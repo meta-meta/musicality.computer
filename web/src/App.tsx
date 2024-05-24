@@ -1,5 +1,5 @@
 import './App.css'
-import {Heading} from "@chakra-ui/react";
+import {Card, CardBody, CardHeader, Heading, Link, Text} from "@chakra-ui/react";
 import ColorMode from "./colorMode.tsx";
 import {useTitle} from "./useTitle.tsx";
 
@@ -12,6 +12,14 @@ function App() {
       <ColorMode/>
 
       <Heading color="brand.900">musicality.computer</Heading>
+
+      <Card>
+        <CardHeader>A place for the future, in the future.</CardHeader>
+        <CardBody>
+          <Text>Great stuff coming soon.</Text>
+          <Link href="https://meta-meta.github.io/aframe-musicality/">Until then, check out the legacy site.</Link>
+        </CardBody>
+      </Card>
     </>
   )
 }
