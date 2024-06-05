@@ -1,4 +1,5 @@
 import {extendTheme, ThemeConfig} from "@chakra-ui/react";
+import '@fontsource/jetbrains-mono';
 
 const colors = {
   brand: {
@@ -13,10 +14,16 @@ const config: ThemeConfig = {
   useSystemColorMode: true,
 }
 
+const fonts = {
+  body: `'Jetbrains Mono', monospace`,
+  heading: `'Jetbrains Mono', monospace`,
+}
+
 const theme =
   extendTheme({
     colors,
     config,
+    fonts,
   })
 
 export default theme;
