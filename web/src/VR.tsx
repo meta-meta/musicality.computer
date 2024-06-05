@@ -28,14 +28,17 @@ type YouTubeClipProps = {
   description: string;
   src: string;
   links?: LinkProps[];
+  iframeProps?: object;
 }
 
-function YouTubeClip({
-                       title,
-                       description,
-                       src,
-                       links = [],
-                     }: YouTubeClipProps) {
+function CardPost({
+                    title,
+                    description,
+                    src,
+                    links = [],
+                    iframeProps,
+                  }: YouTubeClipProps) {
+
   return (
     <Card>
       <CardHeader>
@@ -44,14 +47,13 @@ function YouTubeClip({
 
       <CardBody p="none" aspectRatio="1/1">
         <iframe
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
           frameBorder="0"
           height="100%"
           referrerPolicy="strict-origin-when-cross-origin"
           src={src}
           title={title}
           width="100%"
+          {...iframeProps}
         />
       </CardBody>
 
@@ -70,6 +72,27 @@ function YouTubeClip({
       </CardFooter>
     </Card>
   );
+}
+
+function YouTubeClip({
+                       title,
+                       description,
+                       src,
+                       links = [],
+                     }: YouTubeClipProps) {
+
+  return (
+    <CardPost
+      title={title}
+      description={description}
+      src={src}
+      links={links}
+      iframeProps={{
+        allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+        allowFullScreen: true,
+      }}
+    />
+  )
 }
 
 export function VR({pageTitle = 'Musicality VR'}) {
@@ -128,9 +151,16 @@ export function VR({pageTitle = 'Musicality VR'}) {
           src="https://www.youtube.com/embed/Ad5mJP9gm0s?si=RTuKwepT-TaulEGD&amp;clip=UgkxVb4WEh0PqV3R2LhzCi5zY145p4MOaQ-x&amp;clipt=EOOAOxjyzT4"
         />
 
+        <CardPost
+          title="Feedback"
+          description={``}
+          src="https://docs.google.com/forms/d/e/1FAIpQLSfyuPJSpH3dCAiY13n71VjuzXiPkpz2Dn_E1Uy7h7GMnBUbFg/viewform?embedded=true"
+          links={[]}
+        />
+
         <YouTubeClip
           title="Rhythm Wheels"
-          description="Perfect for exploring polyrhythmic textures akin to West African rhythm. These wheels are propelled by MIDI beat clock; revolving once per measure, or any ratio of a measure. The mallet balls around the circumference are placed according to the Euclidean Algorithm."
+          description="Perfect for exploring polyrhythmic textures akin to West African rhythm. These wheels are propelled by MIDI beat clock; revolving once per measure, or any ratio of a measure. The mallet balls around the circumference are placed according to the Euclidean Algorithm. (this video in particular is not so polyrhythmic. I'll post another)"
           src="https://www.youtube.com/embed/O-mQpfdVRZA?si=-0rVx_NyMIoIsKj_&amp;clip=UgkxTkz5ytoKDEP9EWGrYmnFRJKmCZg-akbX&amp;clipt=EOWTKBim1Cs"
           links={[
             {
