@@ -11,6 +11,7 @@ const ColorMode = (): JSX.Element => {
   const {colorMode, toggleColorMode} = useColorMode();
   return (
     <Flex
+      p={2}
       w="full"
       justifyContent="flex-end"
       marginBottom={-10}
