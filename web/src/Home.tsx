@@ -1,8 +1,10 @@
-import {Box, Card, CardBody, CardHeader, Heading, Link, Text} from "@chakra-ui/react";
+import {Card, CardBody, CardHeader, Center, Heading, Link, Stack, Text} from "@chakra-ui/react";
+import {NotePicker} from "./NotePicker.tsx";
+
 
 export function Home() {
   return (
-    <Box textAlign="center" p={10}>
+    <Stack textAlign="center" p={10}>
       <Heading color="brand.900">musicality.computer</Heading>
 
       <Card>
@@ -12,9 +14,25 @@ export function Home() {
           <br/><br/>
           <Link textDecoration="underline" href="https://meta-meta.github.io/aframe-musicality/">Until then, check out
             the
-            legacy site.</Link>
+            legacy site.
+          </Link>
         </CardBody>
       </Card>
-    </Box>
+
+
+      <Card>
+        <CardHeader>Circle Control</CardHeader>
+        <CardBody>
+          <Text>Embrace the octave with a log2 circular frequency picker.</Text>
+          <br/><br/>
+
+          <Center>
+            <NotePicker/>
+          </Center>
+
+        </CardBody>
+      </Card>
+
+    </Stack>
   );
 }
