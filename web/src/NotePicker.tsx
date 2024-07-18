@@ -1,8 +1,15 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {AbsoluteCenter, Box, Button, Input, Text} from "@chakra-ui/react";
 import {RoundSlider} from 'mz-react-round-slider';
 import {useEnterKey} from "./UseEnterKey.ts";
 
+
+const circleMod = (n: number, fullCircle: number) => {
+  const p = n < 0
+    ? n + fullCircle * Math.ceil(Math.abs(n) / fullCircle)
+    : n;
+  return p % fullCircle;
+};
 
 export function NotePicker({
                              value = 1,
@@ -10,14 +17,15 @@ export function NotePicker({
                              },
                            }) {
 
-  const [val, setVal]: [number, ((value: (((prevState: number) => number) | number)) => void)] = useState(value || 1);
-
+  const [val, setVal] = useState(value || 1);
+  const valRef = useRef(val);
+  valRef.current = val;
 
   useEffect(() => {
     setVal(value);
   }, [value]);
 
-  const valCents = (Math.log2(val) * 1200);
+  const valCents = Math.log2(val) * 1200;
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -33,6 +41,7 @@ export function NotePicker({
     <Box w="330px" h="330px" position="relative">
 
       <RoundSlider
+        // animateOnClick
         // enableTicks
         // tickValuesSuffix="¢"
         // ticksCount={12}
@@ -43,26 +52,23 @@ export function NotePicker({
         max={1199}
         min={0}
         onChange={([pointer]) => {
-
-          const a = valCents < 0
-            ? valCents + 1200 * Math.ceil(Math.abs(valCents) / 1200)
-            : valCents;
-
-          const diff = pointer.value - (a % 1200);
-          const absDiff = Math.abs(diff);
-
-          const b = absDiff < 100 // 100 is arbitrary
-            ? valCents + diff // haven't crossed 0
+          const centsPointer: number = pointer.value;
+          const centsTotal = Math.log2(valRef.current) * 1200;
+          const diff = centsPointer - circleMod(centsTotal, 1200);
+          const b = Math.abs(diff) < 600
+            ? centsTotal + diff // haven't crossed 0
             : diff < 0
-              ? valCents + pointer.value // 1199 -> 0
-              : valCents - (1200 - pointer.value); // 0 -> 1199
+              ? centsTotal + centsPointer // 1199 -> 0
+              : centsTotal - (1200 - centsPointer); // 0 -> 1199
 
-          setVal(Math.pow(2, b / 1200));
+          // oddly the ref is needed when in desktop mode but not mobile
+          valRef.current = Math.pow(2, b / 1200);
+          setVal(valRef.current);
         }}
         pathBgColor="grey"
         pathBorder={1}
         pathEndAngle={269.999}
-        pathInnerBgColor="#333"
+        // pathInnerBgColor="#333" // this causes an undesirably clickable disk
         pathStartAngle={270}
         pointerBgColor="white"
         pointerBgColorSelected="white"
@@ -96,9 +102,16 @@ export function NotePicker({
               onClick={() => {
                 setIsEditing(true)
               }}>
+              {/*{Math.round(valCents)}*/}
               {val.toFixed(3)}
             </Text>
           )}
+      </AbsoluteCenter>
+
+      <AbsoluteCenter>
+        <Text color="grey" fontSize="3em" position="relative" top="1.5em">
+          Hz
+        </Text>
       </AbsoluteCenter>
 
 
