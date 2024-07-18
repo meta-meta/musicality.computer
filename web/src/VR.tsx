@@ -106,6 +106,34 @@ export function VR({pageTitle = 'Musicality VR'}) {
         minChildWidth='400px'
         spacing={2}
       >
+
+        <YouTubeClip
+          title="ii-V-I with polyrhythm"
+          description="Constructing a loop based on the ubiquitous ii-V-I progression in 5-limit JI over a 12/8 bell pattern."
+          src="https://www.youtube.com/embed/ClLeOnZ1JL8"
+          links={[
+            {
+              label: 'Bell pattern',
+              href: 'https://en.wikipedia.org/wiki/Bell_pattern',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'ii-V-I progression',
+              href: 'https://en.wikipedia.org/wiki/Ii%E2%80%93V%E2%80%93I_progression',
+              icon: FaWikipediaW,
+            },
+            {
+              label: '5-limit JI Diatonic scale',
+              href: 'https://en.wikipedia.org/wiki/Just_intonation#Diatonic_scale',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'xenpaper: ii-V-I',
+              href: 'https://xenpaper.com/#%7B1%2F1_9%2F8_5%2F4_4%2F3_3%2F2_5%2F3_15%2F8%7D_%0A%0A%23_C_0__D_1__E_2__F_3__G_4__A_5__B_6%0A%0A0_1_2_3_4_5_6_7%0A%0A%5B9%2F8_4%2F3_5%2F3_1%2F1%5D--%0A%5B3%2F2_15%2F8_9%2F8_4%2F3%5D--%0A%5B1%2F1_5%2F4_3%2F2_15%2F8%5D----%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%0A%23_%5B0_3_5_7%5D----%0A%23_%5B4_6_1_3%5D----%0A%0A%0A%23_%5B1_3_5_0%5D--%0A%23_%5B4_6_1_3%5D--%0A%23_%5B0_2_4_6%5D--%0A%23_%5B0_2_4_5%5D--%0A%0A%0A%23_%5B9%2F8_4%2F3_5%2F3_1%2F1%5D--%0A%23_%5B3%2F2_15%2F8_9%2F8_4%2F3%5D--%0A%23_%5B1%2F1_5%2F4_3%2F2_15%2F8%5D---',
+            },
+          ]}
+        />
+
         <YouTubeClip
           title="Drone Poi and Ambisonic Tornado Siren"
           description="Engaging with an ambisonic recording of the Minneapolis tornado warning siren test by mixing in some drones. I like my drones to revolve for a more trance-inducing effect, so the organ speakers can be whipped around like poi."
