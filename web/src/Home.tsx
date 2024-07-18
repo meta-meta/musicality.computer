@@ -16,6 +16,11 @@ export function Home() {
             the
             legacy site.
           </Link>
+
+          <br/>
+          <br/>
+          <Link textDecoration="underline" href="vr">or Musicality VR
+          </Link>
         </CardBody>
       </Card>
 
