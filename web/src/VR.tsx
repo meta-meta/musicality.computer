@@ -162,6 +162,33 @@ export function VR({pageTitle = 'Musicality VR'}) {
         />
 
         <YouTubeClip
+          title="Drone Poi with DirectivityShaper"
+          description="Engaging with an ambisonic recording of the Minneapolis tornado warning siren test by mixing in some drones. I like my drones to revolve for a more trance-inducing effect, so the organ speakers can be whipped around like poi."
+          src="https://www.youtube.com/embed/gBflK6hZBR4?si=s4Jcxr0xgZkkapkK&amp;clip=UgkxI3rGuFeGQGZzdkAgmD3w9mWlrx8ax5-s&amp;clipt=EP7jBRiypAk"
+          links={[
+            {
+              label: 'Poi (performance art)',
+              href: 'https://en.wikipedia.org/wiki/Poi_(performance_art)',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'Ambisonics',
+              href: 'https://en.wikipedia.org/wiki/Ambisonics',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'IEM DirectivityShaper Guide',
+              href: 'https://plugins.iem.at/docs/directivityshaper/',
+            },
+            {
+              label: 'Drone music',
+              href: 'https://en.wikipedia.org/wiki/Drone_music',
+              icon: FaWikipediaW,
+            },
+          ]}
+        />
+
+        <YouTubeClip
           title="Fractal Jockey"
           description="Improvising on the Lumatone represented by a digital double in VR. MIDI beat clock from REAPER DAW keeps the VR rhythm wheels in sync with a web-based sound toy."
           src="https://www.youtube.com/embed/Qp12mBzXjUw?si=yGSea_9lXCaDXeOG&amp;clip=UgkxnRfCK2fhtLWvXj-B_rgV0bOXpNZeDC7o&amp;clipt=EIT3xAEY5MvIAQ"
