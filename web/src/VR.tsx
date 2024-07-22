@@ -163,7 +163,7 @@ export function VR({pageTitle = 'Musicality VR'}) {
 
         <YouTubeClip
           title="Drone Poi with DirectivityShaper"
-          description="Engaging with an ambisonic recording of the Minneapolis tornado warning siren test by mixing in some drones. I like my drones to revolve for a more trance-inducing effect, so the organ speakers can be whipped around like poi."
+          description="Swinging around a new directivity enhanced poi speaker. Like having a Leslie on a string."
           src="https://www.youtube.com/embed/gBflK6hZBR4?si=s4Jcxr0xgZkkapkK&amp;clip=UgkxI3rGuFeGQGZzdkAgmD3w9mWlrx8ax5-s&amp;clipt=EP7jBRiypAk"
           links={[
             {
@@ -174,6 +174,11 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Ambisonics',
               href: 'https://en.wikipedia.org/wiki/Ambisonics',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'Leslie Speaker',
+              href: 'https://en.wikipedia.org/wiki/Leslie_speaker',
               icon: FaWikipediaW,
             },
             {
