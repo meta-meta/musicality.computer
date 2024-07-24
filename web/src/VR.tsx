@@ -108,6 +108,38 @@ export function VR({pageTitle = 'Musicality VR'}) {
       >
 
         <YouTubeClip
+          title="Chill Sunrise"
+          description=""
+          src="https://www.youtube.com/embed/Mv2yGQv4Pzc?si=xb6K_9QGrEHnolFy&amp;clip=UgkxFf8pUmElNpFmkK8uQpew_OtM6oao_xPQ&amp;clipt=EKDdogEY0ZemAQ"
+          links={[
+            {
+              label: 'Poi (performance art)',
+              href: 'https://en.wikipedia.org/wiki/Poi_(performance_art)',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'Ambisonics',
+              href: 'https://en.wikipedia.org/wiki/Ambisonics',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'Leslie Speaker',
+              href: 'https://en.wikipedia.org/wiki/Leslie_speaker',
+              icon: FaWikipediaW,
+            },
+            {
+              label: 'IEM DirectivityShaper Guide',
+              href: 'https://plugins.iem.at/docs/directivityshaper/',
+            },
+            {
+              label: 'Drone music',
+              href: 'https://en.wikipedia.org/wiki/Drone_music',
+              icon: FaWikipediaW,
+            },
+          ]}
+        />
+
+        <YouTubeClip
           title="ii-V-I with polyrhythm"
           description="Constructing a loop based on the ubiquitous ii-V-I progression in 5-limit JI over a 12/8 bell pattern."
           src="https://www.youtube.com/embed/ClLeOnZ1JL8"
@@ -156,6 +188,24 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Drone music',
               href: 'https://en.wikipedia.org/wiki/Drone_music',
+              icon: FaWikipediaW,
+            },
+          ]}
+        />
+
+
+        <YouTubeClip
+          title="Sound Bath Shower Head"
+          description="Playing a minimal melody by way of rotating a virtual speaker. A drone is directed simultaneously through 4 different band-pass filters which emit audio into the space in separate directions indicated by the colored spheres."
+          src="https://www.youtube.com/embed/Mv2yGQv4Pzc?si=SByLtXscXiAecS26&amp;clip=UgkxJRTmKUTgUb3ZTFL89hNzRsvlyiS_SwsL&amp;clipt=EMDWvQIYoKvBAg"
+          links={[
+            {
+              label: 'IEM DirectivityShaper Guide',
+              href: 'https://plugins.iem.at/docs/directivityshaper/',
+            },
+            {
+              label: 'Band-pass filter',
+              href: 'https://en.wikipedia.org/wiki/Band-pass_filter',
               icon: FaWikipediaW,
             },
           ]}
