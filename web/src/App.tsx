@@ -1,5 +1,6 @@
 import './App.css'
 import ColorMode from "./colorMode.tsx";
+import {MandelbrotMuse} from './MandelbrotMuse.tsx';
 import {useTitle} from "./useTitle.tsx";
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
 import {Home} from "./Home.tsx";
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/vr" element={<VR/>}/>
+          <Route path="/mm/:panX?/:panY?/:zoom?" element={<MandelbrotMuse/>}/>
         </Routes>
 
       </BrowserRouter>

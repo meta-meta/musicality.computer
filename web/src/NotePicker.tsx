@@ -11,8 +11,8 @@ const circleMod = (n: number, fullCircle: number) =>
     : n % fullCircle;
 
 interface NotePickerProps {
-  value: number | undefined;
-  onChange: (a: number) => void;
+  value?: number | undefined;
+  onChange?: ((a: number) => void) | undefined;
 }
 
 export function NotePicker({
