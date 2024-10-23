@@ -108,6 +108,18 @@ export function VR({pageTitle = 'Musicality VR'}) {
       >
 
         <YouTubeClip
+          title="An afternoon of VR music 10/27 12:30"
+          description="A performance of semi-improvised VR music and visuals (minimal/ambient/drone/EJI/ASMR/noise). After the performance, a limited number of volunteers may take turns playing in the virtual environment."
+          src="https://www.youtube.com/embed/vf37vyIq6P8?si=a9sek7dexokiiaLm&amp;clip=UgkxHqMHxrwaf1gJlQiptMwP29pPtYWrYsrG&amp;clipt=EAAY4NQD"
+          links={[
+            {
+              label: 'RESOURCE',
+              href: 'https://www.resource-mpls.com/calendar',
+            },
+          ]}
+        />
+
+        <YouTubeClip
           title="Chill Sunrise"
           description=""
           src="https://www.youtube.com/embed/Mv2yGQv4Pzc?si=xb6K_9QGrEHnolFy&amp;clip=UgkxFf8pUmElNpFmkK8uQpew_OtM6oao_xPQ&amp;clipt=EKDdogEY0ZemAQ"
