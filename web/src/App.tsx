@@ -12,9 +12,13 @@ function App() {
 
   return (
     <>
-      <ColorMode/>
-
       <BrowserRouter>
+
+        <Routes>
+          <Route path="/mm?/*" element={null}/>
+          <Route path="*" element={<ColorMode/>}/>
+        </Routes>
+
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/vr" element={<VR/>}/>

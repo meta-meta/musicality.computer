@@ -58,14 +58,16 @@ import P5 from 'p5';
 export const initialState = {
   audioPan: 0, // -1 - 1
   decayDuration: 1000,
-  exciteEnergy: 0.05,
   exciteDuration: 50,
+  exciteEnergy: 0.05,
   fundamentalFreq: 200,
-  hilbertN: 64, // hilbertN must be power of 2 in order to be square
   hilbMand: [/*{ x, y, m }*/], // coordinates and associated mandelbrot val in hilbert traversal order
+  hilbertN: 64, // hilbertN must be power of 2 in order to be square
   isControlPanelOpen: true,
   isPlaying: false,
+  isPortraitLayout: window.screen.orientation.type.startsWith('portrait'),
   isRegenNeeded: true,
+  isSmooth: false, // smooth technique https://iquilezles.org/www/articles/mset_smooth/mset_smooth.htm
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
   midiClock: 0,
   midiClocksPerTick: 24,
@@ -73,7 +75,6 @@ export const initialState = {
   panY: 0,
   partials: {/* partial: { amp, oscIdx } */}, // the collection is updated in setState but values within are changed in drawLoop directly
   partialsCountMax: 16,
-  isSmooth: false, // smooth technique https://iquilezles.org/www/articles/mset_smooth/mset_smooth.htm
   tick: 0, // updated in draw() bypasses setState
   tickDuration: 100,
   tickLastMillis: 0, // updated in draw() bypasses setState
@@ -353,6 +354,7 @@ export const sketch = (p5: P5) => {
     const {
       hilbertN,
       hilbMand,
+      isPortraitLayout,
     } = state;
 
     const strokeWeight = getStrokeWeight(p5.width / 2);
@@ -366,15 +368,18 @@ export const sketch = (p5: P5) => {
 
       p5.push();
       {
-        p5.translate(p5.width / 4, 0);
+        if (!isPortraitLayout) p5.translate(p5.width / 4, 0);
         drawHilbertCoord(w, h, coordWithVal, hilbertN);
       }
       p5.pop();
 
       p5.push(); // TODO: is it more expensive to push/pop 1000 times or iterate over hilbMand twice?
       {
-        p5.translate((p5.width / 4) * 3, 0);
-        drawLinearizedMandelbrotCoord(p5.width / 4, s, d);
+        if (isPortraitLayout)
+          p5.translate((p5.width / 2), p5.width);
+        else
+          p5.translate((p5.width / 4) * 3, 0);
+        drawLinearizedMandelbrotCoord(isPortraitLayout ? p5.width / 2 : p5.width / 4, s, d);
       }
       p5.pop();
     })
@@ -427,6 +432,7 @@ export const sketch = (p5: P5) => {
 
     const {
       fundamentalFreq,
+      isPortraitLayout,
       partialsCountMax,
     } = p5.state;
 
@@ -461,14 +467,14 @@ export const sketch = (p5: P5) => {
         isRegenNeeded: false,
         partials,
       };
-      drawHilbertMandelbrot( p5.width / 2, p5.height, nextState);
+      drawHilbertMandelbrot( isPortraitLayout ? p5.width : p5.width / 2,isPortraitLayout ? p5.height/2 : p5.height, nextState);
       return nextState;
     });
   }
 
 
   const cursorErasePrev = (maxD, s, prevD) => {
-    const {hilbMand} = p5.state;
+    const {hilbMand, isPortraitLayout} = p5.state;
     const prevCoordAndVal = hilbMand[prevD % maxD];
 
     setFillColorForMandelbrotVal(prevCoordAndVal);
@@ -476,26 +482,29 @@ export const sketch = (p5: P5) => {
 
     p5.push();
     {
-      p5.translate(p5.width / 4, 0);
-      drawHilbertCoord(p5.width / 2, p5.height, prevCoordAndVal, p5.state.hilbertN);
+      if (!isPortraitLayout) p5.translate(p5.width / 4, 0);
+      drawHilbertCoord(isPortraitLayout ? p5.height / 2 : p5.width / 2, isPortraitLayout ? p5.width : p5.height, prevCoordAndVal, p5.state.hilbertN);
     }
     p5.pop();
 
     p5.push();
     {
-      p5.translate((p5.width / 4) * 3, 0);
-      drawLinearizedMandelbrotCoord(p5.width / 4, s, prevD);
+      if (isPortraitLayout)
+        p5.translate((p5.width / 2), p5.width);
+      else
+        p5.translate((p5.width / 4) * 3, 0);
+      drawLinearizedMandelbrotCoord(isPortraitLayout ? p5.height / 4 : p5.width / 4, s, prevD);
     }
     p5.pop();
   }
 
   let prevD = 0;
   const cursorDraw = (id) => {
-    const {hilbMand} = p5.state;
+    const {hilbMand, isPortraitLayout} = p5.state;
     const d = p5.state.tick % hilbMand.length;
     const coordAndVal = hilbMand[d];
-    const sideLength = getSideLengthForLinearizedMap(hilbMand.length, p5.width / 4, p5.height);
-    const strokeWeight = getStrokeWeight(p5.width / 2);
+    const sideLength = getSideLengthForLinearizedMap(hilbMand.length, isPortraitLayout ? p5.width / 2 : p5.width / 4, isPortraitLayout ? p5.width : p5.height);
+    const strokeWeight = getStrokeWeight(isPortraitLayout ? p5.height / 2 : p5.width / 2);
 
     p5.strokeWeight(strokeWeight);
     cursorErasePrev(hilbMand.length, sideLength, prevD);
@@ -505,15 +514,18 @@ export const sketch = (p5: P5) => {
 
     p5.push();
     {
-      p5.translate(p5.width / 4, 0);
-      drawHilbertCoord(p5.width / 2, p5.height, coordAndVal, p5.state.hilbertN);
+      if (!isPortraitLayout) p5.translate(p5.width / 4, 0);
+      drawHilbertCoord(isPortraitLayout ? p5.height / 2 : p5.width / 2, isPortraitLayout ? p5.width : p5.height, coordAndVal, p5.state.hilbertN);
     }
     p5.pop();
 
     p5.push();
     {
-      p5.translate((p5.width / 4) * 3, 0);
-      drawLinearizedMandelbrotCoord(p5.width / 4, sideLength, d);
+      if (isPortraitLayout)
+        p5.translate((p5.width / 2), p5.width);
+      else
+        p5.translate((p5.width / 4) * 3, 0);
+      drawLinearizedMandelbrotCoord(isPortraitLayout ? p5.height / 4 : p5.width / 4, sideLength, d);
     }
     p5.pop();
   }
@@ -569,27 +581,33 @@ export const sketch = (p5: P5) => {
   }
 
   const partialsDraw = () => {
-    const h = p5.height;
-    const w = p5.width / 4;
+
 
     p5.noStroke();
 
-    const { partials, partialsCountMax } = p5.state;
+    const { isPortraitLayout, partials, partialsCountMax } = p5.state;
+    const h = isPortraitLayout ? p5.width : p5.height;
+    const w = isPortraitLayout ? p5.width / 2 : p5.width / 4;
 
-    _.each(partials, ({ amp: targetAmp, oscIdx }, p) => {
-      const barH = h / partialsCountMax;
-      const y = h * ((p - 1) / partialsCountMax);
-      const barW = oscs[oscIdx].gain.gain.value * w;
+    p5.push();
+    {
+      if (isPortraitLayout) p5.translate(0, p5.width);
+      _.each(partials, ({amp: targetAmp, oscIdx}, p) => {
+        const barH = h / partialsCountMax;
+        const y = h * ((p - 1) / partialsCountMax);
+        const barW = oscs[oscIdx].gain.gain.value * w;
 
-      const c = getColorForMandelbrotVal({ m: 1, p})
-      p5.fill(p5.color(p5.hue(c), 255, 8));
-      p5.rect(0, y, w, barH);
+        const c = getColorForMandelbrotVal({m: 1, p});
+        p5.fill(p5.color(p5.hue(c), 255, 8));
+        p5.rect(0, y, w, barH);
 
-      p5.fill(c);
-      p5.rect(0, y, barW, barH);
-      p5.fill(255);
-      p5.rect(targetAmp * w, y, 1, barH);
-    })
+        p5.fill(c);
+        p5.rect(0, y, barW, barH);
+        p5.fill(255);
+        p5.rect(targetAmp * w, y, 1, barH);
+      });
+    }
+    p5.pop();
 
   }
 
@@ -610,7 +628,7 @@ export const sketch = (p5: P5) => {
     } else {
       if (wasPaused) {
         partialsDraw();
-        drawHilbertMandelbrot(p5.width / 2, p5.height, p5.state);
+        drawHilbertMandelbrot( p5.state.isPortraitLayout ? p5.width : p5.width / 2,p5.state.isPortraitLayout ? p5.height/2 : p5.height, p5.state);
         wasPaused = false;
       }
     }
