@@ -61,8 +61,8 @@ function CardPost({
         <Text textAlign="left">{description}</Text>
 
         <Flex gap={2} p={2} flexWrap="wrap">
-          {links.map(({label, href, icon = TbExternalLink}) => (
-            <Tag gap={1}>
+          {links.map(({label, href, icon = TbExternalLink}, k) => (
+            <Tag key={k} gap={1}>
               <Link href={href} target="_blank">{label}</Link>
               <Icon as={icon}/>
             </Tag>))}
