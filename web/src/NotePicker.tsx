@@ -1,5 +1,5 @@
-import {useEffect, useRef, useState} from "react";
-import {AbsoluteCenter, Box, Input, Text} from "@chakra-ui/react";
+import {useEffect, useRef, useState} from 'react';
+import {AbsoluteCenter, Box, Input, Text} from '@chakra-ui/react';
 import {ISettingsPointer, RoundSlider} from 'mz-react-round-slider';
 import {useEnterKey} from './UseEnterKey.ts';
 import * as _ from 'lodash-es';
@@ -31,6 +31,7 @@ export function NotePicker({
   }, [value]);
 
 
+  const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
 
@@ -41,10 +42,14 @@ export function NotePicker({
   useEnterKey();
 
   const change = (n: number) => {
+    if (n < Number.EPSILON) {
+      console.warn('must be > 0');
+      return;
+    }
     valRef.current = n;
     setVal(n);
     onChange(n);
-  }
+  };
 
   const handleSliderChange = ([pointer]: ISettingsPointer[]) => {
     const centsPointer: number = pointer.value as number;
@@ -59,8 +64,36 @@ export function NotePicker({
     change(Math.pow(2, b / 1200));
   };
 
+  const numberText = val.toFixed(val < 10 // TODO: make the actual value precise enough and reflect it exactly
+    ? Math.abs(Math.floor(Math.log10(val))) + 2
+    : val < 100
+      ? 2
+      : val < 1000
+        ? 1
+        : 0);
+
   return ( // 330px is the size of the SVG
-    <Box w="330px" h="330px" position="relative">
+    <Box
+      w="330px"
+      h="330px"
+      position="relative"
+      onPointerDown={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'circle') setIsDragging(true);
+      }}
+      onPointerEnter={() => {
+        setIsDragging(false); // in case mouse dragged and let go off the element
+      }}
+      onPointerUp={() => {
+        setIsDragging(false);
+      }}
+      sx={{
+        '.mz-round-slider-pointer': {
+          cursor: isDragging ? 'grabbing' : 'grab',
+        },
+        cursor: isDragging ? 'grabbing' : 'arrow',
+      }}
+    >
 
       <RoundSlider
         // animateOnClick
@@ -89,6 +122,12 @@ export function NotePicker({
       />
 
       <AbsoluteCenter>
+        <Text color="grey" fontSize="3em" position="relative" top="1.5em">
+          Hz
+        </Text>
+      </AbsoluteCenter>
+
+      <AbsoluteCenter>
         {isEditing
           ? (
             <Input
@@ -97,8 +136,8 @@ export function NotePicker({
               fontSize="3em"
               // value={val.toFixed(3)}
               onBlur={(e) => {
-                const v = parseFloat(e.target.value) || val;
-                change(Math.max(v, 0.00000001))
+                const v = parseFloat(e.currentTarget.value) || val;
+                change(Math.max(v, Number.EPSILON));
                 setIsEditing(false);
               }}
               maxLength={9}
@@ -109,23 +148,25 @@ export function NotePicker({
             <Text
               fontSize="3em"
               onClick={() => setIsEditing(true)}
+              onWheel={(e) => {
+                const {
+                  left: x,
+                  width: w,
+                } = e.currentTarget.getBoundingClientRect();
+
+                const xNorm = (e.clientX - x) / w;
+                const charCount = numberText.length;
+                const char = Math.floor(xNorm * charCount);
+                const decimalChar = numberText.indexOf('.');
+                const diff = (decimalChar < 0 ? charCount : decimalChar) - char;
+                const pow = diff > 0 ? diff - 1 : diff;
+                const mult = diff === 0 ? 0 : Math.pow(10, pow);
+                change(val + mult * e.deltaY / -100);
+              }}
             >
-              {/*{Math.round(valCents)}*/}
-              {val.toFixed(val < 10 // TODO: make the actual value precise enough and reflect it exactly
-                ? Math.abs(Math.floor(Math.log10(val))) + 2
-                : val < 100
-                  ? 2
-                  : val < 1000
-                    ? 1
-                    : 0)}
+              {numberText}
             </Text>
           )}
-      </AbsoluteCenter>
-
-      <AbsoluteCenter>
-        <Text color="grey" fontSize="3em" position="relative" top="1.5em">
-          Hz
-        </Text>
       </AbsoluteCenter>
 
 
@@ -134,7 +175,7 @@ export function NotePicker({
       {/*  setVal(val * Math.pow(2, 1/12)); // floating point error accumulates*/}
       {/*}}>+</Button>*/}
     </Box>
-  )
+  );
 }
 
 
