@@ -72,6 +72,60 @@ export function NotePicker({
         ? 1
         : 0);
 
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  const onWheelBox = (e: WheelEvent) => {
+    const mult = e.deltaY > 0 ? -1 : 1;
+    const currCents = Math.log2(valRef.current) * 1200;
+    const nextCents = currCents + Math.abs(e.deltaY / 100) * mult;
+    change(Math.pow(2, nextCents / 1200));
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (boxRef.current) {
+      // https://github.com/facebook/react/issues/22794
+      boxRef.current.addEventListener('wheel', onWheelBox, {passive: false});
+
+      return () => {
+        boxRef.current?.removeEventListener('wheel', onWheelBox);
+      }
+    }
+  }, [boxRef])
+
+
+  const numRef = useRef<HTMLDivElement | null>(null);
+
+  const onWheelNum = (e: WheelEvent) => {
+    const {
+      left: x,
+      width: w,
+    } = (e.currentTarget as HTMLElement).getBoundingClientRect();
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const xNorm = (e.clientX - x) / w;
+    const charCount = numberText.length;
+    const char = Math.floor(xNorm * charCount);
+    const decimalChar = numberText.indexOf('.');
+    const diff = (decimalChar < 0 ? charCount : decimalChar) - char;
+    const pow = diff > 0 ? diff - 1 : diff;
+    const mult = diff === 0 ? 0 : Math.pow(10, pow);
+    change(valRef.current + mult * e.deltaY / -100);
+  };
+
+  useEffect(() => {
+    if (numRef.current) {
+      // https://github.com/facebook/react/issues/22794
+      numRef.current.addEventListener('wheel', onWheelNum, {passive: false});
+
+      return () => {
+        numRef.current?.removeEventListener('wheel', onWheelNum);
+      }
+    }
+  }, [numRef])
+
   return ( // 330px is the size of the SVG
     <Box
       w="330px"
@@ -86,7 +140,10 @@ export function NotePicker({
       }}
       onPointerUp={() => {
         setIsDragging(false);
+        // @ts-expect-error blur is unavailable on some element types
+        document.activeElement?.blur(); // allows wheel events after grabbing pointer
       }}
+      ref={boxRef}
       sx={{
         '.mz-round-slider-pointer': {
           cursor: isDragging ? 'grabbing' : 'grab',
@@ -122,7 +179,12 @@ export function NotePicker({
       />
 
       <AbsoluteCenter>
-        <Text color="grey" fontSize="3em" position="relative" top="1.5em">
+        <Text
+          color="grey"
+          fontSize="3em"
+          position="relative"
+          top="1.5em"
+        >
           Hz
         </Text>
       </AbsoluteCenter>
@@ -148,21 +210,7 @@ export function NotePicker({
             <Text
               fontSize="3em"
               onClick={() => setIsEditing(true)}
-              onWheel={(e) => {
-                const {
-                  left: x,
-                  width: w,
-                } = e.currentTarget.getBoundingClientRect();
-
-                const xNorm = (e.clientX - x) / w;
-                const charCount = numberText.length;
-                const char = Math.floor(xNorm * charCount);
-                const decimalChar = numberText.indexOf('.');
-                const diff = (decimalChar < 0 ? charCount : decimalChar) - char;
-                const pow = diff > 0 ? diff - 1 : diff;
-                const mult = diff === 0 ? 0 : Math.pow(10, pow);
-                change(val + mult * e.deltaY / -100);
-              }}
+              ref={numRef}
             >
               {numberText}
             </Text>
