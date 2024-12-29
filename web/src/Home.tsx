@@ -1,5 +1,5 @@
-import {Card, CardBody, CardHeader, Center, Heading, Link, Stack, Text} from "@chakra-ui/react";
-import {NotePicker} from "./NotePicker.tsx";
+import {Card, Center, Heading, Link, Stack, Text} from '@chakra-ui/react';
+import {NotePicker} from './NotePicker.tsx';
 
 
 export function Home() {
@@ -7,9 +7,9 @@ export function Home() {
     <Stack textAlign="center" p={10}>
       <Heading color="brand.900">musicality.computer</Heading>
 
-      <Card>
-        <CardHeader>A place for the future, in the future.</CardHeader>
-        <CardBody>
+      <Card.Root>
+        <Card.Header>A place for the future, in the future.</Card.Header>
+        <Card.Body>
           <Text>Great stuff coming soon.</Text>
           <br/><br/>
           <Link textDecoration="underline" href="https://meta-meta.github.io/aframe-musicality/">Until then, check out
@@ -21,13 +21,13 @@ export function Home() {
           <br/>
           <Link textDecoration="underline" href="vr">or Musicality VR
           </Link>
-        </CardBody>
-      </Card>
+        </Card.Body>
+      </Card.Root>
 
 
-      <Card>
-        <CardHeader>Circle Control</CardHeader>
-        <CardBody>
+      <Card.Root>
+        <Card.Header>Circle Control</Card.Header>
+        <Card.Body>
           <Text>Embrace the octave with a log2 circular frequency picker.</Text>
           <br/><br/>
 
@@ -35,8 +35,8 @@ export function Home() {
             <NotePicker/>
           </Center>
 
-        </CardBody>
-      </Card>
+        </Card.Body>
+      </Card.Root>
 
     </Stack>
   );

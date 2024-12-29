@@ -124,7 +124,17 @@ export function NotePicker({
         numRef.current?.removeEventListener('wheel', onWheelNum);
       }
     }
-  }, [numRef])
+  }, [onWheelNum, numRef])
+
+
+  useEffect(() => {
+    document.addEventListener('pointerup', () => {
+      setIsDragging(false);
+      // @ts-expect-error blur is unavailable on some element types
+      document.activeElement?.blur(); // allows wheel events after grabbing pointer
+    })
+  }, []);
+
 
   return ( // 330px is the size of the SVG
     <Box
@@ -135,20 +145,14 @@ export function NotePicker({
         const target = e.target as HTMLElement;
         if (target.tagName === 'circle') setIsDragging(true);
       }}
-      onPointerEnter={() => {
-        setIsDragging(false); // in case mouse dragged and let go off the element
-      }}
-      onPointerUp={() => {
-        setIsDragging(false);
-        // @ts-expect-error blur is unavailable on some element types
-        document.activeElement?.blur(); // allows wheel events after grabbing pointer
-      }}
       ref={boxRef}
-      sx={{
-        '.mz-round-slider-pointer': {
+      css={{
+        '& .mz-round-slider-pointer': {
           cursor: isDragging ? 'grabbing' : 'grab',
         },
-        cursor: isDragging ? 'grabbing' : 'arrow',
+        '&': { // TODO: would be nice to apply this to document
+          cursor: isDragging ? 'grabbing' : 'default',
+        },
       }}
     >
 
@@ -167,11 +171,13 @@ export function NotePicker({
         min={0}
         onChange={handleSliderChange}
         pathBgColor="grey"
-        pathBorder={1}
+        pathBorder={0}
         pathEndAngle={269.999}
         pathStartAngle={270}
         pointerBgColor="white"
         pointerBgColorSelected="white"
+        pointerBorder={1}
+        pointerBorderColor="grey"
         pointerRadius={15}
         pointers={[{value: (Math.log2(val) * 1200) % 1200}]}
         textColor={'#8993B7'}

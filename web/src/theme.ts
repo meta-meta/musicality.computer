@@ -1,29 +1,32 @@
-import {extendTheme, ThemeConfig} from "@chakra-ui/react";
+import {createSystem, defaultConfig, defineConfig} from '@chakra-ui/react';
 import '@fontsource/jetbrains-mono';
 
 const colors = {
   brand: {
-    900: '#1a365d',
-    800: '#153e75',
-    700: '#2a69ac',
-  }
-}
+    900: {value: '#1a365d'},
+    800: {value: '#153e75'},
+    700: {value: '#2a69ac'},
+  },
+};
 
-const config: ThemeConfig = {
-  initialColorMode: 'system',
-  useSystemColorMode: true,
-}
+// const config: ThemeConfig = {
+//   initialColorMode: 'system',
+//   useSystemColorMode: true,
+// }
 
 const fonts = {
-  body: `'Jetbrains Mono', monospace`,
-  heading: `'Jetbrains Mono', monospace`,
-}
+  body: {value: `'Jetbrains Mono', monospace`},
+  heading: {value: `'Jetbrains Mono', monospace`},
+};
 
-const theme =
-  extendTheme({
-    colors,
-    config,
-    fonts,
-  })
+const config = defineConfig({
+  theme: {
+    tokens: { // https://www.chakra-ui.com/docs/theming/tokens
+      colors,
+      // config,
+      fonts,
+    },
+  },
+});
 
-export default theme;
+export const system = createSystem(defaultConfig, config);
