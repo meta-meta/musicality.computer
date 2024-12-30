@@ -1,5 +1,6 @@
 import {Card, Center, Heading, Link, Stack, Text} from '@chakra-ui/react';
 import {NotePicker} from './NotePicker.tsx';
+import LumatoneEditor from './lumatone/LumatoneEditor.tsx';
 
 
 export function Home() {
@@ -24,6 +25,8 @@ export function Home() {
         </Card.Body>
       </Card.Root>
 
+
+      <LumatoneEditor/>
 
       <Card.Root>
         <Card.Header>Circle Control</Card.Header>
