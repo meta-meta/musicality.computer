@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {boardsOnGrid} from './layoutData.js';
+import {boardsOnGrid, gridPosToKeyPosition} from './layoutData.ts';
 
 const setColor = (lumatoneIn, lumatoneOut, board, key, rNorm, gNorm, bNorm) => new Promise((res) => {
   const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
@@ -88,7 +88,7 @@ const LumatoneKeySync = ({
   useEffect(() => {
     if (!lumaIn || !lumaOut) return;
 
-    const lumaKey = boardsOnGrid[y][x];
+    const lumaKey = gridPosToKeyPosition(x, y);
     if (lumaKey) {
       const {boardNum, note /*note = key index of board*/} = lumaKey;
 // console.log(n, 1 - Math.floor(n/12) / 5 )

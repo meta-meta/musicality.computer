@@ -1,23 +1,44 @@
-import {lumatoneRowLengths, lumatoneRowStarts} from './layoutData.js';
+import {gridPosToKeyPosition, lumatoneRowLengths, lumatoneRowStarts} from './layoutData.ts';
 import _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
-import {Fragment, useRef} from 'react';
+import {Fragment, MutableRefObject, useRef} from 'react';
 import LumatoneKey from './LumatoneKey';
-import {nullMapping} from './LumatoneEditor';
+import {Coord, nullMapping} from './LumatoneEditor';
+import {LumatoneLayer} from './lumatoneTypes.ts';
 
 const rotBoard = 343.6;
 
+export type EditorKeyOffset = {
+  gridPos: Coord,
+  id: string,
+  x: number,
+  y: number,
+}
+
+type SelectionBox = {
+  el: HTMLDivElement | null,
+  isEnabled: boolean,
+  x: number,
+  y: number,
+  h: number,
+  w: number,
+}
+
+interface LumatoneBoardProps {
+  getLayer: (c: Coord) => LumatoneLayer | undefined,
+  onSelect: (selection: EditorKeyOffset[]) => void,
+  rowLengths?: number[],
+  rowStarts?: number[],
+}
+
 export default function LumatoneBoard({
   getLayer,
-  layout,
   onSelect,
-  pcSet,
-  pitchSet,
   rowLengths = lumatoneRowLengths,
   rowStarts = lumatoneRowStarts,
-}) {
+}: LumatoneBoardProps) {
 
-  const selectionBox = useRef({
+  const selectionBox: MutableRefObject<SelectionBox> = useRef({
     el: null,
     isEnabled: false,
     x: 0,
@@ -26,32 +47,33 @@ export default function LumatoneBoard({
     w: 0,
   });
 
-  const positions = useRef({});
+  const keyPositions: MutableRefObject<{ [index: string]: EditorKeyOffset }> = useRef({});
 
   const updateSelectionBox = () => {
     const sb = selectionBox.current;
+    if (!sb.el) return;
     const {style} = sb.el;
-    style.top =`${sb.y}px`;
-    style.left =`${sb.x}px`;
-    style.height =`${sb.h}px`;
-    style.width =`${sb.w}px`;
+    style.top = `${sb.y}px`;
+    style.left = `${sb.x}px`;
+    style.height = `${sb.h}px`;
+    style.width = `${sb.w}px`;
     style.visibility = sb.isEnabled ? 'visible' : 'hidden';
 
     if (!sb.isEnabled) return;
-    const selected = _.filter(positions.current, p => p.x > sb.x && p.x < sb.x + sb.w && p.y > sb.y && p.y < sb.y + sb.h);
+    const selected = _.filter(keyPositions.current, p => p.x > sb.x && p.x < sb.x + sb.w && p.y > sb.y && p.y < sb.y + sb.h);
     onSelect(selected);
-  }
+  };
 
-  const onLumatoneKeyRef = (x, y) => (el) => {
-    const id = `${x},${y}`;
+  const onLumatoneKeyRef = (gridPos: Coord) => (el: HTMLDivElement) => {
+    const {id} = gridPosToKeyPosition(gridPos);
 
-    positions.current[id] = el && ({
-      coord: { x, y },
+    keyPositions.current[id] = el && ({
+      gridPos: gridPos,
       id,
       x: el.offsetLeft + el.offsetWidth / 2,
       y: el.offsetTop + el.offsetHeight / 2,
     });
-  }
+  };
 
   return (
     <Flex
@@ -99,12 +121,7 @@ export default function LumatoneBoard({
                     // Lumatone Keys
                     ..._.range(rowStartX, rowLengths[y] + rowStartX)
                       .map(x => {
-
                         const layer = getLayer({x, y});
-
-                        // const isInPcSet = _.includes(pcSet, n % 12);
-                        // const isInPitchSet = _.includes(pitchSet, n);
-                        // const colorHsl = getNoteColorHsl(n, isInPitchSet, false/* !isInPcSet*/);
 
                         return (
                           <LumatoneKey
@@ -112,8 +129,9 @@ export default function LumatoneBoard({
                             layer={layer}
                             mapping={layer ? layer.mappingFn({x, y}) : nullMapping}
                             key={x}
-                            onRef={onLumatoneKeyRef(x, y)}
+                            onRef={onLumatoneKeyRef({x, y})}
                             rotBoard={rotBoard}
+                            keyPosition={gridPosToKeyPosition({x, y})}
                           />
                         );
                       }),
@@ -147,7 +165,7 @@ export default function LumatoneBoard({
               updateSelectionBox();
             }}
 
-            onPointerUp={(e) => {
+            onPointerUp={() => {
               const sb = selectionBox.current;
               sb.isEnabled = false;
               sb.h = 0;
@@ -157,7 +175,7 @@ export default function LumatoneBoard({
           >
 
             <Box
-              ref={(el) => {
+              ref={(el: HTMLDivElement | null) => {
                 selectionBox.current.el = el;
               }}
               bg="whiteAlpha.400"

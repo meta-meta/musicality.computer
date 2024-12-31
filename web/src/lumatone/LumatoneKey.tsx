@@ -1,38 +1,16 @@
 import Color from 'colorjs.io';
 import {AbsoluteCenter, Box, Flex} from '@chakra-ui/react';
 import {toSymbol} from './util';
-import {Coord} from './LumatoneEditor.tsx';
+import {LumatoneKeyPosition, LumatoneLayer, LumatoneMapping} from './lumatoneTypes.ts';
 
-export enum KeyType {
-  NoteOnOff,
-  ContinuousController,
-  Lumatouch,
-  Disabled,
-}
-
-export type MidiChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
-
-export interface LumatoneMapping {
-  channel: MidiChannel,
-  keyColor: Color,
-  keyType: KeyType,
-  noteNum: number,
-}
-
-export interface LumatoneLayer {
-  layerColor: Color,
-  layerName: string,
-  mappingFn: (c: Coord) => LumatoneMapping,
-  mappingFnName: string,
-}
-
-export interface LumatoneKey {
+export interface LumatoneKeyProps {
   isOdd: boolean,
-  isSpacer: boolean,
+  isSpacer?: boolean,
+  keyPosition?: LumatoneKeyPosition,
   layer?: LumatoneLayer,
   mapping: LumatoneMapping,
+  onRef?: (el: HTMLDivElement) => void,
   rotBoard: number,
-  onRef: (el: HTMLDivElement) => void,
 }
 
 const cellSize = 1.5;
@@ -43,10 +21,11 @@ function LumatoneKey({
   isOdd,
   isSpacer = false,
   layer,
+  keyPosition,
   mapping,
-  rotBoard,
   onRef,
-}: LumatoneKey) {
+  rotBoard,
+}: LumatoneKeyProps) {
 
   const borderColor = layer ? layer.layerColor : black;
   // const borderColor = mapping.keyColor

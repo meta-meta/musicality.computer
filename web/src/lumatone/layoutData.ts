@@ -1,4 +1,6 @@
 import _ from 'lodash-es';
+import {LumatoneKeyPosition} from './lumatoneTypes.ts';
+import {Coord} from './LumatoneEditor.tsx';
 
 export const lumatoneRowLengths = [
   2,
@@ -36,7 +38,7 @@ export const lumatoneRowStarts = [
   28,
 ];
 
-export const boardRowLengths = [
+const boardRowLengths = [
   2,
   5,
   6, 6, 6, 6, 6, 6, 6,
@@ -44,7 +46,9 @@ export const boardRowLengths = [
   2,
 ];
 
-export const boardsOnGrid = lumatoneRowLengths.map(() => ([]));
+const boardsOnGrid: Array<LumatoneKeyPosition[]> = lumatoneRowLengths.map(() => ([]));
+
+export const gridPosToKeyPosition = ({x,y}: Coord): LumatoneKeyPosition => boardsOnGrid[y][x];
 
 _.range(5).forEach(boardIndex => {
   const boardNum = boardIndex + 1;
@@ -58,11 +62,11 @@ _.range(5).forEach(boardIndex => {
       const y = boardStartY + boardRow;
       boardsOnGrid[y][boardStartX + lumatoneRowStarts[boardRow] + boardX] = {
         boardNum,
+        id: `${boardNum}/${note}`,
         note,
       };
 
       note++;
     });
   });
-
 });
