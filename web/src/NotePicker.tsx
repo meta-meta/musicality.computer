@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {AbsoluteCenter, Box, Input, Text} from '@chakra-ui/react';
 import {ISettingsPointer, RoundSlider} from 'mz-react-round-slider';
 import {useEnterKey} from './UseEnterKey.ts';
@@ -127,13 +127,16 @@ export function NotePicker({
   }, [onWheelNum, numRef])
 
 
-  useEffect(() => {
-    document.addEventListener('pointerup', () => {
-      setIsDragging(false);
-      // @ts-expect-error blur is unavailable on some element types
-      document.activeElement?.blur(); // allows wheel events after grabbing pointer
-    })
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false);
+    // @ts-expect-error blur is unavailable on some element types
+    document.activeElement?.blur(); // allows wheel events after grabbing pointer
   }, []);
+
+  useEffect(() => {
+    if (isDragging) document.addEventListener('pointerup', handlePointerUp)
+    else document.removeEventListener('pointerup', handlePointerUp);
+  }, [handlePointerUp, isDragging]);
 
 
   return ( // 330px is the size of the SVG
