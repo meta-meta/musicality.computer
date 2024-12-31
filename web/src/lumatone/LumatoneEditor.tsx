@@ -1,10 +1,10 @@
-import {Card} from '@chakra-ui/react';
+import {Button, Card, Stack} from '@chakra-ui/react';
 import LumatoneBoard from './LumatoneBoard';
-import {KeyType, LumatoneMapping, MidiChannel} from './LumatoneKey.tsx';
+import {KeyType, LumatoneLayer, LumatoneMapping, MidiChannel} from './LumatoneKey.tsx';
 import Color from 'colorjs.io';
 import {Okhsl} from 'colorjs.io/fn';
 import {scale} from './util';
-import {useState} from 'react';
+import {useCallback, useState} from 'react';
 import _ from 'lodash-es';
 
 const getNoteColorHsl = (n: number): Color => {
@@ -39,17 +39,29 @@ const getNoteColorHsl = (n: number): Color => {
   // });
 };
 
-const nullMapping: LumatoneMapping = {
+export const nullMapping: LumatoneMapping = {
   channel: 1,
   keyColor: new Color('black'),
   keyType: KeyType.Disabled,
-  layerColor: new Color('black'),
-  layerName: '',
   noteNum: 0,
 };
 
+const selectedMapping: LumatoneMapping = {
+  channel: 1,
+  keyColor: new Color('black'),
+  keyType: KeyType.Disabled,
+  noteNum: 0,
+};
 
-const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}, layerName: string, layerColor: Color) =>
+const selectedLayer: LumatoneLayer = {
+  layerName: 'New',
+  layerColor: new Color('white'),
+  mappingFn: () => selectedMapping,
+  mappingFnName: '',
+};
+
+
+const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
   (key: Coord): LumatoneMapping => {
 
     const x = key.x + offset.x;
@@ -63,49 +75,61 @@ const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}, layerNam
       channel,
       keyColor: getNoteColorHsl(noteNum),
       keyType: KeyType.NoteOnOff,
-      layerColor,
-      layerName,
       noteNum,
     });
   };
 
 
-type Coord = { x: number; y: number };
+export type Coord = { x: number; y: number };
 
 type Layer = {
-  rows: object,
-  mappingFn: (arg: Coord) => LumatoneMapping,
+  ids: string[],
+  lumatoneLayer: LumatoneLayer,
 }
 
 function LumatoneEditor() {
 
   const [layers, setLayers] = useState<Layer[]>([
-    {
-      rows: {
-        0: {0: true, 1: true},
-        1: {2: true, 3: true},
-        2: {2: true, 3: true},
-        3: {2: true, 3: true},
-      },
-      mappingFn: wikiHayden(1, {x: 3, y: 0}, 'Layer 2', new Color('blue')),
-    },
-    {
-      rows: {
-        0: {0: true, 1: true},
-        1: {0: true, 1: true},
-        2: {0: true, 1: true},
-        3: {0: true, 1: true},
-      },
-      mappingFn: wikiHayden(1, {x: 0, y: 0}, 'Layer 1', new Color('rebeccapurple')),
-    },
+    // {
+    //   ids: ['0,0', '0,1', '1,2', '1,3', '2,3', '2,2'],
+    //   lumatoneLayer: {
+    //     layerName: 'Layer Blue',
+    //     layerColor: new Color('blue'),
+    //     mappingFn: wikiHayden(1, {x: 3, y: 0}),
+    //     mappingFnName: wikiHayden.name,
+    //   },
+    // },
+    // {
+    //   ids: ['0,0', '0,1', '1,0', '1,1', '2,0', '2,1', '3,0', '3,1'],
+    //   lumatoneLayer: {
+    //     layerName: 'Layer Purple',
+    //     layerColor: new Color('rebeccapurple'),
+    //     mappingFn: wikiHayden(1, {x: 0, y: 0}),
+    //     mappingFnName: wikiHayden.name,
+    //   },
+    // },
   ]);
 
-  const getMapping = ({x, y}: Coord): LumatoneMapping => {
-    const layer = _.findLast<Layer>(layers, l => _.get(l.rows, [y, x]));
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const handleSelect = useCallback((s: object[]) => {
+    const next = s.map(s => s.id);
+    const didChange = _.xor(selectedIds, next).length;
+    if (didChange) setSelectedIds(next);
+  }, [selectedIds]);
+
+  const getLayer = ({x, y}: Coord): LumatoneLayer | null => {
+    const id = `${x},${y}`;
+
+    if (_.includes(selectedIds, id)) {
+      return selectedLayer;
+    }
+
+    const layer = _.find<Layer>(layers, l => _.includes(l.ids, id));
 
     return layer
-      ? layer.mappingFn({x, y})
-      : nullMapping;
+      ? layer.lumatoneLayer
+      : null;
   };
 
   return (
@@ -114,11 +138,67 @@ function LumatoneEditor() {
       <Card.Body>
 
         <LumatoneBoard
-          getMapping={getMapping}
+          getLayer={getLayer}
           layout={wikiHayden}
+          onSelect={handleSelect}
           pcSet={[]}
           pitchSet={[]}
         />
+
+        <Stack>
+          {!_.isEmpty(selectedIds) && (
+            <Card.Root
+              borderColor={selectedLayer.layerColor.toString({format: 'hex'})}
+            >
+              <Card.Header>{selectedLayer.layerName}</Card.Header>
+              <Card.Body>
+                <Button
+                  onClick={() => {
+
+                    // TODO: something more robust
+                    const [x, y] = selectedIds[0].split(',').map(i => parseInt(i, 10));
+
+                    setLayers([
+                      {
+                        ids: selectedIds,
+                        lumatoneLayer: {
+                          layerName: `Layer ${layers.length + 1}`,
+                          layerColor: getNoteColorHsl(layers.length + 60),
+                          mappingFn: wikiHayden(1, {x: -x, y: -y}),
+                          mappingFnName: wikiHayden.name,
+                        },
+                      },
+                      ...layers,
+                    ]);
+                    setSelectedIds([]);
+                  }}
+                >
+                  Add
+                </Button>
+              </Card.Body>
+            </Card.Root>
+          )}
+
+          {layers.map((layer: Layer, ix) => {
+            const {
+              lumatoneLayer: {
+                layerName,
+                layerColor,
+                mappingFn,
+                mappingFnName,
+              },
+            } = layer;
+            return (
+              <Card.Root
+                key={ix}
+                borderColor={layerColor.toString({format: 'hex'})}
+              >
+                <Card.Header>{layerName}</Card.Header>
+                <Card.Body>{mappingFnName}</Card.Body>
+              </Card.Root>
+            );
+          })}
+        </Stack>
 
 
       </Card.Body>

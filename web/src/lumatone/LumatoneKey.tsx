@@ -1,6 +1,7 @@
 import Color from 'colorjs.io';
 import {AbsoluteCenter, Box, Flex} from '@chakra-ui/react';
 import {toSymbol} from './util';
+import {Coord} from './LumatoneEditor.tsx';
 
 export enum KeyType {
   NoteOnOff,
@@ -15,29 +16,39 @@ export interface LumatoneMapping {
   channel: MidiChannel,
   keyColor: Color,
   keyType: KeyType,
+  noteNum: number,
+}
+
+export interface LumatoneLayer {
   layerColor: Color,
   layerName: string,
-  noteNum: number,
+  mappingFn: (c: Coord) => LumatoneMapping,
+  mappingFnName: string,
 }
 
 export interface LumatoneKey {
   isOdd: boolean,
   isSpacer: boolean,
+  layer?: LumatoneLayer,
   mapping: LumatoneMapping,
   rotBoard: number,
+  onRef: (el: HTMLDivElement) => void,
 }
 
 const cellSize = 1.5;
+const black = new Color('black');
 
 
 function LumatoneKey({
   isOdd,
   isSpacer = false,
+  layer,
   mapping,
   rotBoard,
+  onRef,
 }: LumatoneKey) {
 
-  const borderColor = mapping.layerColor;
+  const borderColor = layer ? layer.layerColor : black;
   // const borderColor = mapping.keyColor
   //   .range('black')(0.25)
   //   .toString({format: 'hex'});
@@ -49,6 +60,7 @@ function LumatoneKey({
   return (
     <>
       <Flex
+        ref={onRef}
         {...{
           alignItems: 'center',
           display: 'inline-flex',
@@ -104,8 +116,6 @@ function LumatoneKey({
         }
 
         {isSpacer && (<>&nbsp;</>)}
-
-
       </Flex>
 
       {/*<LumatoneKeySync*/}

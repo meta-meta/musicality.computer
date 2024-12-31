@@ -1,26 +1,57 @@
-import Pc from './pc.jsx';
 import {lumatoneRowLengths, lumatoneRowStarts} from './layoutData.js';
-import Cell from './cell.jsx';
 import _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
-import Color from 'colorjs.io';
-import {Okhsl, Okhsv} from 'colorjs.io/fn';
-import {scale} from './util.js';
-import {Fragment} from 'react';
+import {Fragment, useRef} from 'react';
 import LumatoneKey from './LumatoneKey';
+import {nullMapping} from './LumatoneEditor';
 
 const rotBoard = 343.6;
 
-const spacerColor = new Color('white');
-
 export default function LumatoneBoard({
-  getMapping,
+  getLayer,
   layout,
+  onSelect,
   pcSet,
   pitchSet,
   rowLengths = lumatoneRowLengths,
   rowStarts = lumatoneRowStarts,
 }) {
+
+  const selectionBox = useRef({
+    el: null,
+    isEnabled: false,
+    x: 0,
+    y: 0,
+    h: 0,
+    w: 0,
+  });
+
+  const positions = useRef({});
+
+  const updateSelectionBox = () => {
+    const sb = selectionBox.current;
+    const {style} = sb.el;
+    style.top =`${sb.y}px`;
+    style.left =`${sb.x}px`;
+    style.height =`${sb.h}px`;
+    style.width =`${sb.w}px`;
+    style.visibility = sb.isEnabled ? 'visible' : 'hidden';
+
+    if (!sb.isEnabled) return;
+    const selected = _.filter(positions.current, p => p.x > sb.x && p.x < sb.x + sb.w && p.y > sb.y && p.y < sb.y + sb.h);
+    onSelect(selected);
+  }
+
+  const onLumatoneKeyRef = (x, y) => (el) => {
+    const id = `${x},${y}`;
+
+    positions.current[id] = el && ({
+      coord: { x, y },
+      id,
+      x: el.offsetLeft + el.offsetWidth / 2,
+      y: el.offsetTop + el.offsetHeight / 2,
+    });
+  }
 
   return (
     <Flex
@@ -61,7 +92,7 @@ export default function LumatoneBoard({
                             isOdd={isOdd}
                             isSpacer
                             key={x}
-                            mapping={getMapping({x, y})}
+                            mapping={nullMapping}
                             rotBoard={rotBoard}
                           />)),
 
@@ -69,6 +100,7 @@ export default function LumatoneBoard({
                     ..._.range(rowStartX, rowLengths[y] + rowStartX)
                       .map(x => {
 
+                        const layer = getLayer({x, y});
 
                         // const isInPcSet = _.includes(pcSet, n % 12);
                         // const isInPitchSet = _.includes(pitchSet, n);
@@ -77,8 +109,10 @@ export default function LumatoneBoard({
                         return (
                           <LumatoneKey
                             isOdd={isOdd}
-                            mapping={getMapping({x, y})}
+                            layer={layer}
+                            mapping={layer ? layer.mappingFn({x, y}) : nullMapping}
                             key={x}
+                            onRef={onLumatoneKeyRef(x, y)}
                             rotBoard={rotBoard}
                           />
                         );
@@ -88,6 +122,52 @@ export default function LumatoneBoard({
                 </Fragment>
               );
             })}
+
+          <Box
+            position="absolute"
+            left={0}
+            top={0}
+            w="full"
+            h="full"
+
+            onPointerDown={(e) => {
+              const {offsetX, offsetY} = e.nativeEvent;
+              selectionBox.current.isEnabled = true;
+              selectionBox.current.x = offsetX;
+              selectionBox.current.y = offsetY;
+              updateSelectionBox();
+            }}
+
+            onPointerMove={(e) => {
+              const sb = selectionBox.current;
+              if (!sb.isEnabled) return;
+              const {offsetX, offsetY} = e.nativeEvent;
+              sb.h = offsetY - sb.y;
+              sb.w = offsetX - sb.x;
+              updateSelectionBox();
+            }}
+
+            onPointerUp={(e) => {
+              const sb = selectionBox.current;
+              sb.isEnabled = false;
+              sb.h = 0;
+              sb.w = 0;
+              updateSelectionBox();
+            }}
+          >
+
+            <Box
+              ref={(el) => {
+                selectionBox.current.el = el;
+              }}
+              bg="whiteAlpha.400"
+              border="2px dashed white"
+              pointerEvents="none"
+              position="absolute"
+              visibility="hidden"
+            />
+          </Box>
+
         </Box>
       </Box>
     </Flex>
