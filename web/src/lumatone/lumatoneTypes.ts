@@ -1,5 +1,4 @@
 import Color from 'colorjs.io';
-import {Coord} from './LumatoneEditor.tsx';
 
 export type LumatoneKeyPosition = {
   boardNum: number,
@@ -19,6 +18,8 @@ export interface LumatoneLayer {
   layerName: string,
   mappingFn: (c: Coord) => LumatoneMapping,
   mappingFnName: string,
+  mappingFnColOffset: number,
+  mappingFnRowOffset: number,
 }
 
 export type MidiChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
@@ -29,3 +30,5 @@ export enum KeyType {
   Lumatouch,
   Disabled,
 }
+
+export type Coord = { x: number; y: number };

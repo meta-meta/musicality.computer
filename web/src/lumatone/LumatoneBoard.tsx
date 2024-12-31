@@ -3,8 +3,8 @@ import _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
 import {Fragment, MutableRefObject, useRef} from 'react';
 import LumatoneKey from './LumatoneKey';
-import {Coord, nullMapping} from './LumatoneEditor';
-import {LumatoneLayer} from './lumatoneTypes.ts';
+import {unmapped} from './LumatoneEditor';
+import {Coord, LumatoneLayer} from './lumatoneTypes.ts';
 
 const rotBoard = 343.6;
 
@@ -26,14 +26,14 @@ type SelectionBox = {
 
 interface LumatoneBoardProps {
   getLayer: (c: Coord) => LumatoneLayer | undefined,
-  onSelect: (selection: EditorKeyOffset[]) => void,
+  onSelectionBoxUpdate: (selection: EditorKeyOffset[]) => void,
   rowLengths?: number[],
   rowStarts?: number[],
 }
 
 export default function LumatoneBoard({
   getLayer,
-  onSelect,
+  onSelectionBoxUpdate,
   rowLengths = lumatoneRowLengths,
   rowStarts = lumatoneRowStarts,
 }: LumatoneBoardProps) {
@@ -61,7 +61,7 @@ export default function LumatoneBoard({
 
     if (!sb.isEnabled) return;
     const selected = _.filter(keyPositions.current, p => p.x > sb.x && p.x < sb.x + sb.w && p.y > sb.y && p.y < sb.y + sb.h);
-    onSelect(selected);
+    onSelectionBoxUpdate(selected);
   };
 
   const onLumatoneKeyRef = (gridPos: Coord) => (el: HTMLDivElement) => {
@@ -114,7 +114,7 @@ export default function LumatoneBoard({
                             isOdd={isOdd}
                             isSpacer
                             key={x}
-                            mapping={nullMapping}
+                            mapping={unmapped}
                             rotBoard={rotBoard}
                           />)),
 
@@ -127,7 +127,7 @@ export default function LumatoneBoard({
                           <LumatoneKey
                             isOdd={isOdd}
                             layer={layer}
-                            mapping={layer ? layer.mappingFn({x, y}) : nullMapping}
+                            mapping={layer ? layer.mappingFn({x, y}) : unmapped}
                             key={x}
                             onRef={onLumatoneKeyRef({x, y})}
                             rotBoard={rotBoard}

@@ -1,6 +1,5 @@
 import _ from 'lodash-es';
-import {LumatoneKeyPosition} from './lumatoneTypes.ts';
-import {Coord} from './LumatoneEditor.tsx';
+import {Coord, LumatoneKeyPosition} from './lumatoneTypes.ts';
 
 export const lumatoneRowLengths = [
   2,
