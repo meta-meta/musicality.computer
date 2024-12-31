@@ -1,7 +1,7 @@
 import {Button, Card, createListCollection, Flex, Grid, GridItem, Input, Text} from '@chakra-ui/react';
 import LumatoneBoard, {EditorKeyOffset} from './LumatoneBoard.tsx';
 import Color from 'colorjs.io';
-import {Okhsl} from 'colorjs.io/fn';
+import {Okhsl, Okhsv} from 'colorjs.io/fn';
 import {scale} from './util';
 import {useCallback, useState} from 'react';
 import _ from 'lodash-es';
@@ -22,23 +22,23 @@ const getNoteColorHsl = (n: number): Color => {
 
   const oct = ((n - 60) / 12);
 
-  // return new Color({
-  //   space: Okhsl,
-  //   coords: [
-  //     28 + 360 * (((n * 5) % 12) / 12),
-  //     0.95 - (oct > 0 ? oct * .2 : 0),
-  //     0.4 + oct * .1,
-  //   ],
-  // });
-
   return new Color({
     space: Okhsl,
     coords: [
       28 + 360 * (((n * 5) % 12) / 12),
-      scale(Math.max(0, oct), [0, 4], [1, 0]),
-      scale(oct, [-4, 4], [0, 0.9]),
+      0.95 - (oct > 0 ? oct * .2 : 0),
+      0.4 + oct * .1,
     ],
   });
+
+  // return new Color({
+  //   space: Okhsl,
+  //   coords: [
+  //     28 + 360 * (((n * 5) % 12) / 12),
+  //     scale(Math.max(0, oct), [0, 4], [1, 0]),
+  //     scale(oct, [-4, 4], [0, 0.9]),
+  //   ],
+  // });
 
   // return new Color({
   //   space: Okhsv,
