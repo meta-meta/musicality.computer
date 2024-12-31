@@ -36,3 +36,21 @@ export const toSymbol = (note, equalDivisions = 12) => ({
 export const ftomf = (frequency) => {
   return 69 + 12 * Math.log2(frequency / 440);
 }
+
+
+export const clamp01 = n => Math.max(0, Math.min(n, 1));
+
+export const scale = (inputY, yRange, xRange) => {
+  const [xMin, xMax] = xRange;
+  const [yMin, yMax] = yRange;
+
+  const percent = (inputY - yMin) / (yMax - yMin);
+  const outputX = percent * (xMax - xMin) + xMin;
+
+  return outputX;
+};
+
+export const scale01 = (n, min, max, clamp = true) => {
+  const res = scale(n, [min, max], [0, 1]);
+  return clamp ? clamp01(res) : res;
+}

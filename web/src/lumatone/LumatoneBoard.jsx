@@ -4,110 +4,88 @@ import Cell from './cell.jsx';
 import _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
 import Color from 'colorjs.io';
-import {Okhsl} from 'colorjs.io/fn';
+import {Okhsl, Okhsv} from 'colorjs.io/fn';
+import {scale} from './util.js';
+import {Fragment} from 'react';
+import LumatoneKey from './LumatoneKey';
 
-const clamp01 = n => Math.max(0, Math.min(n, 1));
-
-const getNoteColorHsl = (n) => {
-
-  const oct = ((n - 60) / 12);
-
-  return new Color({
-    space: Okhsl,
-    coords: [
-      30 + 360 * (((n * 5) % 12) / 12),
-      0.95 - (oct > 0 ? oct * .2 : 0),
-      0.4 + oct * .1,
-    ],
-  });
-};
-
-const rotBoard = 342.6;
+const rotBoard = 343.6;
 
 const spacerColor = new Color('white');
 
-export default function LumatoneBoard({layout, pcSet, pitchSet, rows = lumatoneRowLengths}) {
+export default function LumatoneBoard({
+  getMapping,
+  layout,
+  pcSet,
+  pitchSet,
+  rowLengths = lumatoneRowLengths,
+  rowStarts = lumatoneRowStarts,
+}) {
 
   return (
     <Flex
       bg="#333"
       borderRadius="2xl"
-      p="1em"
       justifyContent="center"
+      p="1em"
+      css={{
+        userSelect: 'none',
+      }}
     >
       <Box
         h="16.5em"
-        w="59.2em"
         overflow="hidden"
         position="relative"
+        w="59.2em"
       >
         <Box
-          w="65em"
-          position="absolute"
           left="-1em"
+          position="absolute"
           top="-9.5em"
           transform={`rotate(${rotBoard}deg) scale(0.85)`}
+          w="65em"
         >
-          {_.range(rows.length)
+          {_.range(rowLengths.length)
             .map(y => {
               const isOdd = y % 2 === 1;
-              const rowStartX = lumatoneRowStarts[y];
+              const rowStartX = rowStarts[y];
 
               return (
-                <>
+                <Fragment key={y}>
                   {[
-                    ..._.range(rowStartX).map(x => {
-                      return (
-                        <Cell
-                          colorHsl={spacerColor}
-                          key={x}
-                          isOdd={isOdd}
-                          isSpacer
-                        >
-                          &nbsp;
-                        </Cell>);
-                    }),
-                    ..._.range(rowStartX, rows[y] + rowStartX).map(x => {
-                      const n = layout(x, y);
-
-                      const isInPcSet = _.includes(pcSet, n % 12);
-                      const isInPitchSet = _.includes(pitchSet, n);
-                      const colorHsl = getNoteColorHsl(n, isInPitchSet, false/* !isInPcSet*/);
-
-                      return (
-                        <>
-                          <Pc
-                            key={x}
-                            colorHsl={colorHsl}
-                            n={n}
-                            rot={360 - rotBoard}
+                    // Spacers before row starts
+                    ..._.range(rowStartX)
+                      .map(x =>
+                        (
+                          <LumatoneKey
                             isOdd={isOdd}
-                            showOctave
-                            style={{
-                              // border: `solid ${1}px`,
-                              // border: `solid 2px`,
-                              // borderRadius: '50%',
-                              color: isInPcSet ? 'white' : 'black', //TODO: printer settings as well as mediaquery stylesheet
-                            }}
+                            isSpacer
+                            key={x}
+                            mapping={getMapping({x, y})}
+                            rotBoard={rotBoard}
+                          />)),
+
+                    // Lumatone Keys
+                    ..._.range(rowStartX, rowLengths[y] + rowStartX)
+                      .map(x => {
+
+
+                        // const isInPcSet = _.includes(pcSet, n % 12);
+                        // const isInPitchSet = _.includes(pitchSet, n);
+                        // const colorHsl = getNoteColorHsl(n, isInPitchSet, false/* !isInPcSet*/);
+
+                        return (
+                          <LumatoneKey
+                            isOdd={isOdd}
+                            mapping={getMapping({x, y})}
+                            key={x}
+                            rotBoard={rotBoard}
                           />
-                          {/*<LumatoneKeySync*/}
-                          {/*  color={{*/}
-                          {/*    ...color,*/}
-                          {/*    l: Math.log2(1 + color.l * 0.5),*/}
-                          {/*  }}*/}
-                          {/*  key={`keysync-${x}`}*/}
-                          {/*  lumaIn={lumaIn}*/}
-                          {/*  lumaOut={lumaOut}*/}
-                          {/*  n={n}*/}
-                          {/*  x={x}*/}
-                          {/*  y={y}*/}
-                          {/*/>*/}
-                        </>
-                      );
-                    }),
+                        );
+                      }),
                   ]}
                   <br/>
-                </>
+                </Fragment>
               );
             })}
         </Box>
