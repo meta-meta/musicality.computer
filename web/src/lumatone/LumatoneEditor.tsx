@@ -6,7 +6,7 @@ import {scale} from './util';
 import {useCallback, useState} from 'react';
 import _ from 'lodash-es';
 import {gridPosToKeyPosition} from './layoutData.ts';
-import {Coord, KeyType, LumatoneLayer, LumatoneMapping, MidiChannel} from './lumatoneTypes.ts';
+import {Coord, KeyType, LumatoneLayer, LumatoneMapping, Midi7Bit, MidiChannel} from './lumatoneTypes.ts';
 import {Field} from '../components/ui/field.tsx';
 import {
   SelectContent,
@@ -17,6 +17,9 @@ import {
   SelectTrigger,
   SelectValueText,
 } from '../components/ui/select.tsx';
+import MidiDeviceSelect, {SelectionType} from '../MidiDeviceSelect.tsx';
+import {lumatoneInSet, lumatoneOutSet} from '../redux/midiReducer.ts';
+import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';
 
 const getNoteColorHsl = (n: number): Color => {
 
@@ -53,7 +56,7 @@ const getNoteColorHsl = (n: number): Color => {
 export const unmapped: LumatoneMapping = {
   channel: 1,
   keyColor: new Color('black'),
-  keyType: KeyType.Disabled,
+  keyType: KeyType.DisabledDefault,
   noteNum: 0,
 };
 
@@ -81,7 +84,7 @@ const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
       channel,
       keyColor: getNoteColorHsl(noteNum),
       keyType: KeyType.NoteOnOff,
-      noteNum,
+      noteNum: Math.max(Math.min(noteNum, 127), 0) as Midi7Bit,
     });
   };
 
@@ -116,6 +119,7 @@ type LayerAssignment = {
 }
 
 function LumatoneEditor() {
+  const dispatch = useAppDispatch();
 
   const [layers, setLayers] = useState<LayerAssignment[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<LumatoneLayer>(blankLayer);
@@ -157,7 +161,26 @@ function LumatoneEditor() {
 
   return (
     <Card.Root>
-      <Card.Header>Lumatone</Card.Header>
+      <Card.Header>
+        <Flex gap={4}>
+          <Text>Lumatone</Text>
+
+          <MidiDeviceSelect
+            label="Lumatone In"
+            selectionType={SelectionType.Input}
+            onSelect={val => dispatch(lumatoneInSet(val))}
+            value={useAppSelector(s => s.midiReducer.lumatoneIn)}
+          />
+
+          <MidiDeviceSelect
+            label="Lumatone Out"
+            selectionType={SelectionType.Output}
+            onSelect={val => dispatch(lumatoneOutSet(val))}
+            value={useAppSelector(s => s.midiReducer.lumatoneOut)}
+          />
+        </Flex>
+
+      </Card.Header>
       <Card.Body gap={2}>
 
         <LumatoneBoard

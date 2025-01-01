@@ -1,6 +1,7 @@
 import {Card, Center, Heading, Link, Stack, Text} from '@chakra-ui/react';
 import {NotePicker} from './NotePicker.tsx';
 import LumatoneEditor from './lumatone/LumatoneEditor.tsx';
+import MidiConfig from './MidiConfig.tsx';
 
 
 export function Home() {
@@ -25,6 +26,7 @@ export function Home() {
         </Card.Body>
       </Card.Root>
 
+      <MidiConfig />
 
       <LumatoneEditor/>
 

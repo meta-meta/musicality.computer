@@ -2,6 +2,7 @@ import Color from 'colorjs.io';
 import {AbsoluteCenter, Box, Flex} from '@chakra-ui/react';
 import {toSymbol} from './util';
 import {LumatoneKeyPosition, LumatoneLayer, LumatoneMapping} from './lumatoneTypes.ts';
+import LumatoneKeySync from './LumatoneKeySync.tsx';
 
 export interface LumatoneKeyProps {
   isOdd: boolean,
@@ -97,18 +98,13 @@ function LumatoneKey({
         {isSpacer && (<>&nbsp;</>)}
       </Flex>
 
-      {/*<LumatoneKeySync*/}
-      {/*  color={{*/}
-      {/*    ...color,*/}
-      {/*    l: Math.log2(1 + color.l * 0.5),*/}
-      {/*  }}*/}
-      {/*  key={`keysync-${x}`}*/}
-      {/*  lumaIn={lumaIn}*/}
-      {/*  lumaOut={lumaOut}*/}
-      {/*  n={n}*/}
-      {/*  x={x}*/}
-      {/*  y={y}*/}
-      {/*/>*/}
+      {keyPosition && (
+        <LumatoneKeySync
+          keyPosition={keyPosition}
+          mapping={mapping}
+        />
+      )}
+
     </>
   );
 }
