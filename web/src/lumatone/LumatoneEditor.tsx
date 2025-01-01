@@ -169,14 +169,14 @@ function LumatoneEditor() {
             label="Lumatone In"
             selectionType={SelectionType.Input}
             onSelect={val => dispatch(lumatoneInSet(val))}
-            value={useAppSelector(s => s.midiReducer.lumatoneIn)}
+            value={useAppSelector(s => s.midi.lumatoneIn)}
           />
 
           <MidiDeviceSelect
             label="Lumatone Out"
             selectionType={SelectionType.Output}
             onSelect={val => dispatch(lumatoneOutSet(val))}
-            value={useAppSelector(s => s.midiReducer.lumatoneOut)}
+            value={useAppSelector(s => s.midi.lumatoneOut)}
           />
         </Flex>
 

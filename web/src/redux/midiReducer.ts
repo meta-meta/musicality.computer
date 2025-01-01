@@ -1,7 +1,13 @@
-import {createSlice} from '@reduxjs/toolkit';
 import type {PayloadAction} from '@reduxjs/toolkit';
-import {Input, Output} from 'webmidi';
+import {createSlice} from '@reduxjs/toolkit';
 import {createListCollection, ListCollection} from '@chakra-ui/react';
+
+export enum MidiStatus {
+  Idle,
+  Connecting,
+  Connected,
+  Unauthorized,
+}
 
 // Define a type for the slice state
 interface MidiState {
@@ -9,6 +15,7 @@ interface MidiState {
   inputs: ListCollection<{ label: string, value: string, group: string }>;
   lumatoneIn: string | null;
   lumatoneOut: string | null;
+  midiStatus: MidiStatus;
   outputs: ListCollection<{ label: string, value: string, group: string }>;
 }
 
@@ -20,6 +27,7 @@ const initialState: MidiState = {
   }),
   lumatoneIn: null,
   lumatoneOut: null,
+  midiStatus: MidiStatus.Idle,
   outputs: createListCollection({
     items: [],
   }),
@@ -45,6 +53,9 @@ export const midiSlice = createSlice({
     lumatoneOutSet: (state, action: PayloadAction<string>) => {
       state.lumatoneOut = action.payload;
     },
+    midiStatusSet: (state, action: PayloadAction<MidiStatus>) => {
+      state.midiStatus = action.payload;
+    },
   },
 });
 
@@ -53,6 +64,7 @@ export const {
   inputsSet,
   lumatoneInSet,
   lumatoneOutSet,
+  midiStatusSet,
   outputsSet,
 } = midiSlice.actions;
 

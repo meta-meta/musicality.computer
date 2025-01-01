@@ -59,8 +59,8 @@ function LumatoneKeySync({
   keyPosition,
   mapping,
 }: LumatoneKeySyncProps) {
-  const lumatoneIn = useAppSelector(s => s.midiReducer.lumatoneIn);
-  const lumatoneOut = useAppSelector(s => s.midiReducer.lumatoneOut);
+  const lumatoneIn = useAppSelector(s => s.midi.lumatoneIn);
+  const lumatoneOut = useAppSelector(s => s.midi.lumatoneOut);
 
 
   useEffect(() => {

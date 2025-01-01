@@ -29,7 +29,7 @@ function MidiDeviceSelect({
 }: MidiDeviceSelectionProps) {
 
   const deviceState = selectionType === SelectionType.Input ? 'inputs' : 'outputs';
-  const deviceOptions = useAppSelector(s => s.midiReducer[deviceState]);
+  const deviceOptions = useAppSelector(s => s.midi[deviceState]);
 
   const deviceGroups = deviceOptions.items.reduce(
     (acc, item) => {
