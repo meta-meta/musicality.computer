@@ -144,6 +144,7 @@ export default function LumatoneBoard({
           <Box
             position="absolute"
             left={0}
+            touchAction="none"
             top={0}
             w="full"
             h="full"
