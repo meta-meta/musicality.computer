@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValueText,
 } from './components/ui/select.tsx';
+import {createListCollection} from '@chakra-ui/react';
 
 export enum SelectionType {
   Input,
@@ -29,7 +30,9 @@ function MidiDeviceSelect({
 }: MidiDeviceSelectionProps) {
 
   const deviceState = selectionType === SelectionType.Input ? 'inputs' : 'outputs';
-  const deviceOptions = useAppSelector(s => s.midi[deviceState]);
+  const deviceOptions = createListCollection({
+    items: useAppSelector(s => s.midi[deviceState]),
+  });
 
   const deviceGroups = deviceOptions.items.reduce(
     (acc, item) => {

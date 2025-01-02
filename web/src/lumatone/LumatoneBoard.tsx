@@ -1,10 +1,13 @@
 import {gridPosToKeyPosition, lumatoneRowLengths, lumatoneRowStarts} from './layoutData.ts';
 import _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
-import {Fragment, MutableRefObject, useRef} from 'react';
+import {Fragment, MutableRefObject, useCallback, useRef} from 'react';
 import LumatoneKey from './LumatoneKey';
-import {unmapped} from './LumatoneEditor';
 import {Coord, LumatoneLayer} from './lumatoneTypes.ts';
+import {useAppSelector} from '../redux/hooks.ts';
+import SelectionBox from './SelectionBox.tsx';
+import Color from 'colorjs.io';
+import {mappingFns, disabledMapping} from './mappingFunctions.ts';
 
 const rotBoard = 343.6;
 
@@ -15,55 +18,17 @@ export type EditorKeyOffset = {
   y: number,
 }
 
-type SelectionBox = {
-  el: HTMLDivElement | null,
-  isEnabled: boolean,
-  x: number,
-  y: number,
-  h: number,
-  w: number,
-}
-
 interface LumatoneBoardProps {
-  getLayer: (c: Coord) => LumatoneLayer | undefined,
-  onSelectionBoxUpdate: (selection: EditorKeyOffset[]) => void,
   rowLengths?: number[],
   rowStarts?: number[],
 }
 
 export default function LumatoneBoard({
-  getLayer,
-  onSelectionBoxUpdate,
   rowLengths = lumatoneRowLengths,
   rowStarts = lumatoneRowStarts,
 }: LumatoneBoardProps) {
 
-  const selectionBox: MutableRefObject<SelectionBox> = useRef({
-    el: null,
-    isEnabled: false,
-    x: 0,
-    y: 0,
-    h: 0,
-    w: 0,
-  });
-
   const keyPositions: MutableRefObject<{ [index: string]: EditorKeyOffset }> = useRef({});
-
-  const updateSelectionBox = () => {
-    const sb = selectionBox.current;
-    if (!sb.el) return;
-    const {style} = sb.el;
-    style.top = `${sb.y}px`;
-    style.left = `${sb.x}px`;
-    style.height = `${sb.h}px`;
-    style.width = `${sb.w}px`;
-    style.visibility = sb.isEnabled ? 'visible' : 'hidden';
-
-    if (!sb.isEnabled) return;
-    const selected = _.filter(keyPositions.current, p => p.x > sb.x && p.x < sb.x + sb.w && p.y > sb.y && p.y < sb.y + sb.h);
-    onSelectionBoxUpdate(selected);
-  };
-
   const onLumatoneKeyRef = (gridPos: Coord) => (el: HTMLDivElement) => {
     const {id} = gridPosToKeyPosition(gridPos);
 
@@ -74,6 +39,23 @@ export default function LumatoneBoard({
       y: el.offsetTop + el.offsetHeight / 2,
     });
   };
+
+  const layerAssignments = useAppSelector(s => s.lumatoneEditor.layers);
+
+  const getLayer = useCallback((gridPos: Coord): LumatoneLayer | undefined => {
+    const layers: { [index: string]: LumatoneLayer } =
+      _.mapValues(layerAssignments, (layerAssignment) => ({
+        layerColor: new Color(layerAssignment.layerColor),
+        mappingFn: mappingFns[layerAssignment.mappingFnName](layerAssignment.layerChannel, {
+          x: layerAssignment.mappingFnColOffset,
+          y: layerAssignment.mappingFnRowOffset,
+        }),
+      }));
+
+    const {id} = gridPosToKeyPosition(gridPos);
+    const layerAssignment = _.findLast(_.orderBy(layerAssignments, 'order'), l => !!l.keys[id]);
+    return layerAssignment && layers[layerAssignment.id];
+  }, [layerAssignments]);
 
   return (
     <Flex
@@ -114,7 +96,7 @@ export default function LumatoneBoard({
                             isOdd={isOdd}
                             isSpacer
                             key={x}
-                            mapping={unmapped}
+                            mapping={disabledMapping}
                             rotBoard={rotBoard}
                           />)),
 
@@ -127,7 +109,7 @@ export default function LumatoneBoard({
                           <LumatoneKey
                             isOdd={isOdd}
                             layer={layer}
-                            mapping={layer ? layer.mappingFn({x, y}) : unmapped}
+                            mapping={layer ? layer.mappingFn({x, y}) : disabledMapping}
                             key={x}
                             onRef={onLumatoneKeyRef({x, y})}
                             rotBoard={rotBoard}
@@ -141,52 +123,7 @@ export default function LumatoneBoard({
               );
             })}
 
-          <Box
-            position="absolute"
-            left={0}
-            touchAction="none"
-            top={0}
-            w="full"
-            h="full"
-
-            onPointerDown={(e) => {
-              const {offsetX, offsetY} = e.nativeEvent;
-              selectionBox.current.isEnabled = true;
-              selectionBox.current.x = offsetX;
-              selectionBox.current.y = offsetY;
-              updateSelectionBox();
-            }}
-
-            onPointerMove={(e) => {
-              const sb = selectionBox.current;
-              if (!sb.isEnabled) return;
-              const {offsetX, offsetY} = e.nativeEvent;
-              sb.h = offsetY - sb.y;
-              sb.w = offsetX - sb.x;
-              updateSelectionBox();
-            }}
-
-            onPointerUp={() => {
-              const sb = selectionBox.current;
-              sb.isEnabled = false;
-              sb.h = 0;
-              sb.w = 0;
-              updateSelectionBox();
-            }}
-          >
-
-            <Box
-              ref={(el: HTMLDivElement | null) => {
-                selectionBox.current.el = el;
-              }}
-              bg="whiteAlpha.400"
-              border="2px dashed white"
-              pointerEvents="none"
-              position="absolute"
-              visibility="hidden"
-            />
-          </Box>
-
+          <SelectionBox keyPositions={keyPositions}/>
         </Box>
       </Box>
     </Flex>

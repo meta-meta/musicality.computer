@@ -1,7 +1,7 @@
-import {Badge, Card, createListCollection, Flex} from '@chakra-ui/react';
+import {Badge, Card, Flex} from '@chakra-ui/react';
 import {SiMidi} from 'react-icons/si';
 import {useEffect} from 'react';
-import {WebMidi} from 'webmidi';
+import {Input, Output, WebMidi} from 'webmidi';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {
   beatClockInSet,
@@ -22,7 +22,7 @@ function MidiConfig() {
 
   useEffect(() => {
     const initMidi = async () => {
-      dispatch(midiStatusSet(MidiStatus.Connecting));
+      dispatch(midiStatusSet(MidiStatus.Initializing));
 
       try {
         await WebMidi.enable({sysex: true});
@@ -34,39 +34,33 @@ function MidiConfig() {
 
       const {inputs, outputs} = WebMidi;
 
-      const inputOptions = createListCollection({
-        items: inputs.map(i => ({
-          label: i.name,
-          value: i.id,
-          group: (i.name.startsWith('LM-') || i.name === 'BeatClock') ? 'LoopMIDI' : 'PhysicalDevices',
-        })),
-      });
+      const options = (devices: Input[] | Output[]) => devices.map(i => ({
+        label: i.name,
+        value: i.id,
+        group: (i.name.startsWith('LM-') || i.name === 'BeatClock') ? 'LoopMIDI' : 'PhysicalDevices',
+      }));
 
-      const outputOptions = createListCollection({
-        items: outputs.map(i => ({
-          label: i.name,
-          value: i.id,
-          group: (i.name.startsWith('LM-') || i.name === 'BeatClock') ? 'LoopMIDI' : 'PhysicalDevices',
-        })),
-      });
-
-      dispatch(inputsSet(inputOptions));
-      dispatch(outputsSet(outputOptions));
-      dispatch(midiStatusSet(MidiStatus.Connected));
+      dispatch(inputsSet(options(inputs)));
+      dispatch(outputsSet(options(outputs)));
+      dispatch(midiStatusSet(inputs.length + outputs.length > 0
+        ? MidiStatus.Enabled
+        : MidiStatus.NoDevicesFound));
 
     };
     initMidi();
   }, [dispatch]);
 
   const status = useAppSelector(s => s.midi.midiStatus);
-  const statusColor = status == MidiStatus.Connected
+  const statusColor = status == MidiStatus.Enabled
     ? 'green'
     : status == MidiStatus.Unauthorized
       ? 'red'
-      : undefined;
+      : status == MidiStatus.NoDevicesFound
+        ? 'yellow'
+        : undefined;
 
   return (
-    <Card.Root>
+    <Card.Root maxWidth="sm">
       <Card.Header>
         <Flex gap={2}>
           <ReactIcon

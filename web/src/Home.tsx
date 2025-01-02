@@ -30,7 +30,7 @@ export function Home() {
 
       <LumatoneEditor/>
 
-      <Card.Root>
+      <Card.Root maxW="sm">
         <Card.Header>Circle Control</Card.Header>
         <Card.Body>
           <Text>Embrace the octave with a log2 circular frequency picker.</Text>

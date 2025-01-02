@@ -1,36 +1,32 @@
 import type {PayloadAction} from '@reduxjs/toolkit';
 import {createSlice} from '@reduxjs/toolkit';
-import {createListCollection, ListCollection} from '@chakra-ui/react';
 
 export enum MidiStatus {
   Idle,
-  Connecting,
-  Connected,
+  Initializing,
+  Enabled,
   Unauthorized,
+  NoDevicesFound,
 }
 
 // Define a type for the slice state
-interface MidiState {
+interface State {
   beatClockIn: string | null;
-  inputs: ListCollection<{ label: string, value: string, group: string }>;
+  inputs: { label: string, value: string, group: string }[];
   lumatoneIn: string | null;
   lumatoneOut: string | null;
   midiStatus: MidiStatus;
-  outputs: ListCollection<{ label: string, value: string, group: string }>;
+  outputs: { label: string, value: string, group: string }[];
 }
 
 // Define the initial state using that type
-const initialState: MidiState = {
+const initialState: State = {
   beatClockIn: null,
-  inputs: createListCollection({
-    items: [],
-  }),
+  inputs: [],
   lumatoneIn: null,
   lumatoneOut: null,
   midiStatus: MidiStatus.Idle,
-  outputs: createListCollection({
-    items: [],
-  }),
+  outputs: [],
 };
 
 export const midiSlice = createSlice({
@@ -38,10 +34,10 @@ export const midiSlice = createSlice({
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    inputsSet: (state, action: PayloadAction<ListCollection>) => {
+    inputsSet: (state, action: PayloadAction<{ label: string, value: string, group: string }[]>) => {
       state.inputs = action.payload;
     },
-    outputsSet: (state, action: PayloadAction<ListCollection>) => {
+    outputsSet: (state, action: PayloadAction<{ label: string, value: string, group: string }[]>) => {
       state.outputs = action.payload;
     },
     beatClockInSet: (state, action: PayloadAction<string>) => {
