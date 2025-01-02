@@ -30,12 +30,14 @@ interface SelectionTool {
 
 // Define a type for the slice state
 interface State {
+  forceUpdate: boolean;
   layers: { [index: string]: LayerAssignment };
   selectionTool: SelectionTool;
 }
 
 // Define the initial state using that type
 const initialState: State = {
+  forceUpdate: false,
   layers: {},
   selectionTool: {
     layerAssignmentId: '',
@@ -48,6 +50,9 @@ export const lumatoneEditorSlice = createSlice({
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
+    forceUpdate: (state) => {
+      state.forceUpdate = !state.forceUpdate;
+    },
     layerAddOrUpdate: (state, action: PayloadAction<LayerAssignment>) => {
       state.layers[action.payload.id] = action.payload;
     },
@@ -61,6 +66,7 @@ export const lumatoneEditorSlice = createSlice({
 });
 
 export const {
+  forceUpdate,
   layerAddOrUpdate,
   layerRemove,
   selectionToolSetLayerId,
