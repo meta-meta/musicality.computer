@@ -28,7 +28,7 @@ function LumatoneLayerView({layerAssignment}: LumatoneLayerViewProps) {
     >
       <Card.Header>{layerName}</Card.Header>
       <Card.Body gap={2}>
-        <Text>{mappingFnOptions.items.find(({value}) => value === mappingFnName)?.label ?? 'No Mapping Function'}</Text>
+        <Text>{mappingFnOptions.items.find(({value}) => value === mappingFnName)?.label ?? '<Not Mapped>'}</Text>
         <Text>Channel {layerChannel}</Text>
         <Button
           onClick={() => {
