@@ -2,7 +2,7 @@ import type {PayloadAction} from '@reduxjs/toolkit';
 import {createSlice} from '@reduxjs/toolkit';
 import {EditorKeyOffset} from '../lumatone/LumatoneBoard.tsx';
 import {MidiChannel} from '../lumatone/lumatoneTypes.ts';
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import {ColorConstructor} from 'colorjs.io';
 
 

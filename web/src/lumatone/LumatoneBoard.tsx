@@ -1,5 +1,5 @@
 import {gridPosToKeyPosition} from './layoutData.ts';
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
 import {MutableRefObject, useCallback, useEffect, useRef} from 'react';
 import {Coord, LumatoneLayer} from './lumatoneTypes.ts';

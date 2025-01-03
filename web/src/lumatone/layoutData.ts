@@ -1,4 +1,4 @@
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import {Coord, LumatoneBoardNum, LumatoneKeyNum, LumatoneKeyPosition} from './lumatoneTypes.ts';
 
 export const lumatoneRowLengths = [

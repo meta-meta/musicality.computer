@@ -1,4 +1,4 @@
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import {Fragment, memo, MutableRefObject} from 'react';
 import {lumatoneRowLengths, lumatoneRowStarts} from './layoutData.ts';
 import {Coord, LumatoneLayer} from './lumatoneTypes.ts';

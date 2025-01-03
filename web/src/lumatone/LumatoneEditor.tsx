@@ -1,6 +1,6 @@
 import {Button, Card, Flex, Grid, GridItem, Text} from '@chakra-ui/react';
 import LumatoneBoard from './LumatoneBoard.tsx';
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import MidiDeviceSelect, {SelectionType} from '../MidiDeviceSelect.tsx';
 import {lumatoneInSet, lumatoneOutSet} from '../redux/midiReducer.ts';
 import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';

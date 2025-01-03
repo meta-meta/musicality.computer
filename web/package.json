@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build-basic": "vite build",
     "build": "tsc && vite build && sudo rm -rf /usr/share/nginx/html/ && sudo cp -a dist/. /usr/share/nginx/html",
     "build-ignoring-ts-error": "NODE_OPTIONS=--max-old-space-size=8192 vite build && sudo rm -rf /usr/share/nginx/html/ && sudo cp -a dist/. /usr/share/nginx/html",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -38,6 +39,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "rollup-plugin-visualizer": "^5.13.1",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   }

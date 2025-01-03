@@ -1,7 +1,7 @@
 import {MutableRefObject, useCallback, useRef} from 'react';
 import {EditorKeyOffset} from './LumatoneBoard.tsx';
 import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import {layerAddOrUpdate, SelectionToolType} from '../redux/lumatoneEditorReducer.ts';
 import {Box} from '@chakra-ui/react';
 

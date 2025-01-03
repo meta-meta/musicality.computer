@@ -1,6 +1,6 @@
 import {layerAddOrUpdate, LayerAssignment, layerRemove} from '../redux/lumatoneEditorReducer.ts';
 import {Button, Card, Text} from '@chakra-ui/react';
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import Color from 'colorjs.io';
 import {mappingFnOptions} from './mappingFunctions.ts';
 import {useAppDispatch} from '../redux/hooks.ts';
