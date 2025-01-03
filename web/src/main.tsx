@@ -6,7 +6,7 @@ import {system} from './theme.ts';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource/jetbrains-mono/700.css';
-import {ColorModeProvider} from './components/ui/color-mode';
+import {ColorModeProvider} from './components/chakra-ui/color-mode';
 import App from './App.tsx';
 import {Provider} from 'react-redux';
 import {store} from './redux/store.ts';

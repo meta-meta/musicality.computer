@@ -35,6 +35,11 @@ export const setNote = (deviceIn: Input, deviceOut: Output, keyPosition: Lumaton
 const changeBuffer: (() => Promise<void>)[] = [];
 let isPopping = false;
 
+// TODO: https://github.com/kbrandwijk/lumachromatic/tree/%40kbrandwijk/driver-per-board
+// it should be possible to speed this up by pushing to each board in parallel but
+// my attempt in branch lumatone-comm-per-board drops messages.
+// might want to eventually switch to lumachromatic's driver since it is a more complete port of OG editor
+
 export const changePush = async (ch: () => Promise<void>) => {
   changeBuffer.push(ch);
 

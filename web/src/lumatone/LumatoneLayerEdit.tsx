@@ -5,7 +5,7 @@ import {
   SelectionToolType,
 } from '../redux/lumatoneEditorReducer.ts';
 import {Button, Card, Flex, GridItem, IconButton, Input} from '@chakra-ui/react';
-import {Field} from '../components/ui/field.tsx';
+import {Field} from '../components/chakra-ui/field.tsx';
 import {
   SelectContent,
   SelectItem,
@@ -14,7 +14,7 @@ import {
   SelectRoot,
   SelectTrigger,
   SelectValueText,
-} from '../components/ui/select.tsx';
+} from '../components/chakra-ui/select.tsx';
 import {MidiChannel} from './lumatoneTypes.ts';
 import {PiSelection} from 'react-icons/pi';
 import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';

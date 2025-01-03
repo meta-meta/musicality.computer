@@ -1,4 +1,4 @@
-import {Badge, Card, Flex} from '@chakra-ui/react';
+import {Badge, Card, Flex, Text} from '@chakra-ui/react';
 import {SiMidi} from 'react-icons/si';
 import {useEffect} from 'react';
 import {Input, Output, WebMidi} from 'webmidi';
@@ -12,8 +12,11 @@ import {
   midiStatusSet,
   outputsSet,
 } from './redux/midiReducer.ts';
-import {ReactIcon} from './components/ui/reactIcon.tsx';
+import {ReactIcon} from './components/chakra-ui/reactIcon.tsx';
 import MidiDeviceSelect, {SelectionType} from './MidiDeviceSelect.tsx';
+import {Field} from './components/chakra-ui/field.tsx';
+import ExternalLink from './components/ExternalLink.tsx';
+import {FaYoutube} from 'react-icons/fa6';
 
 
 function MidiConfig() {
@@ -37,7 +40,7 @@ function MidiConfig() {
       const options = (devices: Input[] | Output[]) => devices.map(i => ({
         label: i.name,
         value: i.id,
-        group: (i.name.startsWith('LM-') || i.name === 'BeatClock') ? 'LoopMIDI' : 'PhysicalDevices',
+        group: (i.name.startsWith('LM-') || i.name === 'BeatClock') ? '» LoopMIDI' : '» PhysicalDevices',
       }));
 
       dispatch(inputsSet(options(inputs)));
@@ -60,7 +63,7 @@ function MidiConfig() {
         : undefined;
 
   return (
-    <Card.Root maxWidth="sm">
+    <Card.Root>
       <Card.Header>
         <Flex gap={2}>
           <ReactIcon
@@ -74,27 +77,49 @@ function MidiConfig() {
 
       </Card.Header>
 
-      <Card.Body>
-        <MidiDeviceSelect
+      <Card.Body gap={2}>
+        <Field
           label="Beat Clock"
-          selectionType={SelectionType.Input}
-          onSelect={val => dispatch(beatClockInSet(val))}
-          value={useAppSelector(s => s.midi.beatClockIn)}
-        />
+          helperText={
+          <Text>
+            Some components can sync with MIDI Beat Clock&nbsp;
+            <ExternalLink
+              href="https://www.youtube.com/watch?v=3y_QszRkC94"
+              icon={<FaYoutube/>}
+              label="MIDI clock in REAPER"
+            />
+          </Text>
+          }
+        >
+          <MidiDeviceSelect
+            selectionType={SelectionType.Input}
+            onSelect={val => dispatch(beatClockInSet(val))}
+            value={useAppSelector(s => s.midi.beatClockIn)}
+          />
+        </Field>
 
-        <MidiDeviceSelect
+        <Field
           label="Lumatone In"
-          selectionType={SelectionType.Input}
-          onSelect={val => dispatch(lumatoneInSet(val))}
-          value={useAppSelector(s => s.midi.lumatoneIn)}
-        />
+        >
+          <MidiDeviceSelect
+            selectionType={SelectionType.Input}
+            onSelect={val => dispatch(lumatoneInSet(val))}
+            value={useAppSelector(s => s.midi.lumatoneIn)}
+          />
+        </Field>
 
-        <MidiDeviceSelect
+
+        <Field
           label="Lumatone Out"
-          selectionType={SelectionType.Output}
-          onSelect={val => dispatch(lumatoneOutSet(val))}
-          value={useAppSelector(s => s.midi.lumatoneOut)}
-        />
+        >
+          <MidiDeviceSelect
+
+            selectionType={SelectionType.Output}
+            onSelect={val => dispatch(lumatoneOutSet(val))}
+            value={useAppSelector(s => s.midi.lumatoneOut)}
+          />
+        </Field>
+
 
       </Card.Body>
 

@@ -3,11 +3,10 @@ import {
   SelectContent,
   SelectItem,
   SelectItemGroup,
-  SelectLabel,
   SelectRoot,
   SelectTrigger,
   SelectValueText,
-} from './components/ui/select.tsx';
+} from './components/chakra-ui/select.tsx';
 import {createListCollection} from '@chakra-ui/react';
 
 export enum SelectionType {
@@ -16,14 +15,12 @@ export enum SelectionType {
 }
 
 interface MidiDeviceSelectionProps {
-  label: string;
   onSelect: (value: string) => void;
   selectionType: SelectionType;
   value: string | null;
 }
 
 function MidiDeviceSelect({
-  label,
   onSelect,
   selectionType,
   value,
@@ -55,7 +52,6 @@ function MidiDeviceSelect({
         onSelect(e.value[0]);
       }}
     >
-      <SelectLabel>{label}</SelectLabel>
       <SelectTrigger>
         <SelectValueText placeholder="Select device"/>
       </SelectTrigger>

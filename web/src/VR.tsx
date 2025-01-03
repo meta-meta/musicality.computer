@@ -1,21 +1,14 @@
-import {Box, Card, Flex, Heading, Link, SimpleGrid, Text} from '@chakra-ui/react';
+import {Box, Card, Flex, Heading, SimpleGrid, Text} from '@chakra-ui/react';
 import {useTitle} from './useTitle.tsx';
-import {TbExternalLink} from 'react-icons/tb';
 import {FaWikipediaW} from 'react-icons/fa6';
-import {Tag} from './components/ui/tag.tsx';
-import {ReactNode} from 'react';
+import ExternalLink, {ExternalLinkProps} from './components/ExternalLink.tsx';
 
-type LinkProps = {
-  label: string;
-  href: string;
-  icon?: ReactNode;
-}
 
 type YouTubeClipProps = {
   title: string;
   description: string;
   src: string;
-  links?: LinkProps[];
+  links?: ExternalLinkProps[];
   iframeProps?: object;
 }
 
@@ -49,10 +42,14 @@ function CardPost({
         <Text textAlign="left">{description}</Text>
 
         <Flex gap={2} p={2} flexWrap="wrap">
-          {links.map(({label, href, icon = <TbExternalLink/>}, k) => (
-            <Tag key={k} gap={1} endElement={icon}>
-              <Link href={href} target="_blank">{label}</Link>
-            </Tag>))}
+          {links.map(({label, href, icon}, k) => (
+            <ExternalLink
+              key={k}
+              label={label}
+              href={href}
+              icon={icon}
+            />
+          ))}
         </Flex>
 
 
@@ -114,17 +111,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Poi (performance art)',
               href: 'https://en.wikipedia.org/wiki/Poi_(performance_art)',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Ambisonics',
               href: 'https://en.wikipedia.org/wiki/Ambisonics',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Leslie Speaker',
               href: 'https://en.wikipedia.org/wiki/Leslie_speaker',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'IEM DirectivityShaper Guide',
@@ -133,7 +130,7 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Drone music',
               href: 'https://en.wikipedia.org/wiki/Drone_music',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -146,17 +143,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Bell pattern',
               href: 'https://en.wikipedia.org/wiki/Bell_pattern',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'ii-V-I progression',
               href: 'https://en.wikipedia.org/wiki/Ii%E2%80%93V%E2%80%93I_progression',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: '5-limit JI Diatonic scale',
               href: 'https://en.wikipedia.org/wiki/Just_intonation#Diatonic_scale',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'xenpaper: ii-V-I',
@@ -173,12 +170,12 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Poi (performance art)',
               href: 'https://en.wikipedia.org/wiki/Poi_(performance_art)',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Ambisonics',
               href: 'https://en.wikipedia.org/wiki/Ambisonics',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Hennepin West Mesonet Siren Policy Page',
@@ -187,7 +184,7 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Drone music',
               href: 'https://en.wikipedia.org/wiki/Drone_music',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -205,7 +202,7 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Band-pass filter',
               href: 'https://en.wikipedia.org/wiki/Band-pass_filter',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -218,17 +215,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Poi (performance art)',
               href: 'https://en.wikipedia.org/wiki/Poi_(performance_art)',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Ambisonics',
               href: 'https://en.wikipedia.org/wiki/Ambisonics',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Leslie Speaker',
               href: 'https://en.wikipedia.org/wiki/Leslie_speaker',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'IEM DirectivityShaper Guide',
@@ -237,7 +234,7 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Drone music',
               href: 'https://en.wikipedia.org/wiki/Drone_music',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -275,17 +272,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Rhythm in Sub-Saharan Africa',
               href: 'https://en.wikipedia.org/wiki/Rhythm_in_Sub-Saharan_Africa',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Euclidean rhythm',
               href: 'https://en.wikipedia.org/wiki/Euclidean_rhythm',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'MIDI beat clock',
               href: 'https://en.wikipedia.org/wiki/MIDI_beat_clock',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -298,17 +295,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Additive synthesis',
               href: 'https://en.wikipedia.org/wiki/Additive_synthesis',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Partials',
               href: 'https://en.wikipedia.org/wiki/Harmonic_series_(music)#Partial.2C_harmonic.2C_fundamental.2C_inharmonicity.2C_and_overtone',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Drawbars',
               href: 'https://en.wikipedia.org/wiki/Hammond_organ#Drawbars',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'On Tuning Theory and False Reification by David B. Doty',
@@ -345,12 +342,12 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Additive synthesis',
               href: 'https://en.wikipedia.org/wiki/Additive_synthesis',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Drawbars',
               href: 'https://en.wikipedia.org/wiki/Hammond_organ#Drawbars',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -367,17 +364,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Additive synthesis',
               href: 'https://en.wikipedia.org/wiki/Additive_synthesis',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Inharmonicity',
               href: 'https://en.wikipedia.org/wiki/Inharmonicity',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Envelopes',
               href: 'https://en.wikipedia.org/wiki/Synthesizer#ADSR_envelope',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -406,12 +403,12 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Theremin',
               href: 'https://en.wikipedia.org/wiki/Theremin',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Formant synthesis',
               href: 'https://en.wikipedia.org/wiki/Speech_synthesis#Formant_synthesis',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -424,12 +421,12 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Theremin',
               href: 'https://en.wikipedia.org/wiki/Theremin',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Formant synthesis',
               href: 'https://en.wikipedia.org/wiki/Speech_synthesis#Formant_synthesis',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />
@@ -441,17 +438,17 @@ export function VR({pageTitle = 'Musicality VR'}) {
             {
               label: 'Overtone singing',
               href: 'https://en.wikipedia.org/wiki/Overtone_singing',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Theremin',
               href: 'https://en.wikipedia.org/wiki/Theremin',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
             {
               label: 'Formant synthesis',
               href: 'https://en.wikipedia.org/wiki/Speech_synthesis#Formant_synthesis',
-              icon: <FaWikipediaW />,
+              icon: <FaWikipediaW/>,
             },
           ]}
         />

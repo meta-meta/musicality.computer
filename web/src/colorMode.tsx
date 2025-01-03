@@ -1,6 +1,6 @@
 import {Button, Flex} from '@chakra-ui/react';
 import {IoMoon, IoSunny} from 'react-icons/io5';
-import {useColorMode} from './components/ui/color-mode.tsx';
+import {useColorMode} from './components/chakra-ui/color-mode.tsx';
 
 
 /**
@@ -17,7 +17,10 @@ const ColorMode = (): JSX.Element => {
       justifyContent="flex-end"
       marginBottom={-10}
     >
-      <Button onClick={toggleColorMode}>
+      <Button
+        onClick={toggleColorMode}
+        variant="subtle"
+      >
         {colorMode === 'light' ? <IoMoon/> : <IoSunny/>}
       </Button>
     </Flex>

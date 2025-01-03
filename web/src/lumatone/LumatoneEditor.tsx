@@ -8,6 +8,7 @@ import {layerAddOrUpdate, LayerAssignment, selectionToolSetLayerId} from '../red
 import LumatoneLayerEdit from './LumatoneLayerEdit.tsx';
 import LumatoneLayerView from './LumatoneLayerView.tsx';
 import {getNoteColorHsl} from './colors.ts';
+import {Field} from '../components/chakra-ui/field.tsx';
 
 
 function LumatoneEditor() {
@@ -22,25 +23,31 @@ function LumatoneEditor() {
         <Flex gap={4}>
           <Text>Lumatone</Text>
 
-          <MidiDeviceSelect
+          <Field
             label="Lumatone In"
-            selectionType={SelectionType.Input}
-            onSelect={val => dispatch(lumatoneInSet(val))}
-            value={useAppSelector(s => s.midi.lumatoneIn)}
-          />
+          >
+            <MidiDeviceSelect
+              selectionType={SelectionType.Input}
+              onSelect={val => dispatch(lumatoneInSet(val))}
+              value={useAppSelector(s => s.midi.lumatoneIn)}
+            />
+          </Field>
 
-          <MidiDeviceSelect
+          <Field
             label="Lumatone Out"
-            selectionType={SelectionType.Output}
-            onSelect={val => dispatch(lumatoneOutSet(val))}
-            value={useAppSelector(s => s.midi.lumatoneOut)}
-          />
+          >
+            <MidiDeviceSelect
+              selectionType={SelectionType.Output}
+              onSelect={val => dispatch(lumatoneOutSet(val))}
+              value={useAppSelector(s => s.midi.lumatoneOut)}
+            />
+          </Field>
         </Flex>
 
       </Card.Header>
 
       <Card.Body gap={2}>
-        <LumatoneBoard />
+        <LumatoneBoard/>
 
         <Button
           onClick={() => {
