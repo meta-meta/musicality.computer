@@ -63,7 +63,7 @@ function MidiConfig() {
         : undefined;
 
   return (
-    <Card.Root>
+    <Card.Root h="full">
       <Card.Header>
         <Flex gap={2}>
           <ReactIcon

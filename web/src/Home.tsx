@@ -1,15 +1,4 @@
-import {
-  Card,
-  Center,
-  Grid,
-  GridItem,
-  Heading,
-  Link,
-  SimpleGrid,
-  Stack,
-  Text,
-  useBreakpointValue,
-} from '@chakra-ui/react';
+import {Card, Center, Grid, GridItem, Heading, Image, Link, Stack, Text, useBreakpointValue} from '@chakra-ui/react';
 import {NotePicker} from './NotePicker.tsx';
 import LumatoneEditor from './lumatone/LumatoneEditor.tsx';
 import MidiConfig from './MidiConfig.tsx';
@@ -31,27 +20,17 @@ export function Home() {
   return (
 
     <Stack textAlign="center" p={2}>
-      <Heading color="brand.900">{columns} musicality.computer</Heading>
+      <Heading color="brand.900">musicality.computer</Heading>
 
       <Grid
+        gap={2}
         gridTemplateColumns={`repeat(${columns}, 1fr)`}
         gridTemplateRows="auto"
-        // columns={{ base: 1, md: 2, lg: 3 }}
-        gap={2}
-        // autoColumns={true}
-        // autoRows="max-content"
-        // minChildWidth="md"
-        // p={2}
-        // position="relative"
-        // rowGap={2}
       >
         <GridItem>
-          <Card.Root>
-            <Card.Header>A home for soundtoys and soundtools.</Card.Header>
+          <Card.Root h="full">
+            <Card.Header>A place for refactoring music.</Card.Header>
             <Card.Body>
-              <Text>Great stuff coming soon.</Text>
-              <br/><br/>
-
               <Text>Born out of&nbsp;
                 <ExternalLink
                   href="https://meta-meta.github.io/aframe-musicality/"
@@ -61,9 +40,19 @@ export function Home() {
 
               <br/>
               <br/>
-              <Link textDecoration="underline" href="vr">
-                Musicality VR
-              </Link>
+
+              <Card.Root h="full">
+                <Card.Header>Musicality VR</Card.Header>
+                <Card.Body>
+                  <Link textDecoration="underline" href="vr" display="block">
+                    <Image
+                      src="/musicality-vr.png"
+                      borderRadius="lg"
+                    />
+                  </Link>
+                </Card.Body>
+              </Card.Root>
+
             </Card.Body>
           </Card.Root>
         </GridItem>
@@ -73,8 +62,8 @@ export function Home() {
         </GridItem>
 
         <GridItem>
-          <Card.Root>
-            <Card.Header>Circle Control</Card.Header>
+          <Card.Root h="full">
+            <Card.Header>Log Knob</Card.Header>
             <Card.Body>
               <Text>Embrace the octave with a log2 circular frequency picker.</Text>
               <br/><br/>
