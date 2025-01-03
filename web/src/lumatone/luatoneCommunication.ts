@@ -1,6 +1,7 @@
-import {Input, Output} from 'webmidi';
-import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
+import {Input, MessageEvent, Output} from 'webmidi';
+import {LumatoneBoardNum, LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
 import {sRGB} from 'colorjs.io/fn';
+import _ from 'lodash-es';
 
 export const setColor = (deviceIn: Input, deviceOut: Output, keyPosition: LumatoneKeyPosition, mapping: LumatoneMapping) =>
   new Promise<void>((res) => {
@@ -15,9 +16,9 @@ export const setColor = (deviceIn: Input, deviceOut: Output, keyPosition: Lumato
     const g = normTo255(rgb.g);
     const b = normTo255(rgb.b);
 
-    deviceIn.addOneTimeListener('sysex', () => {
-      res();
-    });
+    addListenerIfNeeded(deviceIn);
+    changersByBoard[keyPosition.boardNum].ackAwaiter = res;
+
     deviceOut.sendSysex(mfid, [keyPosition.boardNum, setKeyColor, keyPosition.note, r >> 4, r & 0xf, g >> 4, g & 0xf, b >> 4, b & 0xf]);
   });
 
@@ -26,24 +27,53 @@ export const setNote = (deviceIn: Input, deviceOut: Output, keyPosition: Lumaton
   new Promise<void>((res) => {
     const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
     const setKeyNote = 0x00;
-    deviceIn.addOneTimeListener('sysex', () => {
-      res();
-    });
+
+    addListenerIfNeeded(deviceIn);
+    changersByBoard[keyPosition.boardNum].ackAwaiter = res;
+
     deviceOut.sendSysex(mfid, [keyPosition.boardNum, setKeyNote, keyPosition.note, mapping.noteNum, mapping.channel - 1, mapping.keyType]);
   });
 
-const changeBuffer: (() => Promise<void>)[] = [];
-let isPopping = false;
+let isAckListenerAdded = false;
+const addListenerIfNeeded = (deviceIn: Input) => {
+  if (!isAckListenerAdded) deviceIn.addListener('sysex', ackListener);
+  isAckListenerAdded = true;
+};
 
-export const changePush = async (ch: () => Promise<void>) => {
+const ackListener = (e: MessageEvent) => {
+  const {ackAwaiter} = changersByBoard[e.dataBytes[0]];
+  console.log(e.dataBytes);
+  ackAwaiter();
+};
+
+type Changer = {
+  changeBuffer: (() => Promise<void>)[],
+  isPopping: boolean,
+  ackAwaiter: () => void,
+}
+
+const changersByBoard: { [index: number]: Changer } = _.fromPairs(
+  _.range(5).map(i => [(i + 1) as LumatoneBoardNum, {
+    changeBuffer: [],
+    isPopping: false,
+    ackAwaiter: () => {
+    },
+  }]),
+);
+
+export const changePush = async (ch: () => Promise<void>, keyPosition: LumatoneKeyPosition) => {
+  const changer = changersByBoard[keyPosition.boardNum];
+  const {changeBuffer, isPopping} = changer;
   changeBuffer.push(ch);
 
   if (isPopping) return;
 
   let chPop;
-  isPopping = true;
+  changer.isPopping = true;
   while ((chPop = changeBuffer.shift())) {
+    console.log('push', keyPosition.boardNum)
     await chPop();
+    console.log('pop', keyPosition.boardNum)
   }
-  isPopping = false;
+  changer.isPopping = false;
 };

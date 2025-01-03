@@ -24,14 +24,14 @@ function LumatoneKeySync({
     const deviceOut = WebMidi.getOutputById(lumatoneOut);
     if (!deviceIn || !deviceOut) return;
 
-    changePush(() => setColor(deviceIn, deviceOut, keyPosition, mapping));
+    changePush(() => setColor(deviceIn, deviceOut, keyPosition, mapping), keyPosition);
     // await setColor(lumaIn, lumaOut, boardNum, note, r, g, b);
     // await setNote(lumaIn, lumaOut, boardNum, note, n);
 
     // const typeByteCC =  (true << 4) | 2;   // (faderUpIsNull << 4) | keyType
     // await setNote(lumaIn, lumaOut, boardNum, note, n, 1, typeByteCC); // cc
 
-    changePush(() => setNote(deviceIn, deviceOut, keyPosition, mapping));
+    changePush(() => setNote(deviceIn, deviceOut, keyPosition, mapping), keyPosition);
 
     // let timeoutId : number;
     // const maxL = 1;
