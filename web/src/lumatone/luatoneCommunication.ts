@@ -1,6 +1,5 @@
 import {Input, Output} from 'webmidi';
 import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
-import {sRGB} from 'colorjs.io/fn';
 
 /* Derived from
 https://github.com/vsicurella/TerpstraSysEx.2014
@@ -19,7 +18,7 @@ export const setColor = (deviceIn: Input, deviceOut: Output, keyPosition: Lumato
     const normTo255 = (norm: number) =>
       Math.max(0, Math.min(255, Math.floor(norm * 255)));
 
-    const rgb = mapping.keyColor.clone().to(sRGB);
+    const rgb = mapping.keyColor.clone().to('srgb');
 
     const r = normTo255(rgb.r);
     const g = normTo255(rgb.g);

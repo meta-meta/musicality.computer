@@ -1,12 +1,11 @@
 import Color from 'colorjs.io';
-import {Okhsl} from 'colorjs.io/fn';
 
 export const getNoteColorHsl = (n: number): Color => {
 
   const oct = ((n - 60) / 12 + 1);
 
   return new Color({
-    space: Okhsl,
+    space: 'okhsl',
     coords: [
       28 + 360 * (((n * 5) % 12) / 12),
       0.95 - (oct > 0 ? oct * .1 : 0),
