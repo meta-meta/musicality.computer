@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build-basic": "vite build",
-    "build": "tsc && vite build && sudo rm -rf /usr/share/nginx/html/ && sudo cp -a dist/. /usr/share/nginx/html",
-    "build-ignoring-ts-error": "NODE_OPTIONS=--max-old-space-size=8192 vite build && sudo rm -rf /usr/share/nginx/html/ && sudo cp -a dist/. /usr/share/nginx/html",
+    "build-ts": "tsc && vite build && sudo rm -rf /usr/share/nginx/html/ && sudo cp -a dist/. /usr/share/nginx/html",
+    "build": "NODE_OPTIONS=--max-old-space-size=2048 vite build && sudo rm -rf /usr/share/nginx/html/ && sudo cp -a dist/. /usr/share/nginx/html",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
