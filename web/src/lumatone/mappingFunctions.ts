@@ -10,15 +10,58 @@ export const disabledMapping: LumatoneMapping = {
   noteNum: 0,
 };
 
-const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
+// https://www.redblobgames.com/grids/hexagons/
+const oddrToAxial = ({x, y}: Coord) => {
+  const q = x - (y - (y & 1)) / 2;
+  const r = y;
+  return {q, r};
+};
+
+const convertCoords = (key: Coord, offset: Coord) => {
+  const oddRowOffset = offset.y % 2 !== 0;
+  const offsetFactor = oddRowOffset ? 1 : 0;
+  const {q: qKey, r: rKey} = oddrToAxial({x: key.x, y: -key.y});
+  const {q: qOffset, r: rOffset} = oddrToAxial({x: offset.x - offsetFactor, y: -offset.y});
+  const q = qKey + qOffset;
+  const r = rKey + rOffset;
+  return {q, r};
+};
+
+const harmonicTable = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
   (key: Coord): LumatoneMapping => {
 
-    const x = key.x + offset.x;
-    const y = key.y + offset.y;
+    const {q, r} = convertCoords(key, offset);
+    const startingNote = 72;
+    const noteNum = startingNote + q * 3 + r * 7;
 
-    const noteNum = y % 2 === 0
-      ? ((12 - y) * 6 + x * 2) + (x > 12 ? 24 : 0)
-      : (12 - y) * 6 + x * 2 + 1 + (x > 12 ? 24 : 0);
+    return ({
+      channel,
+      keyColor: getNoteColorHsl(noteNum),
+      keyType: KeyType.NoteOnOff,
+      noteNum: Math.max(Math.min(noteNum, 127), 0) as Midi7Bit,
+    });
+  };
+
+const janko = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
+  (key: Coord): LumatoneMapping => {
+
+    const {q, r} = convertCoords(key, offset);
+    const startingNote = 36;
+    const noteNum = startingNote + q * 2 + r * 1;
+
+    return ({
+      channel,
+      keyColor: getNoteColorHsl(noteNum),
+      keyType: KeyType.NoteOnOff,
+      noteNum: Math.max(Math.min(noteNum, 127), 0) as Midi7Bit,
+    });
+  };
+
+const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
+  (key: Coord): LumatoneMapping => {
+    const {q, r} = convertCoords(key, offset);
+    const startingNote = 60;
+    const noteNum = startingNote + q * 2 + r * 7;
 
     return ({
       channel,
@@ -32,12 +75,16 @@ export const mappingFns: {
   [index: string]: (channel: MidiChannel, offset?: Coord) => (key: Coord) => LumatoneMapping
 } = {
   'unmapped': () => () => disabledMapping,
+  'harmonicTable': harmonicTable,
+  'janko': janko,
   'wikiHayden': wikiHayden,
 };
 
 export const mappingFnOptions = createListCollection({
   items: [
-    {label: 'Wiki Hayden', value: 'wikiHayden', group: 'Note Layouts'},
+    {label: 'Harmonic Table', value: 'harmonicTable', group: '» Note Layouts'},
+    {label: 'Jankó', value: 'janko', group: '» Note Layouts'},
+    {label: 'Wiki-Hayden', value: 'wikiHayden', group: '» Note Layouts'},
   ],
 });
 

@@ -2,6 +2,16 @@ import {Input, Output} from 'webmidi';
 import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
 import {sRGB} from 'colorjs.io/fn';
 
+/* Derived from
+https://github.com/vsicurella/TerpstraSysEx.2014
+* */
+
+// TODO: https://github.com/kbrandwijk/lumachromatic/tree/%40kbrandwijk/driver-per-board
+// it should be possible to speed this up by pushing to each board in parallel but
+// my attempt in branch lumatone-comm-per-board drops messages.
+// might want to eventually switch to lumachromatic's driver since it is a more complete port of OG editor
+
+
 export const setColor = (deviceIn: Input, deviceOut: Output, keyPosition: LumatoneKeyPosition, mapping: LumatoneMapping) =>
   new Promise<void>((res) => {
     const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
@@ -35,10 +45,6 @@ export const setNote = (deviceIn: Input, deviceOut: Output, keyPosition: Lumaton
 const changeBuffer: (() => Promise<void>)[] = [];
 let isPopping = false;
 
-// TODO: https://github.com/kbrandwijk/lumachromatic/tree/%40kbrandwijk/driver-per-board
-// it should be possible to speed this up by pushing to each board in parallel but
-// my attempt in branch lumatone-comm-per-board drops messages.
-// might want to eventually switch to lumachromatic's driver since it is a more complete port of OG editor
 
 export const changePush = async (ch: () => Promise<void>) => {
   changeBuffer.push(ch);

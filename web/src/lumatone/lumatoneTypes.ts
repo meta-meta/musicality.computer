@@ -3,6 +3,7 @@ import Color from 'colorjs.io';
 export type LumatoneKeyPosition = {
   boardNum: LumatoneBoardNum,
   id: string,
+  gridPos: Coord,
   note: LumatoneKeyNum,
 }
 

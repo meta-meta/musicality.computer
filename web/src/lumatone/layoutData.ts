@@ -59,8 +59,10 @@ _.range(5).forEach(boardIndex => {
   _.forEach(boardRowLengths, (boardRowLen, boardRow) => {
     _.range(boardRowLen).forEach(boardX => {
       const y = boardStartY + boardRow;
-      boardsOnGrid[y][boardStartX + lumatoneRowStarts[boardRow] + boardX] = {
+      const x = boardStartX + lumatoneRowStarts[boardRow] + boardX;
+      boardsOnGrid[y][x] = {
         boardNum,
+        gridPos: {x, y},
         id: `${boardNum}/${note}`,
         note: note as LumatoneKeyNum,
       };

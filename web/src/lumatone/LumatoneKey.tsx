@@ -82,7 +82,7 @@ const LumatoneKey= memo(
               >
                 {/* Note Number */}
                 {toSymbol(mapping.noteNum)}
-
+{/*&nbsp;*/}
                 {/* Octave */}
                 <Box
                   {...{
@@ -90,9 +90,13 @@ const LumatoneKey= memo(
                     fontSize: '0.5em',
                     position: 'absolute',
                     right: '-0.7em',
+
+                    // top: '1.6em',
+                    // left: '-0.2em',
                   }}
                 >
-                  {Math.floor(mapping.noteNum / 12)}
+                  {/*{keyPosition.gridPos.x},{keyPosition.gridPos.y}*/}
+                  {Math.floor(mapping.noteNum / 12) - 1}
                 </Box>
               </Box>
             </>

@@ -42,10 +42,12 @@ export default function LumatoneBoard() {
     const layers: { [index: string]: LumatoneLayer } =
       _.mapValues(layerAssignments, (layerAssignment) => ({
         layerColor: new Color(layerAssignment.layerColor),
-        mappingFn: mappingFns[layerAssignment.mappingFnName](layerAssignment.layerChannel, {
-          x: layerAssignment.mappingFnColOffset,
-          y: layerAssignment.mappingFnRowOffset,
-        }),
+        mappingFn: mappingFns[layerAssignment.mappingFnName](
+          layerAssignment.layerChannel,
+          {
+            x: layerAssignment.mappingFnColOffset,
+            y: layerAssignment.mappingFnRowOffset,
+          }),
       }));
 
     _.forEach(_.keys(keyPositions.current), (keyId) => {

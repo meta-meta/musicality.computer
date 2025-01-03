@@ -34,6 +34,8 @@ function LumatoneLayerEdit({layerAssignment}: LumatoneLayerEditorProps) {
 
   const color = new Color(layerAssignment.layerColor).toString({format: 'hex'});
 
+  // TODO: feature request for copy/paste with fn applied to copied region https://www.facebook.com/groups/lumatone.keyboard/posts/8602543689854787/?comment_id=8612222608886895&reply_comment_id=8612355405540282
+
   return (
     <GridItem rowSpan={2}>
       <Card.Root

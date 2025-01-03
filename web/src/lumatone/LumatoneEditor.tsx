@@ -11,6 +11,17 @@ import {getNoteColorHsl} from './colors.ts';
 import {Field} from '../components/chakra-ui/field.tsx';
 
 
+/*
+ https://sjoerdvisscher.glitch.me/lumatone
+ https://github.com/JeffreyBenjaminBrown/lumatone-isomorphic
+ https://github.com/kbrandwijk/lumachromatic
+ https://www.plainsound.org/hex
+
+
+
+* */
+
+
 function LumatoneEditor() {
   const dispatch = useAppDispatch();
   const layers = useAppSelector(s => s.lumatoneEditor.layers);

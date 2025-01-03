@@ -3,14 +3,14 @@ import {Okhsl} from 'colorjs.io/fn';
 
 export const getNoteColorHsl = (n: number): Color => {
 
-  const oct = ((n - 60) / 12);
+  const oct = ((n - 60) / 12 + 1);
 
   return new Color({
     space: Okhsl,
     coords: [
       28 + 360 * (((n * 5) % 12) / 12),
-      0.95 - (oct > 0 ? oct * .2 : 0),
-      0.4 + oct * .1,
+      0.95 - (oct > 0 ? oct * .1 : 0),
+      0.45 + (oct > 0 ? oct * .03 : oct * .12),
     ],
   });
 
