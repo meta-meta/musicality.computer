@@ -3,6 +3,7 @@ import {NotePicker} from './NotePicker.tsx';
 import LumatoneEditor from './lumatone/LumatoneEditor.tsx';
 import MidiConfig from './MidiConfig.tsx';
 import ExternalLink from './components/ExternalLink.tsx';
+import {FlashCards} from './FlashCards.tsx';
 
 
 export function Home() {
@@ -72,6 +73,15 @@ export function Home() {
                 <NotePicker/>
               </Center>
 
+            </Card.Body>
+          </Card.Root>
+        </GridItem>
+
+        <GridItem>
+          <Card.Root h="full">
+            <Card.Header>Flash Cards</Card.Header>
+            <Card.Body>
+              <FlashCards/>
             </Card.Body>
           </Card.Root>
         </GridItem>

@@ -32,6 +32,13 @@ export const toSymbol = (note, equalDivisions = 12) => ({
   11: 'Ɛ',
 })[note % equalDivisions] || note % equalDivisions;
 
+export const fromSymbol = (symbol) => ({
+  '૪': 10,
+  'Ɛ': 11,
+})[symbol] || parseInt(symbol, 10);
+
+
+
 // ripped from Tone/core/Conversions
 export const ftomf = (frequency) => {
   return 69 + 12 * Math.log2(frequency / 440);
