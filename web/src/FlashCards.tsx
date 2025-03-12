@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Center, Flex, Text} from '@chakra-ui/react';
 import * as _ from 'lodash-es';
 import {toSymbol} from './lumatone/util';
@@ -28,24 +28,29 @@ export function FlashCards() {
   const [scoreDiff, setScoreDiff] = useState(0);
   const [tAtRoundStart, setTAtRoundStart] = useState(Date.now);
 
+  const scoreDiffInterval = useRef<number>(-1);
+
   const handlePickerChange = useCallback((val: number) => {
     const isCorrect = val === key;
     const t = Date.now() - tAtRoundStart;
-    const tMult = t > 5000 ? 1 : 1 + Math.round((5000 - t) / 500);
+    const tMult = t > 10000 ? 1 : 1 + Math.round((10000 - t) / 1000);
 
     const scoreDiff = !isCorrect
       ? -10
-      : tMult * 10;
+      : tMult * 20;
 
     setScore(s => Math.max(0, s + scoreDiff));
     setScoreDiff(scoreDiff);
-    setTAtRoundStart(Date.now());
 
     // @ts-ignore
     const nextKey : number = _.sample(_.range(11).filter(n => n !== key));
-    if (isCorrect) setKey(nextKey);
+    if (isCorrect) {
+      setKey(nextKey);
+      setTAtRoundStart(Date.now());
+    }
 
-    _.delay(() => setScoreDiff(0), 300);
+    clearInterval(scoreDiffInterval.current);
+    scoreDiffInterval.current = _.delay(() => setScoreDiff(0), 300);
   }, [key, tAtRoundStart])
 
   useEffect(() => {
