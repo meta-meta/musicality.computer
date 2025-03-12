@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Center, Flex, Text} from '@chakra-ui/react';
 import * as _ from 'lodash-es';
 import {toSymbol} from './lumatone/util';
@@ -37,7 +37,7 @@ export function FlashCards() {
       ? -10
       : tMult * 10;
 
-    setScore(score => score + scoreDiff);
+    setScore(s => Math.max(0, s + scoreDiff));
     setScoreDiff(scoreDiff);
     setTAtRoundStart(Date.now());
 
@@ -45,6 +45,11 @@ export function FlashCards() {
 
     _.delay(() => setScoreDiff(0), 500);
   };
+
+  useEffect(() => {
+    const id = setInterval(() => setScore(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   return ( // 330px is the size of the SVG
     <>
