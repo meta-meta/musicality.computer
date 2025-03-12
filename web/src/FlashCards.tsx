@@ -3,6 +3,7 @@ import {Center, Flex, Text} from '@chakra-ui/react';
 import * as _ from 'lodash-es';
 import {toSymbol} from './lumatone/util';
 import {PitchClassPicker} from './PitchClassPicker.tsx';
+import {useColorMode} from './components/chakra-ui/color-mode.tsx';
 
 
 interface NotesProps {
@@ -58,6 +59,9 @@ export function FlashCards() {
     return () => clearInterval(id);
   }, []);
 
+  const {colorMode} = useColorMode();
+
+
   return ( // 330px is the size of the SVG
     <>
       <Text>Pick the key containing these notes:</Text>
@@ -65,7 +69,7 @@ export function FlashCards() {
       <Flex
         alignItems="center"
         borderRadius="xl"
-        bg="#222"
+        bg={colorMode === 'light' ? '#ccc' : '#222'}
         h="120px"
         justifyContent="space-between"
         paddingX={10}

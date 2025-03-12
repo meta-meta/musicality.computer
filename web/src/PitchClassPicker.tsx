@@ -1,9 +1,9 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {AbsoluteCenter, Box, Text} from '@chakra-ui/react';
 import {ISettingsPointer, RoundSlider} from 'mz-react-round-slider';
-import {useEnterKey} from './UseEnterKey.ts';
 import * as _ from 'lodash-es';
 import {fromSymbol, toSymbol} from './lumatone/util';
+import {useColorMode} from './components/chakra-ui/color-mode.tsx';
 
 
 interface NotePickerProps {
@@ -30,8 +30,6 @@ export function PitchClassPicker({
   const [isDragging, setIsDragging] = useState(false);
 
 
-  useEnterKey();
-
   const change = (n: number) => {
     const next = n % 12;
     valRef.current = next;
@@ -56,7 +54,10 @@ export function PitchClassPicker({
   useEffect(() => {
     if (isDragging) document.addEventListener('pointerup', handlePointerUp);
     else document.removeEventListener('pointerup', handlePointerUp);
+    return () => document.removeEventListener('pointerup', handlePointerUp);
   }, [handlePointerUp, isDragging]);
+
+  const {colorMode} = useColorMode();
 
 
   return ( // 330px is the size of the SVG
@@ -98,7 +99,7 @@ export function PitchClassPicker({
         pathBorder={0}
         pathEndAngle={270 + 360}
         pathThickness={20}
-        tickValuesColor="white"
+        tickValuesColor={colorMode === 'light' ? 'black' : 'white'}
         longerTicksHeight={0}
         ticksColor="none"
         showTickValues
@@ -138,7 +139,7 @@ export function PitchClassPicker({
       <AbsoluteCenter>
         <Text
           fontSize="3em"
-          onClick={() => {onChange(valRef.current)}}
+          // onClick={() => {onChange(valRef.current)}}
         >
           {toSymbol(val)}
         </Text>
