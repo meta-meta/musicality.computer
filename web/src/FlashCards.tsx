@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Center, Flex, Text} from '@chakra-ui/react';
 import * as _ from 'lodash-es';
 import {toSymbol} from './lumatone/util';
@@ -28,7 +28,7 @@ export function FlashCards() {
   const [scoreDiff, setScoreDiff] = useState(0);
   const [tAtRoundStart, setTAtRoundStart] = useState(Date.now);
 
-  const handlePickerChange = (val: number) => {
+  const handlePickerChange = useCallback((val: number) => {
     const isCorrect = val === key;
     const t = Date.now() - tAtRoundStart;
     const tMult = t > 5000 ? 1 : 1 + Math.round((5000 - t) / 500);
@@ -41,10 +41,12 @@ export function FlashCards() {
     setScoreDiff(scoreDiff);
     setTAtRoundStart(Date.now());
 
-    if (isCorrect) setKey(_.random(11));
+    // @ts-ignore
+    const nextKey : number = _.sample(_.range(11).filter(n => n !== key));
+    if (isCorrect) setKey(nextKey);
 
-    _.delay(() => setScoreDiff(0), 500);
-  };
+    _.delay(() => setScoreDiff(0), 300);
+  }, [key, tAtRoundStart])
 
   useEffect(() => {
     const id = setInterval(() => setScore(s => Math.max(0, s - 1)), 1000);
@@ -64,6 +66,8 @@ export function FlashCards() {
         paddingX={10}
         flexWrap="wrap"
       >
+        {/*<Text color="pink">{key}</Text>*/}
+
         <Notes currentKey={key}/>
       </Flex>
 
