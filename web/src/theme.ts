@@ -1,5 +1,5 @@
 import {createSystem, defaultConfig, defineConfig} from '@chakra-ui/react';
-import '@fontsource/jetbrains-mono';
+// import '@fontsource/jetbrains-mono';
 
 const colors = {
   brand: {
@@ -13,6 +13,8 @@ const colors = {
 //   initialColorMode: 'system',
 //   useSystemColorMode: true,
 // }
+
+// TODO for bravura  https://chakra-ui.com/guides/theming-add-custom-font-to-vite
 
 const fonts = {
   body: {value: `'Jetbrains Mono', monospace`},

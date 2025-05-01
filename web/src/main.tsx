@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import {ChakraProvider} from '@chakra-ui/react';
 import {system} from './theme.ts';
+import '@fontsource/bravura/400.css';
+import '@fontsource/bravura-text/400.css'; // FIXME: this is not working
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource/jetbrains-mono/700.css';
