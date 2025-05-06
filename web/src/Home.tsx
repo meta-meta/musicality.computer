@@ -18,7 +18,50 @@ import MidiConfig from './MidiConfig.tsx';
 import ExternalLink from './components/ExternalLink.tsx';
 import {FlashCards} from './FlashCards.tsx';
 import {FaWikipediaW} from 'react-icons/fa6';
+import {ReactNode} from 'react';
 
+
+type ChordFamProps = {
+  integerName: string;
+  wikiLabel: string;
+  wikiUrl: string;
+  classicNames: ReactNode[];
+}
+
+function ChordFam({
+  integerName = '',
+  classicNames = [],
+  wikiLabel = '',
+  wikiUrl = '',
+}: ChordFamProps) {
+  return (
+    <Flex
+      border="solid 1px"
+      borderRadius="md"
+      p={1}
+      justifyContent="space-between"
+      gap={2}
+    >
+      <Code fontSize="lg">{integerName}</Code>
+      {classicNames.map((cn, i) => (
+        <Code
+          fontFamily="Bravura"
+          fontSize="lg"
+          key={i}
+        >
+          <Text position="relative" top="0.333em">{/*hack for Bravura - should go away with Bravura-Text*/}
+            {cn}
+          </Text>
+        </Code>
+      ))}
+      {wikiUrl && (
+        <ExternalLink
+          label={wikiLabel}
+          href={`https://en.wikipedia.org/wiki/${wikiUrl}`}
+          icon={<FaWikipediaW/>}
+        />)}
+    </Flex>);
+}
 
 export function Home() {
 
@@ -108,79 +151,54 @@ export function Home() {
             {/*https://w3c.github.io/smufl/latest/tables/standard-accidentals-for-chord-symbols.html*/}
 
             <Card.Body gap={2}>
-              <Flex justifyContent="space-between" gap={2}>
-                <Code fontSize="lg" >0+47</Code>
-                <Code fontSize="lg" fontFamily="Bravura">C</Code>
-                <Code fontSize="lg" fontFamily="Bravura">CM</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cmaj</Code>
-                <Code fontSize="lg" fontFamily="Bravura">C</Code>
-                <ExternalLink
-                  label="Major triad"
-                  href="https://en.wikipedia.org/wiki/Major_chord"
-                  icon={<FaWikipediaW/>}
-                />
-              </Flex>
+              <ChordFam
+                classicNames={[`C`, `CM`, `Cmaj`, `C`]}
+                integerName="0+47"
+                wikiLabel="Major triad"
+                wikiUrl="Major_chord"
+              />
 
-              <Flex justifyContent="space-between" gap={2}>
-                <Code fontSize="lg" >0+37</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cm</Code>
-                <Code fontSize="lg" fontFamily="Bravura">CM</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cmin</Code>
-                <Code fontSize="lg" fontFamily="Bravura">C</Code>
-                <ExternalLink
-                  label="Minor triad"
-                  href="https://en.wikipedia.org/wiki/Minor_chord"
-                  icon={<FaWikipediaW/>}
-                />
-              </Flex>
+              <ChordFam
+                classicNames={[`Cm`, `Cmin`, `C`]}
+                integerName="0+37"
+                wikiLabel="Minor triad"
+                wikiUrl="Minor_chord"
+              />
 
-              <Flex justifyContent="space-between" gap={2}>
-                <Code fontSize="lg" >0+48</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Caug</Code>
-                <Code fontSize="lg" fontFamily="Bravura">C</Code>
-                <ExternalLink
-                  label="Augmented triad"
-                  href="https://en.wikipedia.org/wiki/Augmented_triad"
-                  icon={<FaWikipediaW/>}
-                />
-              </Flex>
+              <ChordFam
+                classicNames={[`Caug`, `C`]}
+                integerName="0+48"
+                wikiLabel="Augmented triad"
+                wikiUrl="Augmented_chord"
+              />
 
-              <Flex justifyContent="space-between" gap={2}>
-                <Code fontSize="lg" >0+36</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cdim</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cm<sup>5</sup></Code> {/*sup?*/}
-                <Code fontSize="lg" fontFamily="Bravura">C</Code>
-                <ExternalLink
-                  label="Diminished triad"
-                  href="https://en.wikipedia.org/wiki/Diminished_triad"
-                  icon={<FaWikipediaW/>}
-                />
-              </Flex>
+              <ChordFam
+                classicNames={[`Cdim`, <>Cm<sup>5</sup></>, `C`]}
+                integerName="0+36"
+                wikiLabel="Diminished triad"
+                wikiUrl="Diminished_chord"
+              />
 
-              <Flex justifyContent="space-between" gap={2}>
-                <Code fontSize="lg" >0+369</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cdim<sup>7</sup></Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cm<sup>65</sup></Code> {/*inversion enharmonic*/}
-                <Code fontSize="lg" fontFamily="Bravura">C<sup>7</sup></Code>
-                <ExternalLink
-                  label="Diminished seventh"
-                  href="https://en.wikipedia.org/wiki/Diminished_seventh_chord"
-                  icon={<FaWikipediaW/>}
-                />
-              </Flex>
+              <ChordFam
+                classicNames={[
+                  <>Cdim<sup>7</sup></>,
+                  <>Cm<sup>65</sup></>, /*inversion enharmonic*/
+                  <>C<sup>7</sup></>,
+                ]}
+                integerName="0+369"
+                wikiLabel="Diminished seventh"
+                wikiUrl="Diminished_seventh_chord"
+              />
 
-              <Flex justifyContent="space-between" gap={2}>
-                <Code fontSize="lg" >0+36૪</Code>
-                <Code fontSize="lg" fontFamily="Bravura">Cm7(5)</Code>
-                <Code fontSize="lg" fontFamily="Bravura">C<sup>7</sup></Code>
-                <ExternalLink
-                  label="Half-diminished seventh"
-                  href="https://en.wikipedia.org/wiki/Half-diminished_seventh_chord"
-                  icon={<FaWikipediaW/>}
-                />
-              </Flex>
-
-              {/*TODO */}
+              <ChordFam
+                classicNames={[
+                  <>Cm<sup>7(5)</sup></>,
+                  <>C<sup>7</sup></>,
+                ]}
+                integerName="0+36૪"
+                wikiLabel="Half-diminished seventh"
+                wikiUrl="Half-diminished_seventh_chord"
+              />
 
             </Card.Body>
           </Card.Root>
