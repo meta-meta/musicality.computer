@@ -203,6 +203,7 @@ export function Home() {
                 wikiUrl="Half-diminished_seventh_chord"
               />
 
+              (...) more to come...
             </Card.Body>
           </Card.Root>
         </GridItem>
