@@ -123,7 +123,10 @@ export function Home() {
           <Card.Root h="full">
             <Card.Header>Log Knob</Card.Header>
             <Card.Body>
-              <Text>Embrace the octave with a log2 circular frequency picker.</Text>
+              <Text>
+                Embrace the octave with a 2<sup>n</sup> circular frequency picker. <br/>
+                Freq (Hz) = 2<sup>n</sup> where n = number of turns
+              </Text>
               <br/><br/>
 
               <Center>
