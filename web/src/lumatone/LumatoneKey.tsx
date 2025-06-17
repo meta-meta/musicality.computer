@@ -71,7 +71,7 @@ const LumatoneKey= memo(
               <AbsoluteCenter zIndex="-1">
                 <Box
                   color={mapping.keyColor.toString({format: 'hex'})}
-                  fontSize={`${cellSize * 1.5}em`}
+                  fontSize={`${cellSize * 1.45}em`}
                 >
                   &#x2B22;
                 </Box>
