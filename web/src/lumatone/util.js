@@ -30,7 +30,7 @@ export const toSolfege = (note, equalDivisions = 12) => ({
 export const toSymbol = (note, equalDivisions = 12) => ({
   10: '૪',
   11: 'Ɛ',
-})[note % equalDivisions] || note % equalDivisions;
+})[note % equalDivisions] || `${note % equalDivisions}`;
 
 export const fromSymbol = (symbol) => ({
   '૪': 10,

@@ -1,4 +1,4 @@
-import {Coord, KeyType, LumatoneMapping, Midi7Bit, MidiChannel} from './lumatoneTypes.ts';
+import {CoordOffset, KeyType, LumatoneMapping, Midi7Bit, MidiChannel} from './lumatoneTypes.ts';
 import {getNoteColorHsl} from './colors.ts';
 import {createListCollection} from '@chakra-ui/react';
 import Color from 'colorjs.io';
@@ -11,13 +11,13 @@ export const disabledMapping: LumatoneMapping = {
 };
 
 // https://www.redblobgames.com/grids/hexagons/
-const oddrToAxial = ({x, y}: Coord) => {
+const oddrToAxial = ({x, y}: CoordOffset) => {
   const q = x - (y - (y & 1)) / 2;
   const r = y;
   return {q, r};
 };
 
-const convertCoords = (key: Coord, offset: Coord) => {
+const convertCoords = (key: CoordOffset, offset: CoordOffset) => {
   const oddRowOffset = offset.y % 2 !== 0;
   const offsetFactor = oddRowOffset ? 1 : 0;
   const {q: qKey, r: rKey} = oddrToAxial({x: key.x, y: -key.y});
@@ -27,8 +27,8 @@ const convertCoords = (key: Coord, offset: Coord) => {
   return {q, r};
 };
 
-const harmonicTable = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
-  (key: Coord): LumatoneMapping => {
+const harmonicTable = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
+  (key: CoordOffset): LumatoneMapping => {
 
     const {q, r} = convertCoords(key, offset);
     const startingNote = 72;
@@ -42,8 +42,8 @@ const harmonicTable = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
     });
   };
 
-const janko = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
-  (key: Coord): LumatoneMapping => {
+const janko = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
+  (key: CoordOffset): LumatoneMapping => {
 
     const {q, r} = convertCoords(key, offset);
     const startingNote = 36;
@@ -57,8 +57,8 @@ const janko = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
     });
   };
 
-const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
-  (key: Coord): LumatoneMapping => {
+const wikiHayden = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
+  (key: CoordOffset): LumatoneMapping => {
     const {q, r} = convertCoords(key, offset);
     const startingNote = 60;
     const noteNum = startingNote + q * 2 + r * 7;
@@ -72,7 +72,7 @@ const wikiHayden = (channel: MidiChannel, offset: Coord = {x: 0, y: 0}) =>
   };
 
 export const mappingFns: {
-  [index: string]: (channel: MidiChannel, offset?: Coord) => (key: Coord) => LumatoneMapping
+  [index: string]: (channel: MidiChannel, offset?: CoordOffset) => (key: CoordOffset) => LumatoneMapping
 } = {
   'unmapped': () => () => disabledMapping,
   'harmonicTable': harmonicTable,

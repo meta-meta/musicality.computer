@@ -8,7 +8,7 @@ import {memo} from 'react';
 export interface LumatoneKeyProps {
   isOdd: boolean,
   isSpacer?: boolean,
-  keyPosition: LumatoneKeyPosition,
+  keyPosition?: LumatoneKeyPosition,
   layer?: LumatoneLayer,
   mapping: LumatoneMapping,
   onRef?: (el: HTMLDivElement) => void,
@@ -20,6 +20,7 @@ const black = new Color('black');
 
 const LumatoneKey= memo(
   function LumatoneKey({
+    hideLabel = false,
     isOdd,
     isSpacer = false,
     keyPosition,
@@ -27,8 +28,8 @@ const LumatoneKey= memo(
     mapping,
     onRef,
     rotBoard,
+    ...others
   }: LumatoneKeyProps) {
-
 
     const borderColor = layer ? layer.layerColor : black;
     // const borderColor = mapping.keyColor
@@ -54,6 +55,7 @@ const LumatoneKey= memo(
             position: 'relative',
             width: `${cellSize * 1.1}em`,
           }}
+          {...others}
         >
           {!isSpacer && // hexagon: https://stackoverflow.com/a/60967560/1477489
             <>
@@ -75,30 +77,33 @@ const LumatoneKey= memo(
                 </Box>
               </AbsoluteCenter>
 
-              <Box
-                color="black"
-                textShadow={`white 0 0 13px, ${shadowColor} 0 -0.5px 2px`}
-                transform={`rotate(${360 - rotBoard}deg)`}
-              >
-                {/* Note Number */}
-                {toSymbol(mapping.noteNum)}
-{/*&nbsp;*/}
-                {/* Octave */}
+              {!hideLabel && (
                 <Box
-                  {...{
-                    bottom: '15%',
-                    fontSize: '0.5em',
-                    position: 'absolute',
-                    right: '-0.7em',
-
-                    // top: '1.6em',
-                    // left: '-0.2em',
-                  }}
+                  color="black"
+                  textShadow={`white 0 0 13px, ${shadowColor} 0 -0.5px 2px`}
+                  transform={`rotate(${360 - rotBoard}deg)`}
                 >
-                  {/*{keyPosition.gridPos.x},{keyPosition.gridPos.y}*/}
-                  {Math.floor(mapping.noteNum / 12) - 1}
+                  {/* Note Number */}
+                  {toSymbol(mapping.noteNum)}
+
+                  {/* Octave */}
+                  <Box
+                    {...{
+                      bottom: '15%',
+                      fontSize: '0.5em',
+                      position: 'absolute',
+                      right: '-0.7em',
+
+                      // top: '1.6em',
+                      // left: '-0.2em',
+                    }}
+                  >
+                    {/*{keyPosition.gridPos.x},{keyPosition.gridPos.y}*/}
+                    {Math.floor(mapping.noteNum / 12) - 1}
+                  </Box>
                 </Box>
-              </Box>
+              )}
+
             </>
           }
 

@@ -2,7 +2,7 @@ import {gridPosToKeyPosition} from './layoutData.ts';
 import * as _ from 'lodash-es';
 import {Box, Flex} from '@chakra-ui/react';
 import {MutableRefObject, useCallback, useEffect, useRef} from 'react';
-import {Coord, LumatoneLayer} from './lumatoneTypes.ts';
+import {CoordOffset, LumatoneLayer} from './lumatoneTypes.ts';
 import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';
 import SelectionBox from './SelectionBox.tsx';
 import Color from 'colorjs.io';
@@ -13,7 +13,7 @@ import {forceUpdate} from '../redux/lumatoneEditorReducer.ts';
 const rotBoard = 343.6;
 
 export type EditorKeyOffset = {
-  gridPos: Coord,
+  gridPos: CoordOffset,
   id: string,
   x: number,
   y: number,
@@ -24,7 +24,7 @@ export default function LumatoneBoard() {
   const dispatch = useAppDispatch();
 
   const keyPositions: MutableRefObject<{ [index: string]: EditorKeyOffset }> = useRef({});
-  const handleLumatoneKeyRef = useCallback((gridPos: Coord) => (el: HTMLDivElement) => {
+  const handleLumatoneKeyRef = useCallback((gridPos: CoordOffset) => (el: HTMLDivElement) => {
     const {id} = gridPosToKeyPosition(gridPos);
 
     keyPositions.current[id] = el && ({

@@ -1,12 +1,12 @@
 import * as _ from 'lodash-es';
 import {Fragment, memo, MutableRefObject} from 'react';
 import {lumatoneRowLengths, lumatoneRowStarts} from './layoutData.ts';
-import {Coord, LumatoneLayer} from './lumatoneTypes.ts';
+import {CoordOffset, LumatoneLayer} from './lumatoneTypes.ts';
 import LumatoneKeyWrapper from './LumatoneKeyWrapper.tsx';
 
 interface LumatoneKeysProps {
   keyIdToLumatoneLayer: MutableRefObject<{ [index: string]: LumatoneLayer | undefined }>;
-  onLumatoneKeyRef: (gridPos: Coord) => (el: HTMLDivElement) => void
+  onLumatoneKeyRef: (gridPos: CoordOffset) => (el: HTMLDivElement) => void
   rotBoard: number,
 }
 

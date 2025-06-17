@@ -1,5 +1,5 @@
 import * as _ from 'lodash-es';
-import {Coord, LumatoneBoardNum, LumatoneKeyNum, LumatoneKeyPosition} from './lumatoneTypes.ts';
+import {CoordOffset, LumatoneBoardNum, LumatoneKeyNum, LumatoneKeyPosition} from './lumatoneTypes.ts';
 
 export const lumatoneRowLengths = [
   2,
@@ -47,7 +47,7 @@ const boardRowLengths = [
 
 const boardsOnGrid: Array<LumatoneKeyPosition[]> = lumatoneRowLengths.map(() => ([]));
 
-export const gridPosToKeyPosition = ({x,y}: Coord): LumatoneKeyPosition => boardsOnGrid[y][x];
+export const gridPosToKeyPosition = ({x,y}: CoordOffset): LumatoneKeyPosition => boardsOnGrid[y][x];
 
 _.range(5).forEach(boardIndex => {
   const boardNum = boardIndex + 1 as LumatoneBoardNum;

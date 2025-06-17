@@ -17,6 +17,7 @@
     "@fontsource/bravura-text": "^5.2.5",
     "@fontsource/jetbrains-mono": "^5.0.20",
     "@reduxjs/toolkit": "^2.5.0",
+    "@tombatossals/react-chords": "^0.2.10",
     "colorjs.io": "^0.6.0-alpha.1",
     "lodash-es": "^4.17.21",
     "mz-react-round-slider": "^1.0.3",

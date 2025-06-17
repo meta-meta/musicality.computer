@@ -19,6 +19,8 @@ import ExternalLink from './components/ExternalLink.tsx';
 import {FlashCards} from './FlashCards.tsx';
 import {FaWikipediaW} from 'react-icons/fa6';
 import {ReactNode} from 'react';
+import {UkeChords} from './UkeChords.tsx';
+import {LumatoneChords} from './LumatoneChords.tsx';
 
 
 type ChordFamProps = {
@@ -42,7 +44,7 @@ function ChordFam({
       justifyContent="space-between"
       gap={2}
     >
-      <Code fontSize="lg">{integerName}</Code>
+      <Code fontFamily="Jetbrains Mono" fontSize="lg">{integerName}</Code>
       {classicNames.map((cn, i) => (
         <Code
           fontFamily="Bravura"
@@ -207,6 +209,26 @@ export function Home() {
             </Card.Body>
           </Card.Root>
         </GridItem>
+
+        <GridItem>
+          <Card.Root h="full">
+            <Card.Header>Uke Chords</Card.Header>
+            <Card.Body>
+              <UkeChords/>
+            </Card.Body>
+          </Card.Root>
+        </GridItem>
+
+        {columns > 1 && (
+          <GridItem colSpan={columns}>
+            <Card.Root h="full">
+              <Card.Header>Lumatone Chords</Card.Header>
+              <Card.Body>
+                <LumatoneChords/>
+              </Card.Body>
+            </Card.Root>
+          </GridItem>
+        )}
 
         {columns > 1 && (
           <GridItem colSpan={columns}>

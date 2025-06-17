@@ -1,12 +1,12 @@
 import LumatoneKey from './LumatoneKey.tsx';
-import {Coord, LumatoneLayer} from './lumatoneTypes.ts';
+import {CoordOffset, LumatoneLayer} from './lumatoneTypes.ts';
 import {MutableRefObject} from 'react';
 import {useAppSelector} from '../redux/hooks.ts';
 import {gridPosToKeyPosition} from './layoutData.ts';
 import {disabledMapping} from './mappingFunctions.ts';
 
 interface Props {
-  gridPos: Coord,
+  gridPos: CoordOffset,
   isOdd: boolean,
   isSpacer?: boolean,
   keyIdToLumatoneLayer: MutableRefObject<{ [index: string]: LumatoneLayer | undefined }>;
