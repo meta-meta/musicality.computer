@@ -15,7 +15,7 @@
     "@emotion/react": "^11.14.0",
     "@fontsource/bravura": "^5.2.5",
     "@fontsource/bravura-text": "^5.2.5",
-    "@fontsource/jetbrains-mono": "^5.0.20",
+    "@fontsource/jetbrains-mono": "^5.2.6",
     "@reduxjs/toolkit": "^2.5.0",
     "@tombatossals/react-chords": "^0.2.10",
     "colorjs.io": "^0.6.0-alpha.1",
