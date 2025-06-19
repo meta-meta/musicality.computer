@@ -17,8 +17,8 @@ const colors = {
 // TODO for bravura  https://chakra-ui.com/guides/theming-add-custom-font-to-vite
 
 const fonts = {
-  body: {value: `'Jetbrains Mono', monospace`},
-  heading: {value: `'Jetbrains Mono', monospace`},
+  body: {value: `'Jetbrains Mono'`},
+  heading: {value: `'Jetbrains Mono'`},
 };
 
 const config = defineConfig({
