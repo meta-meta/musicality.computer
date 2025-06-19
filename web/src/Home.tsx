@@ -44,7 +44,7 @@ function ChordFam({
       justifyContent="space-between"
       gap={2}
     >
-      <Code fontFamily="Jetbrains Mono" fontSize="lg">{integerName}</Code>
+      <Code fontSize="lg">{integerName}</Code>
       {classicNames.map((cn, i) => (
         <Code
           fontFamily="Bravura"
@@ -89,8 +89,9 @@ export function Home() {
       >
         <GridItem>
           <Card.Root h="full">
-            <Card.Header>A place for refactoring music.</Card.Header>
-            <Card.Body>
+            <Card.Header fontSize="lg">A place for refactoring music.</Card.Header>
+
+            <Card.Body gap={2}>
               <Text>Born out of&nbsp;
                 <ExternalLink
                   href="https://meta-meta.github.io/aframe-musicality/"
@@ -98,10 +99,11 @@ export function Home() {
                 />
               </Text>
 
-              <br/>
-              <br/>
+              <Text>
+                Promoting a dozenal spelling of 12EDO pitch-classes: <Code fontSize="md">0 1 2 3 4 5 6 7 8 9 ૪ Ɛ</Code>
+              </Text>
 
-              <Card.Root h="full">
+              <Card.Root>
                 <Card.Header>Musicality VR</Card.Header>
                 <Card.Body>
                   <Link textDecoration="underline" href="vr" display="block">
