@@ -5,9 +5,11 @@ import {ChakraProvider} from '@chakra-ui/react';
 import {system} from './theme.ts';
 import '@fontsource/bravura/400.css';
 import '@fontsource/bravura-text/400.css'; // FIXME: this is not working
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/500.css';
-import '@fontsource/jetbrains-mono/700.css';
+// import '@fontsource/jetbrains-mono/latin-ext-400.css';
+import './JetbrainsMono/400.css';
+// import '@fontsource/jetbrains-mono/400.css';
+// import '@fontsource/jetbrains-mono/500.css';
+// import '@fontsource/jetbrains-mono/700.css';
 import {ColorModeProvider} from './components/chakra-ui/color-mode';
 import App from './App.tsx';
 import {Provider} from 'react-redux';

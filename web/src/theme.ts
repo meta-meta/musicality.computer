@@ -19,6 +19,7 @@ const colors = {
 const fonts = {
   body: {value: `'Jetbrains Mono'`},
   heading: {value: `'Jetbrains Mono'`},
+  mono: {value: `'Jetbrains Mono'`},
 };
 
 const config = defineConfig({
