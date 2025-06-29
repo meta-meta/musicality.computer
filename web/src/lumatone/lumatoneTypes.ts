@@ -36,3 +36,20 @@ export type CoordCartesian = { x: number; y: number };
 export type CoordOffset = { x: number; y: number };
 
 export type CoordAxial = { q: number; r: number };
+
+
+
+
+
+export interface LumatoneChordData {
+  fromIntervals?: number[][];
+  fromRootInterval?: number[];
+  root: number,
+  intervals: number[][],
+  intervalNextRoot?: number[],
+}
+
+export interface LumatoneLyricsAndChordsGroup {
+  chords: LumatoneChordData[],
+  lyrics?: string,
+}

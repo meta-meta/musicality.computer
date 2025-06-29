@@ -31,3 +31,18 @@ export const getNoteColorHsl = (n: number): Color => {
   //   ],
   // });
 };
+
+export const colorGrey = new Color({
+  space: 'okhsl',
+  coords: [
+    0,0,0.5
+  ],
+});
+
+export const colorClear = new Color({
+  space: 'okhsl',
+  coords: [
+    0,0,0,
+  ],
+  alpha: 0,
+});
