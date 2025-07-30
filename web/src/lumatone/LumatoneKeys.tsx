@@ -23,6 +23,7 @@ const LumatoneKeys = memo(
           .map(y => {
             const isOdd = y % 2 === 1;
             const rowStartX = lumatoneRowStarts[y];
+            const rowEndX = rowStartX + lumatoneRowLengths[y];
 
             return (
               <Fragment key={y}>
@@ -41,7 +42,7 @@ const LumatoneKeys = memo(
                         />)),
 
                   // Lumatone Keys
-                  ..._.range(rowStartX, lumatoneRowLengths[y] + rowStartX)
+                  ..._.range(rowStartX, rowEndX)
                     .map(x => {
                       return (
                         <LumatoneKeyWrapper

@@ -17,7 +17,7 @@ const oddrToAxial = ({x, y}: CoordOffset) => {
   return {q, r};
 };
 
-const convertCoords = (key: CoordOffset, offset: CoordOffset) => {
+export const convertCoords = (key: CoordOffset, offset: CoordOffset) => {
   const oddRowOffset = offset.y % 2 !== 0;
   const offsetFactor = oddRowOffset ? 1 : 0;
   const {q: qKey, r: rKey} = oddrToAxial({x: key.x, y: -key.y});
@@ -71,6 +71,20 @@ const wikiHayden = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
     });
   };
 
+const wikiHaydenMirror = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
+  (key: CoordOffset): LumatoneMapping => {
+    const {q, r} = convertCoords(key, offset);
+    const startingNote = 60;
+    const noteNum = startingNote + q * -2 + r * 5;
+
+    return ({
+      channel,
+      keyColor: getNoteColorHsl(noteNum),
+      keyType: KeyType.NoteOnOff,
+      noteNum: Math.max(Math.min(noteNum, 127), 0) as Midi7Bit,
+    });
+  };
+
 export const mappingFns: {
   [index: string]: (channel: MidiChannel, offset?: CoordOffset) => (key: CoordOffset) => LumatoneMapping
 } = {
@@ -78,6 +92,7 @@ export const mappingFns: {
   'harmonicTable': harmonicTable,
   'janko': janko,
   'wikiHayden': wikiHayden,
+  'wikiHaydenMirror': wikiHaydenMirror,
 };
 
 export const mappingFnOptions = createListCollection({
@@ -85,6 +100,7 @@ export const mappingFnOptions = createListCollection({
     {label: 'Harmonic Table', value: 'harmonicTable', group: '» Note Layouts'},
     {label: 'Jankó', value: 'janko', group: '» Note Layouts'},
     {label: 'Wiki-Hayden', value: 'wikiHayden', group: '» Note Layouts'},
+    {label: 'Wiki-Hayden mirror', value: 'wikiHaydenMirror', group: '» Note Layouts'},
   ],
 });
 

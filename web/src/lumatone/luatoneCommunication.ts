@@ -1,5 +1,6 @@
 import {Input, Output} from 'webmidi';
 import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
+import Color from 'colorjs.io';
 
 /* Derived from
 https://github.com/vsicurella/TerpstraSysEx.2014
@@ -12,13 +13,16 @@ https://github.com/vsicurella/TerpstraSysEx.2014
 
 
 export const setColor = (deviceIn: Input, deviceOut: Output, keyPosition: LumatoneKeyPosition, mapping: LumatoneMapping) =>
+  setColorRgb(deviceIn, deviceOut, keyPosition, mapping.keyColor.clone().to('srgb'));
+
+export const setColorRgb = (deviceIn: Input, deviceOut: Output, keyPosition: LumatoneKeyPosition, colorRgb: Color) =>
   new Promise<void>((res) => {
     const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
     const setKeyColor = 0x01;
     const normTo255 = (norm: number) =>
       Math.max(0, Math.min(255, Math.floor(norm * 255)));
 
-    const rgb = mapping.keyColor.clone().to('srgb');
+    const rgb = colorRgb;
 
     const r = normTo255(rgb.r);
     const g = normTo255(rgb.g);
