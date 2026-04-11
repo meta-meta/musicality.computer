@@ -92,6 +92,57 @@ export function VR({pageTitle = 'Musicality VR'}) {
       >
 
         <YouTubeClip
+          title="Mixed Reality Music in Minnehaha Park"
+          description=""
+          src="https://www.youtube.com/embed/KR2Jw_QdUd0?si=FFL-Y53mXboGpcTN&amp;clip=UgkxxN5xbw-y8S46k_CKAwnlIdG0O4PfiNyM&amp;clipt=EPftEBjXwhQ"
+          links={[
+            {
+              label: 'Minnehaha Park',
+              href: 'https://en.wikipedia.org/wiki/Minnehaha_Park_(Minneapolis)',
+              icon: <FaWikipediaW/>,
+            },
+            {
+              label: 'Mixed Reality',
+              href: 'https://en.wikipedia.org/wiki/Augmented_reality',
+              icon: <FaWikipediaW/>,
+            },
+            {
+              label: 'Just Intonation',
+              href: 'https://en.wikipedia.org/wiki/Just_intonation',
+              icon: <FaWikipediaW/>,
+            },
+          ]}
+        />
+
+        <YouTubeClip
+          title="EJI polyrhythmic ambient in Joshua Tree National Park"
+          description=""
+          src="https://www.youtube.com/embed/ssTXCL8vB5Q?si=X28UTzHz_FJrv58j&amp;clip=UgkxLDzs0Iybi_KVPkH3yCY4VtbDOUPOBXFC&amp;clipt=EInBGxir1x4"
+          links={[
+            {
+              label: 'Joshua Tree National Park',
+              href: 'https://en.wikipedia.org/wiki/Joshua_Tree_National_Park',
+              icon: <FaWikipediaW/>,
+            },
+            {
+              label: 'Mixed Reality',
+              href: 'https://en.wikipedia.org/wiki/Augmented_reality',
+              icon: <FaWikipediaW/>,
+            },
+            {
+              label: 'Just Intonation',
+              href: 'https://en.wikipedia.org/wiki/Just_intonation',
+              icon: <FaWikipediaW/>,
+            },
+            {
+              label: 'Polyrhythm',
+              href: 'https://en.wikipedia.org/wiki/Polyrhythm',
+              icon: <FaWikipediaW/>,
+            },
+          ]}
+        />
+
+        <YouTubeClip
           title="An afternoon of VR music 10/27 12:30"
           description="A performance of semi-improvised VR music and visuals (minimal/ambient/drone/EJI/ASMR/noise). After the performance, a limited number of volunteers may take turns playing in the virtual environment."
           src="https://www.youtube.com/embed/vf37vyIq6P8?si=a9sek7dexokiiaLm&amp;clip=UgkxHqMHxrwaf1gJlQiptMwP29pPtYWrYsrG&amp;clipt=EAAY4NQD"
