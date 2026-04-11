@@ -5,6 +5,8 @@ import {useAppSelector} from '../redux/hooks.ts';
 import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
 import {NoteMessageEvent, WebMidi} from 'webmidi';
 import {changePush, setColor, setColorRgb, setNote} from './luatoneCommunication.ts';
+import _ from 'lodash-es';
+import {current} from '@reduxjs/toolkit';
 
 
 export interface LumatoneKeySyncProps {
@@ -19,10 +21,14 @@ function LumatoneKeySync({
   const lumatoneIn = useAppSelector(s => s.midi.lumatoneIn);
   const lumatoneOut = useAppSelector(s => s.midi.lumatoneOut);
 
+  const isSomeLayerEditing = useRef(false);
+  const timeoutIdIsMapped = useRef(-1);
   const timeoutId = useRef(-1);
   const velAtNoteOn = useRef(0);
   const isMapped = useRef(false);
 
+  const layers = useAppSelector(s => s.lumatoneEditor.layers);
+  isSomeLayerEditing.current = _.some(layers, l => l.isEditing);
 
   useEffect(() => {
     if (!lumatoneIn || !lumatoneOut) return;
@@ -34,12 +40,8 @@ function LumatoneKeySync({
       isMapped.current = false;
       clearTimeout(timeoutId.current);
 
-      await Promise.all([
-        changePush(() => setColor(deviceIn, deviceOut, keyPosition, mapping)),
-        changePush(() => setNote(deviceIn, deviceOut, keyPosition, mapping)),
-      ]);
-
-      isMapped.current = true;
+      changePush(() => setColor(deviceIn, deviceOut, keyPosition, mapping));
+      changePush(() => setNote(deviceIn, deviceOut, keyPosition, mapping));
     }
 
     map();
@@ -47,7 +49,7 @@ function LumatoneKeySync({
     const velToBrighness = (vel: number) => 0.5 + Math.max(0.3, vel / 255)
 
     const handleNoteOff = (e: NoteMessageEvent) => {
-      if (!isMapped.current) return; // ignore events while mapping FIXME: this doesn't work. something is sending a noteOff just after mapping
+      if (isSomeLayerEditing.current) return;
       const {dataBytes: [nPlayed]} = e;
 
 
@@ -74,7 +76,7 @@ function LumatoneKeySync({
     };
 
     const handleNoteOn = (e: NoteMessageEvent) => {
-      if (!isMapped.current) return; // ignore events while mapping
+      if (isSomeLayerEditing.current) return;
       const {dataBytes: [nPlayed, vPlayed]} = e;
 
       if (nPlayed === mapping.noteNum) {
@@ -92,11 +94,13 @@ function LumatoneKeySync({
 
     return () => {
       clearTimeout(timeoutId.current);
+      clearTimeout(timeoutIdIsMapped.current);
       deviceIn.removeListener('noteon', handleNoteOn);
       deviceIn.removeListener('noteoff', handleNoteOff);
     }
 
-  }, [lumatoneIn, lumatoneOut, keyPosition, mapping]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lumatoneIn, lumatoneOut, keyPosition, JSON.stringify(mapping)]); // stringify mapping because mapping.keyColor doesn't pass reference equality check
 
   return null;
 }
