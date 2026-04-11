@@ -60,7 +60,7 @@ const janko = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
 const wikiHayden = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
   (key: CoordOffset): LumatoneMapping => {
     const {q, r} = convertCoords(key, offset);
-    const startingNote = 60;
+    const startingNote = 96;
     const noteNum = startingNote + q * 2 + r * 7;
 
     return ({
@@ -74,7 +74,7 @@ const wikiHayden = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
 const wikiHaydenMirror = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
   (key: CoordOffset): LumatoneMapping => {
     const {q, r} = convertCoords(key, offset);
-    const startingNote = 60;
+    const startingNote = 96;
     const noteNum = startingNote + q * -2 + r * 5;
 
     return ({
