@@ -1,12 +1,11 @@
 // noinspection JSUnusedLocalSymbols
 
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef} from 'react';
 import {useAppSelector} from '../redux/hooks.ts';
 import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
 import {NoteMessageEvent, WebMidi} from 'webmidi';
 import {changePush, setColor, setColorRgb, setNote} from './luatoneCommunication.ts';
 import _ from 'lodash-es';
-import {current} from '@reduxjs/toolkit';
 
 
 export interface LumatoneKeySyncProps {
