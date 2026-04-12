@@ -95,7 +95,7 @@ function LumatoneLayerEdit({layerAssignment}: LumatoneLayerEditorProps) {
             <SelectContent>
               {mappingFnCategories.map((category) => (
                 <SelectItemGroup key={category.group} label={category.group}>
-                  {mappingFnOptions.items.map((item) => (
+                  {category.items.map((item) => (
                     <SelectItem item={item} key={item.value}>
                       {item.label}
                     </SelectItem>

@@ -124,7 +124,7 @@ export const mappingFns: {
 
 export const mappingFnOptions = createListCollection({
   items: [
-    {label: 'Chord Composer Controls', value: 'chordComposerButtons', group: '» CC Layouts'},
+    {label: 'Chord Composer Controls', value: 'chordComposerButtons', group: '» Command Layouts'},
     {label: 'Harmonic Table', value: 'harmonicTable', group: '» Note Layouts'},
     {label: 'Jankó', value: 'janko', group: '» Note Layouts'},
     {label: 'Wiki-Hayden', value: 'wikiHayden', group: '» Note Layouts'},
