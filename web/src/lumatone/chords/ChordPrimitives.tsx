@@ -87,6 +87,8 @@ export function ArrowFromToHex({
   const {colorMode} = useColorMode();
   const isLight = colorMode === 'light';
 
+  const strokeColor = isLight ? '#999' : '#fffa';
+
   return (
     <>
       <defs>
@@ -107,7 +109,7 @@ export function ArrowFromToHex({
         x2={x2}
         y2={y2}
         fill="none"
-        stroke={isLight ? '#000a' : '#fffa'}
+        stroke={strokeColor}
         strokeWidth={strokeWidth}
         {...others}
       />
@@ -120,7 +122,7 @@ export function ArrowFromToHex({
             x2={-3}
             y2={-2}
             fill="none"
-            stroke={toColor}
+            stroke={strokeColor}
             strokeWidth={strokeWidth * 0.75}
             {...others}
           />
@@ -130,7 +132,7 @@ export function ArrowFromToHex({
             x2={-3}
             y2={2}
             fill="none"
-            stroke={toColor}
+            stroke={strokeColor}
             strokeWidth={strokeWidth * 0.75}
             {...others}
           />

@@ -9,7 +9,7 @@ export const getNoteColorHsl = (n: number): Color => {
     coords: [
       28 + 360 * (((n * 5) % 12) / 12),
       0.95 - (oct > 0 ? oct * .1 : 0),
-      0.45 + (oct > 0 ? oct * .03 : oct * .12),
+      0.2 + (oct > 0 ? oct * .01 : oct * .12),
     ],
   });
 

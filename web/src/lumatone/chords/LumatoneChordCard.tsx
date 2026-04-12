@@ -84,7 +84,7 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
         textAlign="center"
         width="full"
       >
-        {toSymbol(root)}+{pcs}
+        {toSymbol(root)}{pcs.length ? '+' : ''}{pcs}
       </Heading>
 
       <svg height="100%" width="100%" viewBox="0 0 100 100">
@@ -128,7 +128,7 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
               />
 
               <text
-                fill="#000c"
+                fill={!isLight ? '#000c' : '#fffc'}
                 textAnchor="middle"
                 dominantBaseline="central"
                 style={{
@@ -141,7 +141,7 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
               </text>
 
               <text
-                fill="#0007"
+                fill={!isLight ? '#0007' : '#fff7'}
                 textAnchor="middle"
                 dominantBaseline="central"
                 style={{
@@ -161,7 +161,7 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
             from={arrowFrom}
             fromColor={getNoteColorHsl(fromNoteNum).range(isLight ? 'white' : 'black')(0.5).toString({format: 'hex'})}
             to={arrowTo}
-            toColor={isLight ? '#000' : '#fff'}
+            toColor={isLight ? '#666' : '#fff'}
           />
         )}
       </svg>
