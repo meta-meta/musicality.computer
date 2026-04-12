@@ -1,21 +1,30 @@
 import { configureStore } from '@reduxjs/toolkit'
 import {rootReducer} from './rootReducer.ts';
 import {LUMATONE_COMPOSITIONS_STORAGE_KEY} from './lumatoneChordComposerReducer.ts';
+import {MIDI_SELECTIONS_STORAGE_KEY} from './midiReducer.ts';
 
 export const store = configureStore({
   reducer: rootReducer,
 })
 
 let lastPersistedComposerState = '';
+let lastPersistedMidiSelections = '';
 store.subscribe(() => {
   if (typeof window === 'undefined') return;
 
   const {compositions, selectedCompositionId} = store.getState().lumatoneChordComposer;
-  const serialized = JSON.stringify({compositions, selectedCompositionId});
-  if (serialized === lastPersistedComposerState) return;
+  const serializedComposer = JSON.stringify({compositions, selectedCompositionId});
+  if (serializedComposer !== lastPersistedComposerState) {
+    window.localStorage.setItem(LUMATONE_COMPOSITIONS_STORAGE_KEY, serializedComposer);
+    lastPersistedComposerState = serializedComposer;
+  }
 
-  window.localStorage.setItem(LUMATONE_COMPOSITIONS_STORAGE_KEY, serialized);
-  lastPersistedComposerState = serialized;
+  const {lumatoneIn, lumatoneOut} = store.getState().midi;
+  const serializedMidiSelections = JSON.stringify({lumatoneIn, lumatoneOut});
+  if (serializedMidiSelections !== lastPersistedMidiSelections) {
+    window.localStorage.setItem(MIDI_SELECTIONS_STORAGE_KEY, serializedMidiSelections);
+    lastPersistedMidiSelections = serializedMidiSelections;
+  }
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

@@ -2,6 +2,7 @@
 
 import {useEffect, useRef} from 'react';
 import {useAppSelector} from '../redux/hooks.ts';
+import {MidiStatus} from '../redux/midiReducer.ts';
 import {LumatoneKeyPosition, LumatoneMapping} from './lumatoneTypes.ts';
 import {NoteMessageEvent, WebMidi} from 'webmidi';
 import {changePush, setColor, setColorRgb, setNote} from './luatoneCommunication.ts';
@@ -19,6 +20,7 @@ function LumatoneKeySync({
 }: LumatoneKeySyncProps) {
   const lumatoneIn = useAppSelector(s => s.midi.lumatoneIn);
   const lumatoneOut = useAppSelector(s => s.midi.lumatoneOut);
+  const midiStatus = useAppSelector(s => s.midi.midiStatus);
 
   const isSomeLayerEditing = useRef(false);
   const timeoutIdIsMapped = useRef(-1);
@@ -30,6 +32,7 @@ function LumatoneKeySync({
   isSomeLayerEditing.current = _.some(layers, l => l.isEditing);
 
   useEffect(() => {
+    if (midiStatus !== MidiStatus.Enabled || !WebMidi.enabled) return;
     if (!lumatoneIn || !lumatoneOut) return;
     const deviceIn = WebMidi.getInputById(lumatoneIn);
     const deviceOut = WebMidi.getOutputById(lumatoneOut);
@@ -99,7 +102,7 @@ function LumatoneKeySync({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lumatoneIn, lumatoneOut, keyPosition, JSON.stringify(mapping)]); // stringify mapping because mapping.keyColor doesn't pass reference equality check
+  }, [midiStatus, lumatoneIn, lumatoneOut, keyPosition, JSON.stringify(mapping)]); // stringify mapping because mapping.keyColor doesn't pass reference equality check
 
   return null;
 }

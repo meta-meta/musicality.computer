@@ -1,6 +1,8 @@
 import type {PayloadAction} from '@reduxjs/toolkit';
 import {createSlice} from '@reduxjs/toolkit';
 
+export const MIDI_SELECTIONS_STORAGE_KEY = 'midi.selections.v1';
+
 export enum MidiStatus {
   Idle,
   Initializing,
@@ -19,12 +21,34 @@ interface State {
   outputs: { label: string, value: string, group: string }[];
 }
 
+type PersistedMidiSelections = {
+  lumatoneIn?: string | null;
+  lumatoneOut?: string | null;
+};
+
+function loadPersistedMidiSelections(): PersistedMidiSelections {
+  if (typeof window === 'undefined') return {};
+  const raw = window.localStorage.getItem(MIDI_SELECTIONS_STORAGE_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as PersistedMidiSelections;
+    return {
+      lumatoneIn: parsed.lumatoneIn ?? null,
+      lumatoneOut: parsed.lumatoneOut ?? null,
+    };
+  } catch {
+    return {};
+  }
+}
+
+const persistedSelections = loadPersistedMidiSelections();
+
 // Define the initial state using that type
 const initialState: State = {
   beatClockIn: null,
   inputs: [],
-  lumatoneIn: null,
-  lumatoneOut: null,
+  lumatoneIn: persistedSelections.lumatoneIn ?? null,
+  lumatoneOut: persistedSelections.lumatoneOut ?? null,
   midiStatus: MidiStatus.Idle,
   outputs: [],
 };
