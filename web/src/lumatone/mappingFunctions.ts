@@ -1,5 +1,5 @@
 import {CoordOffset, KeyType, LumatoneMapping, Midi7Bit, MidiChannel} from './lumatoneTypes.ts';
-import {getNoteColorHsl} from './colors.ts';
+import {getColorHsl, getNoteColorHsl} from './colors.ts';
 import {createListCollection} from '@chakra-ui/react';
 import Color from 'colorjs.io';
 
@@ -85,10 +85,37 @@ const wikiHaydenMirror = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 
     });
   };
 
+export const chordComposerButtonsMappings = {
+  selectPrevious: {color: getColorHsl(120, 0.4, 0.2), note: 1, q: 1, r: -1},
+  selectNext: {color: getColorHsl(20, 0.4, 0.2), note: 2, q: 2, r: -1},
+  insertBlankBeforeSelected: {color: getColorHsl(240, 0.7, 0.18), note: 5, q: 0, r: 0},
+  addReplaceSelected: {color: getColorHsl(120, 1, 0.2), note: 3, q: 1, r: 0},
+  deleteSelected: {color: getColorHsl(20, 1, 0.1), note: 4, q: 2, r: -2},
+};
+
+const chordComposerButtons = (channel: MidiChannel, offset: CoordOffset = {x: 0, y: 0}) =>
+  (key: CoordOffset): LumatoneMapping => {
+    const {q, r} = convertCoords(key, offset);
+
+    const mappings = Object.values(chordComposerButtonsMappings);
+
+    const mapping = mappings.find(m => m.q === q && m.r === r);
+
+    return mapping
+      ? ({
+        channel: 16,
+        keyColor: mapping.color,
+        keyType: KeyType.NoteOnOff,
+        noteNum: mapping.note as Midi7Bit,
+      })
+      : disabledMapping;
+  };
+
 export const mappingFns: {
   [index: string]: (channel: MidiChannel, offset?: CoordOffset) => (key: CoordOffset) => LumatoneMapping
 } = {
   'unmapped': () => () => disabledMapping,
+  'chordComposerButtons': chordComposerButtons,
   'harmonicTable': harmonicTable,
   'janko': janko,
   'wikiHayden': wikiHayden,
@@ -97,6 +124,7 @@ export const mappingFns: {
 
 export const mappingFnOptions = createListCollection({
   items: [
+    {label: 'Chord Composer Controls', value: 'chordComposerButtons', group: '» CC Layouts'},
     {label: 'Harmonic Table', value: 'harmonicTable', group: '» Note Layouts'},
     {label: 'Jankó', value: 'janko', group: '» Note Layouts'},
     {label: 'Wiki-Hayden', value: 'wikiHayden', group: '» Note Layouts'},

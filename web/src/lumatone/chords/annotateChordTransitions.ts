@@ -1,6 +1,6 @@
 import type {LumatoneLyricsAndChordsGroup} from '../lumatoneTypes.ts';
 
-export function annotateChordTransitions(groups: LumatoneLyricsAndChordsGroup[]) {
+export function annotateChordTransitions(groups: LumatoneLyricsAndChordsGroup[]) : LumatoneLyricsAndChordsGroup[] {
   let prevChordIntervals: number[][] = [];
   let prevChordIntervalNextRoot = [0, 0];
 

@@ -46,3 +46,5 @@ export const colorClear = new Color({
   ],
   alpha: 0,
 });
+
+export const getColorHsl = (h: number, s: number, l: number): Color => new Color({space: 'okhsl', coords: [h, s, l]});

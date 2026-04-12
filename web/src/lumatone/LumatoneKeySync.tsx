@@ -88,8 +88,8 @@ function LumatoneKeySync({
       }
     };
 
-    deviceIn.addListener('noteon', handleNoteOn);
-    deviceIn.addListener('noteoff', handleNoteOff);
+    deviceIn.addListener('noteon', handleNoteOn, {channels: _.range(1, 16)});
+    deviceIn.addListener('noteoff', handleNoteOff, {channels: _.range(1, 16)});
 
     return () => {
       clearTimeout(timeoutId.current);
