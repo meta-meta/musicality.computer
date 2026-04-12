@@ -5,6 +5,8 @@ import {MidiChannel} from '../lumatone/lumatoneTypes.ts';
 import * as _ from 'lodash-es';
 import {ColorConstructor} from 'colorjs.io';
 
+export const LUMATONE_EDITOR_LAYERS_STORAGE_KEY = 'lumatoneEditor.layers.v1';
+
 
 export type LayerAssignment = {
   id: string,
@@ -35,10 +37,26 @@ interface State {
   selectionTool: SelectionTool;
 }
 
+type PersistedLumatoneEditorState = {
+  layers?: { [index: string]: LayerAssignment };
+};
+
+function loadPersistedLayers(): { [index: string]: LayerAssignment } {
+  if (typeof window === 'undefined') return {};
+  const raw = window.localStorage.getItem(LUMATONE_EDITOR_LAYERS_STORAGE_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as PersistedLumatoneEditorState;
+    return parsed.layers ?? {};
+  } catch {
+    return {};
+  }
+}
+
 // Define the initial state using that type
 const initialState: State = {
   forceUpdate: false,
-  layers: {},
+  layers: loadPersistedLayers(),
   selectionTool: {
     layerAssignmentId: '',
     type: SelectionToolType.Box,

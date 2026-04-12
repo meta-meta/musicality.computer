@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import {rootReducer} from './rootReducer.ts';
 import {LUMATONE_COMPOSITIONS_STORAGE_KEY} from './lumatoneChordComposerReducer.ts';
+import {LUMATONE_EDITOR_LAYERS_STORAGE_KEY} from './lumatoneEditorReducer.ts';
 import {MIDI_SELECTIONS_STORAGE_KEY} from './midiReducer.ts';
 
 export const store = configureStore({
@@ -8,6 +9,7 @@ export const store = configureStore({
 })
 
 let lastPersistedComposerState = '';
+let lastPersistedEditorLayers = '';
 let lastPersistedMidiSelections = '';
 store.subscribe(() => {
   if (typeof window === 'undefined') return;
@@ -17,6 +19,13 @@ store.subscribe(() => {
   if (serializedComposer !== lastPersistedComposerState) {
     window.localStorage.setItem(LUMATONE_COMPOSITIONS_STORAGE_KEY, serializedComposer);
     lastPersistedComposerState = serializedComposer;
+  }
+
+  const {layers} = store.getState().lumatoneEditor;
+  const serializedEditorLayers = JSON.stringify({layers});
+  if (serializedEditorLayers !== lastPersistedEditorLayers) {
+    window.localStorage.setItem(LUMATONE_EDITOR_LAYERS_STORAGE_KEY, serializedEditorLayers);
+    lastPersistedEditorLayers = serializedEditorLayers;
   }
 
   const {lumatoneIn, lumatoneOut} = store.getState().midi;
