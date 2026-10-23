@@ -6,10 +6,13 @@ import {BrowserRouter, Route, Routes} from 'react-router-dom';
 import {Home} from "./Home.tsx";
 import {VR} from "./VR.tsx";
 import {Theremin} from './Theremin.tsx';
+import {Lumatone} from './Lumatone.tsx';
+import {useMidiInitialization} from './useMidiInitialization.ts';
 
 function App() {
 
   useTitle('musicality.computer')
+  useMidiInitialization();
 
   return (
     <>
@@ -22,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/vr" element={<VR/>}/>
+          <Route path="/lumatone" element={<Lumatone/>}/>
           <Route path="/theremin/*" element={<Theremin/>}/>
           {/*<Route path="/mm/:panX?/:panY?/:zoom?" element={<MandelbrotMuse/>}/>*/}
         </Routes>

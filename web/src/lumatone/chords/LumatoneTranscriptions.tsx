@@ -2,15 +2,17 @@ import {Code, Flex, Heading, Stack} from '@chakra-ui/react';
 import {useMemo, useState} from 'react';
 import {NativeSelectField, NativeSelectRoot} from '../../components/chakra-ui/native-select.tsx';
 import sWonderful from '../chordCharts/sWonderful.ts';
+import stellaByStarlight from '../chordCharts/stellaByStarlight.ts';
 import thisWillBeOurYear from '../chordCharts/thisWillBeOurYear.ts';
 import {annotateChordTransitions} from './annotateChordTransitions.ts';
 import {LumatoneChordCard} from './LumatoneChordCard.tsx';
 
-type TranscriptionId = 'thisWillBeOurYear' | 'sWonderful';
+type TranscriptionId = 'thisWillBeOurYear' | 'sWonderful' | 'stellaByStarlight';
 
 const transcriptionOptions: {label: string; value: TranscriptionId}[] = [
   {label: 'This Will Be Our Year', value: 'thisWillBeOurYear'},
   {label: "S'Wonderful", value: 'sWonderful'},
+  {label: 'Stella by Starlight', value: 'stellaByStarlight'},
 ];
 
 export function LumatoneTranscriptions() {
@@ -18,6 +20,9 @@ export function LumatoneTranscriptions() {
   const transpose = 57;
 
   const chordGroups = useMemo(() => {
+    if (selectedTranscription === 'stellaByStarlight') {
+      return annotateChordTransitions(stellaByStarlight(transpose));
+    }
     if (selectedTranscription === 'sWonderful') {
       return annotateChordTransitions(sWonderful(transpose));
     }

@@ -1,14 +1,11 @@
-import {Button, Card, Flex, Grid, GridItem, Text} from '@chakra-ui/react';
+import {Button, Card, Grid, GridItem} from '@chakra-ui/react';
 import LumatoneBoard from './LumatoneBoard.tsx';
 import * as _ from 'lodash-es';
-import MidiDeviceSelect, {SelectionType} from '../MidiDeviceSelect.tsx';
-import {lumatoneInSet, lumatoneOutSet} from '../redux/midiReducer.ts';
 import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';
 import {layerAddOrUpdate, LayerAssignment, selectionToolSetLayerId} from '../redux/lumatoneEditorReducer.ts';
 import LumatoneLayerEdit from './LumatoneLayerEdit.tsx';
 import LumatoneLayerView from './LumatoneLayerView.tsx';
 import {getNoteColorHsl} from './colors.ts';
-import {Field} from '../components/chakra-ui/field.tsx';
 
 
 /*
@@ -30,32 +27,7 @@ function LumatoneEditor() {
 
   return (
     <Card.Root>
-      <Card.Header>
-        <Flex gap={4}>
-          <Text>Lumatone</Text>
-
-          <Field
-            label="Lumatone In"
-          >
-            <MidiDeviceSelect
-              selectionType={SelectionType.Input}
-              onSelect={val => dispatch(lumatoneInSet(val))}
-              value={useAppSelector(s => s.midi.lumatoneIn)}
-            />
-          </Field>
-
-          <Field
-            label="Lumatone Out"
-          >
-            <MidiDeviceSelect
-              selectionType={SelectionType.Output}
-              onSelect={val => dispatch(lumatoneOutSet(val))}
-              value={useAppSelector(s => s.midi.lumatoneOut)}
-            />
-          </Field>
-        </Flex>
-
-      </Card.Header>
+      <Card.Header>Lumatone</Card.Header>
 
       <Card.Body gap={2}>
         <LumatoneBoard/>

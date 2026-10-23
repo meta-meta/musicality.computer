@@ -13,14 +13,13 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 import {NotePicker} from './NotePicker.tsx';
-import LumatoneEditor from './lumatone/LumatoneEditor.tsx';
 import MidiConfig from './MidiConfig.tsx';
 import ExternalLink from './components/ExternalLink.tsx';
 import {FlashCards} from './FlashCards.tsx';
 import {FaWikipediaW} from 'react-icons/fa6';
 import {ReactNode} from 'react';
 import {UkeChords} from './UkeChords.tsx';
-import {LumatoneChords} from './LumatoneChords.tsx';
+import {Link as RouterLink} from 'react-router-dom';
 
 
 type ChordFamProps = {
@@ -221,22 +220,16 @@ export function Home() {
           </Card.Root>
         </GridItem>
 
-        {columns > 1 && (
-          <GridItem colSpan={columns}>
-            <Card.Root h="full">
-              <Card.Header>Lumatone Chords</Card.Header>
-              <Card.Body>
-                <LumatoneChords/>
-              </Card.Body>
-            </Card.Root>
-          </GridItem>
-        )}
-
-        {columns > 1 && (
-          <GridItem colSpan={columns}>
-            <LumatoneEditor/>
-          </GridItem>
-        )}
+        <GridItem>
+          <Card.Root h="full">
+            <Card.Header>Lumatone</Card.Header>
+            <Card.Body>
+              <Link asChild textDecoration="underline">
+                <RouterLink to="/lumatone">Open MIDI editor and chord charts</RouterLink>
+              </Link>
+            </Card.Body>
+          </Card.Root>
+        </GridItem>
 
       </Grid>
     </Stack>

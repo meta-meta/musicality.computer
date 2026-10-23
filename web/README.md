@@ -1,5 +1,10 @@
 # musicality.computer web
 
+The Lumatone MIDI editor, transcriptions, and chord composer are available at
+`/lumatone`, linked from the home page. MIDI device configuration is available on
+both pages, with collapsible configuration and editor sections on `/lumatone`.
+Device selection lives in MIDI configuration. MIDI initializes across routes so
+the Lumatone page can be opened directly.
 
 ## React + TypeScript + Vite
 

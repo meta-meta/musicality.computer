@@ -1,16 +1,11 @@
 import {Badge, Card, Flex, Text} from '@chakra-ui/react';
 import {SiMidi} from 'react-icons/si';
-import {useEffect} from 'react';
-import {Input, Output, WebMidi} from 'webmidi';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {
   beatClockInSet,
-  inputsSet,
   lumatoneInSet,
   lumatoneOutSet,
   MidiStatus,
-  midiStatusSet,
-  outputsSet,
 } from './redux/midiReducer.ts';
 import {ReactIcon} from './components/chakra-ui/reactIcon.tsx';
 import MidiDeviceSelect, {SelectionType} from './MidiDeviceSelect.tsx';
@@ -22,36 +17,6 @@ import {FaYoutube} from 'react-icons/fa6';
 function MidiConfig() {
 
   const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    const initMidi = async () => {
-      dispatch(midiStatusSet(MidiStatus.Initializing));
-
-      try {
-        await WebMidi.enable({sysex: true});
-
-      } catch (error) {
-        dispatch(midiStatusSet(MidiStatus.Unauthorized));
-        return;
-      }
-
-      const {inputs, outputs} = WebMidi;
-
-      const options = (devices: Input[] | Output[]) => devices.map(i => ({
-        label: i.name,
-        value: i.id,
-        group: (i.name.startsWith('LM-') || i.name === 'BeatClock') ? '» LoopMIDI' : '» PhysicalDevices',
-      }));
-
-      dispatch(inputsSet(options(inputs)));
-      dispatch(outputsSet(options(outputs)));
-      dispatch(midiStatusSet(inputs.length + outputs.length > 0
-        ? MidiStatus.Enabled
-        : MidiStatus.NoDevicesFound));
-
-    };
-    initMidi();
-  }, [dispatch]);
 
   const status = useAppSelector(s => s.midi.midiStatus);
   const statusColor = status == MidiStatus.Enabled
