@@ -18,6 +18,9 @@ export function Lumatone() {
         <RouterLink to="/">musicality.computer</RouterLink>
       </Link>
       <Heading as="h1" color="brand.900">Lumatone</Heading>
+      <Link asChild textDecoration="underline" alignSelf="start">
+        <RouterLink to="/lumatone/xr">Explore Stella in 3D / WebXR</RouterLink>
+      </Link>
 
       <AccordionRoot
         multiple
