@@ -16,10 +16,37 @@ import {NotePicker} from './NotePicker.tsx';
 import MidiConfig from './MidiConfig.tsx';
 import ExternalLink from './components/ExternalLink.tsx';
 import {FlashCards} from './FlashCards.tsx';
+import {EarTrainingCircle} from './EarTrainingCircle.tsx';
+import {CircleInterval} from './IntervalCirclePicker.tsx';
 import {FaWikipediaW} from 'react-icons/fa6';
 import {ReactNode} from 'react';
 import {UkeChords} from './UkeChords.tsx';
 import {Link as RouterLink} from 'react-router-dom';
+
+const ji = (numerator: number, denominator: number, labels: string[]): CircleInterval => ({
+  point: Math.log2(numerator / denominator) % 1,
+  labels,
+});
+
+const justIntonationIntervals: CircleInterval[] = [
+  ji(1, 1, ['unison', '1:1']),
+  ji(16, 15, ['just minor second', '16:15']),
+  ji(10, 9, ['small whole tone', '10:9']),
+  ji(9, 8, ['major whole tone', '9:8']),
+  ji(7, 6, ['septimal minor third', '7:6']),
+  ji(6, 5, ['just minor third', '6:5']),
+  ji(5, 4, ['just major third', '5:4']),
+  ji(4, 3, ['perfect fourth', '4:3']),
+  ji(7, 5, ['septimal tritone', '7:5']),
+  ji(45, 32, ['augmented fourth', '45:32']),
+  ji(64, 45, ['diminished fifth', '64:45']),
+  ji(3, 2, ['perfect fifth', '3:2']),
+  ji(8, 5, ['just minor sixth', '8:5']),
+  ji(5, 3, ['just major sixth', '5:3']),
+  ji(7, 4, ['harmonic seventh', '7:4']),
+  ji(9, 5, ['just minor seventh', '9:5']),
+  ji(15, 8, ['just major seventh', '15:8']),
+];
 
 
 type ChordFamProps = {
@@ -145,6 +172,15 @@ export function Home() {
             <Card.Header>Flash Cards</Card.Header>
             <Card.Body>
               <FlashCards/>
+            </Card.Body>
+          </Card.Root>
+        </GridItem>
+
+        <GridItem>
+          <Card.Root h="full">
+            <Card.Header>Ear Training Circle</Card.Header>
+            <Card.Body>
+              <EarTrainingCircle intervals={justIntonationIntervals}/>
             </Card.Body>
           </Card.Root>
         </GridItem>
