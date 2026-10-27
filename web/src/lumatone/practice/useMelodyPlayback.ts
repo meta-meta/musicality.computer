@@ -16,6 +16,8 @@ type Follower = {context: AudioContext; harmonyGain: GainNode; state: FollowStat
 
 export function useMelodyPlayback(options: Options) {
   const [running, setRunning] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const pausedAt = useRef<number | null>(null);
   const [position, setPosition] = useState<Position>({beat: START, pass: 0, entryBeat: START, endBeat: END});
   const savedPosition = useRef(position);
   const [pendingBeat, setPendingBeat] = useState<number | null>(null);
@@ -41,6 +43,8 @@ export function useMelodyPlayback(options: Options) {
     if (current) current.harmonyGain.gain.setTargetAtTime(options.harmonySound ? options.harmonyVolume / 100 : 0, current.context.currentTime, 0.025);
   }, [options.harmonySound, options.harmonyVolume]);
   const release = useCallback(() => {
+    pausedAt.current = null;
+    setPaused(false);
     const following = follower.current;
     follower.current = undefined;
     if (following) {
@@ -71,6 +75,7 @@ export function useMelodyPlayback(options: Options) {
   }, [stop]);
 
   const positionAt = useCallback((time: number) => {
+    if (pausedAt.current !== null) return null;
     if (follower.current) return {...follower.current.state, next: null};
     const current = transport.current;
     if (!current || current.context.state !== 'running') return null;
@@ -78,8 +83,34 @@ export function useMelodyPlayback(options: Options) {
     return positionAtTime(current.segments, audioTime, 60 / currentOptions.current.bpm);
   }, []);
 
+  const pause = () => {
+    const current = transport.current ?? follower.current;
+    if (!current || pausedAt.current !== null) return;
+    const position = positionAt(performance.now());
+    if (position) publish(position);
+    pausedAt.current = performance.now() / 1000;
+    setPaused(true); setRunning(false);
+    void current.context.suspend().catch(reason => {stop(); setError(String(reason));});
+  };
+  const resume = async () => {
+    const current = transport.current ?? follower.current;
+    if (!current || pausedAt.current === null) return;
+    try {
+      await current.context.resume();
+      if (current !== (transport.current ?? follower.current) || pausedAt.current === null) return;
+      if (follower.current) follower.current.state.anchorTime += performance.now() / 1000 - pausedAt.current;
+      pausedAt.current = null;
+      setPaused(false); setRunning(true);
+    } catch (reason) {stop(); setError(String(reason));}
+  };
+
   const seek = (requested: number) => {
-    const beat = Math.max(START, Math.min(END - 1e-6, requested));
+    const beat = Math.max(START, Math.min(END, requested));
+    if (pausedAt.current !== null || beat === END) {
+      stop();
+      publish({beat, pass: savedPosition.current.pass + 1, entryBeat: beat, endBeat: END});
+      return;
+    }
     const following = follower.current;
     if (following) {
       const settings = currentOptions.current;
@@ -111,6 +142,7 @@ export function useMelodyPlayback(options: Options) {
 
 
   const followPitch = (note: number, cents: number, time: number, articulation: number) => {
+    if (pausedAt.current !== null) return null;
     const current = follower.current;
     if (!current || time / 1000 < current.state.anchorTime) return null;
     const settings = currentOptions.current;
@@ -157,6 +189,7 @@ export function useMelodyPlayback(options: Options) {
         setRunning(true);
         const animateFollow = () => {
           if (follower.current !== following) return;
+          if (pausedAt.current !== null) {following.frame = requestAnimationFrame(animateFollow); return;}
           const settings = currentOptions.current;
           const previousPass = following.state.pass;
           following.state = tickFollower(following.state, performance.now() / 1000, settings.bpm,
@@ -204,6 +237,7 @@ export function useMelodyPlayback(options: Options) {
       publish({beat: from - 4, pass: savedPosition.current.pass + 1, entryBeat: from, endBeat});
       setRunning(true);
       current.schedule = () => {
+        if (pausedAt.current !== null) return;
         const settings = currentOptions.current;
         const now = context.currentTime;
         const horizon = now + 0.25;
@@ -253,6 +287,7 @@ export function useMelodyPlayback(options: Options) {
       };
       const animate = () => {
         if (transport.current !== current) return;
+        if (pausedAt.current !== null) {current.frame = requestAnimationFrame(animate); return;}
         const value = positionAt(performance.now());
         if (value) {
           publish(value, true);
@@ -271,5 +306,5 @@ export function useMelodyPlayback(options: Options) {
       setError(reason instanceof Error ? reason.message : 'Playback could not start.');
     }
   };
-  return {running, ...position, pendingBeat, previewNote, positionAt, seek, start, stop, playNote, playChord, followPitch, waiting, error};
+  return {running, paused, ...position, pendingBeat, previewNote, positionAt, seek, start, stop, pause, resume, playNote, playChord, followPitch, waiting, error};
 }

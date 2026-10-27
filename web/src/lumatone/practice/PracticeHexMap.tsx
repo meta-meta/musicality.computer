@@ -6,6 +6,7 @@ import {pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
 import type {PracticeChord} from './exercise.ts';
+import type {UpcomingAttack} from './lookahead.ts';
 
 const RADIUS = 27;
 const referenceCells = Array.from({length: 10}, (_, row) => Array.from({length: 11}, (_, col) => {
@@ -22,8 +23,9 @@ const points = Array.from({length: 6}, (_, index) => {
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, upcoming, lead, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false}: {
-  target?: MelodyAttack; upcoming?: MelodyAttack; lead: number; progress: number;
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false}: {
+  target?: MelodyAttack; futureAttacks: UpcomingAttack[]; progress: number;
+  targetHit?: boolean;
   heard: number | null; transpose: number; mode: LabelMode;
   heardCents?: number | null;
   onPlayNote: (note: number) => void;
@@ -38,6 +40,7 @@ export function PracticeHexMap({target, upcoming, lead, progress, heard, heardCe
   const harmonyColor = isLight ? '#422006' : '#dec89d';
   const progressColor = isLight ? '#111' : '#d1d5db';
   const tuningOffset = -Math.max(-50, Math.min(50, heardCents ?? 0)) / 50 * 4;
+  const markers = futureAttacks.map(attack => ({id: attack.id, attackId: attack.id, step: attack.ordinal - 1}));
   const svg = useRef<SVGSVGElement>(null);
   const [aspect, setAspect] = useState(width / height);
   useEffect(() => {
@@ -73,8 +76,7 @@ export function PracticeHexMap({target, upcoming, lead, progress, heard, heardCe
     return {normal: base.toString({format: 'hex'}), played: base.range(isLight ? 'black' : 'white')(0.25).toString({format: 'hex'})};
   }), [cells, isLight]);
   const atTarget = (cell: typeof cells[number], note?: MelodyAttack) => note && cell.q === note.at.q - transpose / 12 && cell.r === note.at.r + transpose / 6;
-  const upcomingCell = cells.find(cell => atTarget(cell, upcoming));
-  const upcomingRadius = RADIUS - 2 + (1 - lead) * 9;
+  const targetCell = cells.find(cell => atTarget(cell, target));
   const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
   const heardCells = cells.filter(cell => cell.note === heard);
   const heardCell = heardCells.find(cell => atTarget(cell, target))
@@ -92,6 +94,9 @@ export function PracticeHexMap({target, upcoming, lead, progress, heard, heardCe
           stroke-width: 1.25;
           stroke-opacity: 1;
           opacity: 1;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .practice-upcoming-motion { transition: none !important; }
         }
       `}</style>
       {cells.map((cell, index) => {
@@ -120,7 +125,6 @@ export function PracticeHexMap({target, upcoming, lead, progress, heard, heardCe
             <text fill={isLight ? '#fffc' : '#000c'} textAnchor="middle" dominantBaseline="central" style={{fontSize: RADIUS * (pitchLabel(cell.note, mode).length > 1 ? 0.65 : 0.95)}}>{pitchLabel(cell.note, mode)}</text>
             <text x={RADIUS * 0.5} y={RADIUS * 0.25} fill={isLight ? '#fff7' : '#0007'} textAnchor="middle" style={{fontSize: RADIUS * 0.32}}>{Math.floor(cell.note / 12) - 1}</text>
             {active && <>
-              <polygon points={points} fill="none" stroke={targetColor} strokeWidth={1.25}/>
               {practicing && <g data-duration-bar="true" pointerEvents="none">
                 <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7} height={2.5} rx={1.25} fill={progressColor} opacity={0.2}/>
                 <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7 * Math.max(0, Math.min(1, 1 - progress))} height={2.5} rx={1.25} fill={progressColor}/>
@@ -132,11 +136,29 @@ export function PracticeHexMap({target, upcoming, lead, progress, heard, heardCe
           </g>
         );
       })}
-      {upcomingCell && <g transform={`translate(${upcomingCell.x},${upcomingCell.y})`} pointerEvents="none">
-        <polygon data-upcoming-hex="true" points={points} transform={`scale(${upcomingRadius / (RADIUS - 2)})`}
-          fill="none" stroke={isLight ? '#111' : '#fff9'} strokeWidth={1.5 * (RADIUS - 2) / upcomingRadius}
-          strokeDasharray={`${upcomingDashPeriod * 3 / 7} ${upcomingDashPeriod * 4 / 7}`}/>
-      </g>}
+      {[...markers].sort((a, b) => b.step - a.step).map(marker => {
+        const approaching = futureAttacks[marker.step];
+        if (!approaching || approaching.id !== marker.attackId) return null;
+        const note = approaching.note;
+        const cell = cells.find(cell => atTarget(cell, note));
+        if (!cell) return null;
+        const ordinal = marker.step + 1;
+        const radius = RADIUS - 2 + Math.min(1, approaching?.beatsAway ?? 1) * 9;
+        const delay = marker.step * 40;
+        const transition = practicing ? `transform 320ms ease-in-out ${delay}ms, opacity 240ms ease-out ${delay}ms` : 'none';
+        return <g key={marker.id} className="practice-upcoming-motion" role="img"
+          aria-label={`Upcoming attack ${ordinal}: ${pitchLabel(cell.note, mode)}`}
+          data-traveller-id={marker.id} data-traveller-note={cell.note} data-traveller-step={marker.step} data-attack-id={marker.attackId}
+          style={{transform: `translate(${cell.x}px, ${cell.y}px)`, transition}} pointerEvents="none">
+          <polygon className="practice-upcoming-motion" data-upcoming-hex="true" points={points}
+            style={{transform: `scale(${radius / (RADIUS - 2)})`, transformOrigin: '0px 0px', opacity: marker.step === 0 ? 1 : 0.3 / marker.step, transition: practicing ? `opacity 240ms ease-out ${delay}ms` : 'none'}}
+            fill="none" stroke={marker.step === 0 ? targetColor : marker.step === 1 ? isLight ? '#2563eb' : '#93c5fd' : isLight ? '#dc2626' : '#fca5a5'} strokeWidth={1.5 * (RADIUS - 2) / radius}
+            strokeDasharray={`${upcomingDashPeriod * 3 / 7} ${upcomingDashPeriod * 4 / 7}`}/>
+        </g>;
+      })}
+      {targetCell && <polygon data-target-hit={targetHit ? 'true' : 'false'} data-note={targetCell.note} points={points}
+        transform={`translate(${targetCell.x},${targetCell.y})`} fill="none" stroke={targetHit ? isLight ? '#15803d' : '#4ade80' : targetColor}
+        strokeWidth={1.25} pointerEvents="none"/>}
     </svg>
   );
 }

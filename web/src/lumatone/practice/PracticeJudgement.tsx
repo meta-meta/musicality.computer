@@ -2,7 +2,7 @@ import {Box, Flex, Text} from '@chakra-ui/react';
 import {useColorModeValue} from '../../components/chakra-ui/color-mode.tsx';
 import {noteName} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
-import {exercise, TIMING_TOLERANCE} from './exercise.ts';
+import {exercise, isPracticeHit, TIMING_TOLERANCE} from './exercise.ts';
 import type {Attempt} from './exercise.ts';
 
 const timingX = (ms: number) => 160 + Math.max(-400, Math.min(400, ms)) / 400 * 128;
@@ -19,7 +19,7 @@ export function PracticeJudgement({attempt, freeTime, running, listening, betwee
   const amber = useColorModeValue('#b45309', '#f5b66a');
   const cyan = useColorModeValue('#0e7490', '#52e6ef');
   const onTime = attempt && Math.abs(attempt.errorMs) <= TIMING_TOLERANCE;
-  const success = attempt?.correctPitch && (freeTime || onTime);
+  const success = isPracticeHit(attempt, freeTime);
   const pitchColor = attempt ? attempt.correctPitch ? green : amber : 'currentColor';
   const timingColor = onTime ? green : amber;
   const status = attempt ? freeTime ? attempt.correctPitch ? 'Pitch matched' : 'Try that note again'

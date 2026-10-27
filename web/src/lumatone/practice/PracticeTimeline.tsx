@@ -16,7 +16,7 @@ const percent = (beat: number) => (beat - START) / LENGTH * 100;
 const bars = Array.from({length: 32}, (_, index) => index * 4);
 
 export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendingBeat, target, harmony, mode, transpose, showHarmony, showMelodyRoles, showChordTransitions, bpm,
-  loop, loopStart, loopEnd, onLoopStart, onLoopEnd, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts}: {
+  loop, loopStart, loopEnd, onLoopStart, onLoopEnd, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts, onTogglePlayback, onBack, transportDisabled}: {
   beat: number; entryBeat: number; endBeat: number; pass: number; running: boolean; pendingBeat: number | null;
   target?: MelodyAttack; harmony?: PracticeChord; mode: LabelMode; transpose: number; showHarmony: boolean; showMelodyRoles: boolean; showChordTransitions: boolean; bpm: number;
   loop: boolean; loopStart: number | null; loopEnd: number | null;
@@ -24,6 +24,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
   onSeek: (beat: number) => void; onMelody: (note: MelodyAttack) => void; onHarmony: (chord: PracticeChord) => void;
   attempts: Record<string, Attempt>; listening: boolean; freeTime: boolean;
   analysis: AnalysisOptions; phraseStarts: number[];
+  onTogglePlayback: () => void; onBack: () => void; transportDisabled: boolean;
 }) {
   const scroll = useRef<HTMLDivElement>(null);
   const actions = useRef({onSeek, onMelody, onHarmony});
@@ -61,9 +62,13 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <Box data-testid="overview-playhead" pointerEvents="none" position="absolute" left={`min(calc(100% - 2px), ${percent(position)}%)`} top={0} bottom={0} width="2px" bg="cyan.400"/>
         {pendingBeat !== null && <Box pointerEvents="none" position="absolute" left={`${percent(pendingBeat)}%`} top={0} bottom={0} width="2px" bg="orange.400"/>}
       </Box>
-      <Flex as="label" gap={2} align="center" fontSize="sm">Playhead
-        <input aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: 1, minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
+      <Flex gap={2} align="center" fontSize="sm">
+        <Button size="sm" variant="outline" aria-label="Previous loop point or beginning" title="Previous loop point or beginning ([)" onClick={onBack}>⏮</Button>
+        <Button size="sm" aria-label={running ? 'Pause playback' : 'Play playback'} title="Play / pause (Space)" disabled={transportDisabled} onClick={onTogglePlayback}>{running ? '⏸' : '▶'}</Button>
+        <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
+        <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: 1, minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
+      <Text fontSize="xs" color="fg.muted">Space: play/pause · [ / ]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. Shortcuts leave text fields and sliders alone.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}>Loop start
           <select aria-label="Loop start" disabled={running} value={loopStart ?? ''} onChange={event => onLoopStart(event.target.value === '' ? null : Number(event.target.value))}>

@@ -9,6 +9,20 @@ export const LENGTH = END - START;
 export const TIMING_TOLERANCE = 120;
 export type Attempt = {index: number; cycle: number; note: number; cents: number; errorMs: number; correctPitch: boolean; freeTime?: boolean};
 
+export function isPracticeHit(attempt: Attempt | null | undefined, freeTime = attempt?.freeTime ?? false) {
+  return Boolean(attempt?.correctPitch && (freeTime || Math.abs(attempt.errorMs) <= TIMING_TOLERANCE));
+}
+
+export function recordPracticeAttempt(current: Record<string, Attempt>, attempt: Attempt) {
+  const key = `${attempt.cycle}-${attempt.index}`;
+  const previous = current[key];
+  // Preserve the best confirmation: a full hit, then correct pitch regardless
+  // of timing, then a miss. Timing remains a separate judgement.
+  const rank = (result: Attempt) => isPracticeHit(result) ? 2 : result.correctPitch ? 1 : 0;
+  if (previous && rank(previous) >= rank(attempt)) return current;
+  return {...current, [key]: attempt};
+}
+
 export function matchesPracticePitch(expected: number, played: number, cents: number, allowLowOctaveUp = false) {
   return Math.abs(cents) <= 35 && (played === expected || (allowLowOctaveUp && expected < 60 && played === expected + 12));
 }

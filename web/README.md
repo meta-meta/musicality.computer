@@ -34,6 +34,38 @@ coverage, open/closed voicing relationships, and twelve-key transpositions.
 
 ### Flute practice
 
+Play/pause and back controls sit beside the playhead. Pausing suspends the
+playback audio clock and preserves the current pass and count-in; resuming
+continues from there. In flute-follow mode, the follower's clock pauses too.
+Space toggles play/pause; `[` / `]` move through the configured loop points and
+the beginning/end of the track; Left/Right move to adjacent bar boundaries.
+Down Arrow auditions the current chord without moving the playhead; holding
+the key does not repeatedly retrigger it.
+The back button goes to the previous loop point or beginning. While timed
+playback runs, navigation queues on the next beat, as strip clicks do; seeking
+to the end stops playback. Inputs, sliders, and editable text retain their own
+keyboard behavior. Focused buttons and note hexes retain native Space actions.
+
+**Practice history** below the timeline records judgements locally under
+`musicality.practice-history.v1`. Sessions begin with a fresh practice run;
+pausing/resuming keeps the same session. Judgements are batched to localStorage
+every 750 ms and flushed when leaving. Runs without judgements are not saved.
+No microphone audio is recorded. Continuous flute-follow samples are deduplicated
+by note, pass, articulation, stable pitch, and pitch-result changes.
+
+Session summaries separate first-try pitch, pitch after corrections, and timing
+within ±120 ms. Only notes with detected judgements are counted. A recent-session
+pitch chart and paginated detail log show dates, tempo/mode, target/played notes,
+tuning, and early/late results. Historical pitches are snapshots, so score edits
+do not rewrite old results. Labels follow the current Dozenal/Jazz setting.
+
+Pause to export or import versioned JSON backups. Import validates the complete
+file, merges session/judgement IDs, and skips duplicates; conflicting IDs and
+malformed files leave existing results unchanged. Storage failures are visible
+and in-memory results remain exportable. Corrupt saved data is left untouched
+and can be downloaded as a recovery copy. Storage belongs to the browser/origin;
+use export/import to move between localhost, the deployed site, or browsers.
+
 Live pitch labels require two consistent readings before changing notes,
 with a 120ms settling period near semitone midpoints. The settling period
 expires so the label cannot latch indefinitely onto the wrong neighbor.
@@ -109,9 +141,23 @@ All layers share the existing beat scale. Chord connections and motif/destinatio
 analyses are built once; editable phrase groups and interval lanes are memoized.
 
 `/lumatone/practice` pairs a fixed 2q + 7r hex layout with Stella's pickup and
-full 32-bar form. A contracting dashed hexagon anticipates the next attack; the active
-note's small bottom bar shortens over its duration. Playback has a four-beat count-in, tempo,
-register, looping, guide sound, and metronome controls. Click any hex (or focus it
+full 32-bar form. **Display → Upcoming attacks** selects 0–8 future attacks
+(three by default). Each dashed outline tracks an exact
+upcoming attack occurrence, including its loop pass. Positions and countdowns
+always come from the current melody queue; the brightest outline is the next
+attack. New outlines enter at the far end; repeated notes remain separate attacks.
+Position, size, and opacity ease between stages; reduced-motion settings
+disable these transitions.
+The nearest outline contracts smoothly, retaining 24 dashes. Lookahead follows loop boundaries and
+includes a note sustained across a loop start. The active
+note's small bottom bar shortens over its duration.
+The active note outline turns green for confirmed correct pitch, matching the
+pitch checkmark. Early/late timing is judged separately. Feedback is matched
+to the current attack and pass, so it does not carry into another note or loop.
+Within that attack, a pitch correction can upgrade an earlier miss; later
+readings do not clear a confirmed green outline.
+Playback has a four-beat count-in, tempo, register, looping, guide sound, and
+metronome controls. Click any hex (or focus it
 and press Enter or Space) to audition its guide tone, including when playback is
 stopped or guide sound is disabled. The microphone can also
 run alone as a live note and tuning display. It starts only after pressing
