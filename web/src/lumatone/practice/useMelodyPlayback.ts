@@ -4,67 +4,26 @@ import {nextBeatTime, positionAtTime} from './transport.ts';
 import type {Segment} from './transport.ts';
 import {createFollower, followEntrance, tickFollower} from './fluteFollower.ts';
 import type {FollowState} from './fluteFollower.ts';
+import {sound} from './sound.ts';
+import type {Voice} from './sound.ts';
+import {useNoteAudition} from './useNoteAudition.ts';
 
 type Options = {bpm: number; transpose: number; guide: boolean; metronome: boolean; loop: boolean; loopStart: number | null; loopEnd: number | null; harmonySound: boolean; harmonyVolume: number; followFlute: boolean; allowLowOctaveUp: boolean};
 type Position = {beat: number; pass: number; entryBeat: number; endBeat: number};
-type Voice = {start: number; end: number; stopAt: (time: number) => void; cancel: () => void};
 type Transport = {context: AudioContext; harmonyGain: GainNode; segments: Segment[]; voices: Voice[]; frame: number; timer: number; nextId: number; scheduled: Set<string>; schedule: () => void; pending: {time: number; beat: number} | null};
 type Follower = {context: AudioContext; harmonyGain: GainNode; state: FollowState; voices: Voice[]; frame: number; chord: number; guide: number; guideVoice?: Voice; tick: number};
 
-function sound(context: AudioContext, frequency: number, at: number, duration: number, volume: number, output: AudioNode = context.destination, attack = 0.008, release = 0.03): Voice {
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  attack = Math.min(attack, duration / 3);
-  release = Math.min(release, duration / 3);
-  oscillator.type = 'sine';
-  oscillator.frequency.value = frequency;
-  gain.gain.setValueAtTime(0, at);
-  gain.gain.linearRampToValueAtTime(volume, at + attack);
-  gain.gain.setValueAtTime(volume, at + duration - release);
-  gain.gain.linearRampToValueAtTime(0, at + duration);
-  oscillator.connect(gain);
-  gain.connect(output);
-  oscillator.onended = () => {oscillator.disconnect(); gain.disconnect();};
-  oscillator.start(at);
-  oscillator.stop(at + duration + 0.01);
-  const voice: Voice = {start: at, end: at + duration,
-    stopAt: time => {
-      if (voice.end <= time) return;
-      if (voice.start >= time) {voice.cancel(); return;}
-      const fade = Math.max(context.currentTime, time - 0.012);
-      const elapsed = fade - at;
-      const level = elapsed < attack ? volume * Math.max(0, elapsed / attack)
-        : elapsed > duration - release ? volume * Math.max(0, (duration - elapsed) / release) : volume;
-      gain.gain.cancelScheduledValues(fade);
-      gain.gain.setValueAtTime(level, fade);
-      gain.gain.linearRampToValueAtTime(0, time);
-      oscillator.stop(time);
-      voice.end = time;
-    },
-    cancel: () => {
-      gain.gain.cancelScheduledValues(context.currentTime);
-      gain.gain.setValueAtTime(0, context.currentTime);
-      oscillator.stop(context.currentTime);
-      voice.end = context.currentTime;
-    },
-  };
-  return voice;
-}
 
 export function useMelodyPlayback(options: Options) {
   const [running, setRunning] = useState(false);
   const [position, setPosition] = useState<Position>({beat: START, pass: 0, entryBeat: START, endBeat: END});
   const savedPosition = useRef(position);
   const [pendingBeat, setPendingBeat] = useState<number | null>(null);
-  const [previewNote, setPreviewNote] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const {previewNote, setPreviewNote, releasePreview, playNote, playChord} = useNoteAudition(setError, options.harmonyVolume);
   const transport = useRef<Transport>();
   const follower = useRef<Follower>();
   const [waiting, setWaiting] = useState(false);
-  const previewContext = useRef<AudioContext>();
-  const previewVoice = useRef<() => void>();
-  const previewRequest = useRef(0);
-  const previewTimer = useRef<number>();
   const currentOptions = useRef(options);
   useEffect(() => {currentOptions.current = options;}, [options]);
   const lastPublished = useRef(-Infinity);
@@ -104,16 +63,6 @@ export function useMelodyPlayback(options: Options) {
     if (saved.beat < saved.entryBeat) publish({...saved, beat: saved.entryBeat});
   }, [release, publish]);
   useEffect(() => release, [release]);
-  const releasePreview = useCallback(() => {
-    previewRequest.current++;
-    window.clearTimeout(previewTimer.current);
-    previewVoice.current?.();
-    previewVoice.current = undefined;
-    const context = previewContext.current;
-    previewContext.current = undefined;
-    if (context) void context.close().catch(() => {});
-  }, []);
-  useEffect(() => releasePreview, [releasePreview]);
   useEffect(() => {stop();}, [options.bpm, options.transpose, options.loop, options.loopStart, options.loopEnd, options.followFlute, stop]);
   useEffect(() => {
     const hidden = () => {if (document.hidden) stop();};
@@ -160,32 +109,6 @@ export function useMelodyPlayback(options: Options) {
     current.schedule();
   };
 
-  const audition = async (notes: number[], duration: number, volume: number, attack = 0.008, releaseTime = 0.03, highlight: number | null = null) => {
-    const request = ++previewRequest.current;
-    setError('');
-    try {
-      const context = previewContext.current ??= new AudioContext();
-      await context.resume();
-      if (request !== previewRequest.current || context !== previewContext.current) return;
-      window.clearTimeout(previewTimer.current);
-      setPreviewNote(highlight);
-      previewVoice.current?.();
-      const at = context.currentTime;
-      const voices = notes.map(note => sound(context, 440 * 2 ** ((note - 69) / 12), at,
-        duration, volume / Math.sqrt(notes.length), context.destination, attack, releaseTime));
-      previewVoice.current = () => voices.forEach(voice => voice.stopAt(context.currentTime + 0.02));
-      previewTimer.current = window.setTimeout(() => {
-        if (request === previewRequest.current) setPreviewNote(null);
-      }, duration * 1000);
-    } catch (reason) {
-      if (request === previewRequest.current) {
-        setPreviewNote(null);
-        setError(reason instanceof Error ? reason.message : 'The guide tone could not play.');
-      }
-    }
-  };
-  const playNote = (note: number) => audition([note], 0.6, 0.07, 0.008, 0.03, note);
-  const playChord = (notes: number[]) => audition(notes, 1.2, 0.08 * currentOptions.current.harmonyVolume / 100, 0.07, 0.18);
 
   const followPitch = (note: number, cents: number, time: number, articulation: number) => {
     const current = follower.current;

@@ -6,6 +6,32 @@ both pages, with collapsible configuration and editor sections on `/lumatone`.
 Device selection lives in MIDI configuration. MIDI initializes across routes so
 the Lumatone page can be opened directly.
 
+### Exercise transcriptions
+
+The transcription picker on `/lumatone` includes nine exercise collections
+by Dustin Getz, transcribed from the supplied PDFs: the basic ii–V–I–vi, voicing variations, twelve-key
+vibraphone set, six colours, line clichés, moving shapes, pedals and slides,
+finishing touches, and modes. The 61 original sections contain 539 attacks.
+Each card preserves the written notes, octaves, source bar/beat, and duration;
+rootless voicings do not gain an extra root. Mode scale passages include both
+the drone and the moving thirds. Upper-structure triads retain their annotations.
+
+Choose a collection, then its section. Dozenal/Jazz labels and previous-voicing
+overlays are independent controls. Click a card (or focus it and press Enter or
+Space) to hear its written voicing with the same chord sound as flute practice.
+Click an individual note hex, or focus it and press Enter/Space, to hear only
+that note. Clicking its pitch or octave label has the same effect.
+This also works for the original song transcriptions. Previous-voicing overlays
+are not sounded, and each audition replaces the previous one.
+Source PDF links open the relevant page;
+the supplied originals live in `public/lumatone-exercises/`. Checked pitch data
+is stored in `src/lumatone/exercises/scores.json`, one attack per line, and
+`exerciseScores.ts` maps exact MIDI intervals onto the existing hex lattice.
+The shared chord renderer's optional root-omission flags default off, retaining
+the existing song transcription behavior.
+Run `node scripts/validate-exercise-scores.mjs` from `web/` to check measure
+coverage, open/closed voicing relationships, and twelve-key transpositions.
+
 ### Flute practice
 
 Live pitch labels require two consistent readings before changing notes,
