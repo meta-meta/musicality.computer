@@ -21,7 +21,7 @@ export function HexagonPointy({
   const scale = rWithGap / 50;
   const translate = 50 - rWithGap;
   return (
-    <svg x={cx - 50} y={cy - 50} viewBox="0 0 100 100">
+    <svg x={cx - 50} y={cy - 50} width={100} height={100} viewBox="0 0 100 100">
       <polygon
         points="
                 50,0
@@ -46,7 +46,7 @@ type HexCenter = {
   cy: number;
 };
 
-type ArrowFromToHexProps = SVGProps<SVGLineElement> & {
+type ArrowFromToHexProps = Omit<SVGProps<SVGLineElement>, 'from' | 'to'> & {
   from: HexCenter;
   fromColor: string;
   to: HexCenter;
@@ -114,7 +114,7 @@ export function ArrowFromToHex({
         {...others}
       />
 
-      <svg x={x2 - 50} y={y2 - 50} viewBox="0 0 100 100">
+      <svg x={x2 - 50} y={y2 - 50} width={100} height={100} viewBox="0 0 100 100">
         <g transform={`translate(50, 50) rotate(${rotDeg})`}>
           <line
             x1={0}

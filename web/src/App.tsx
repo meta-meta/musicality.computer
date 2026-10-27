@@ -11,6 +11,7 @@ import {useMidiInitialization} from './useMidiInitialization.ts';
 import {lazy, Suspense} from 'react';
 
 const LumatoneXR = lazy(() => import('./LumatoneXR.tsx'));
+const LumatonePractice = lazy(() => import('./LumatonePractice.tsx'));
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
           <Route path="/vr" element={<VR/>}/>
           <Route path="/lumatone" element={<Lumatone/>}/>
           <Route path="/lumatone/xr" element={<Suspense fallback={<div>Loading 3D view…</div>}><LumatoneXR/></Suspense>}/>
+          <Route path="/lumatone/practice" element={<Suspense fallback={<div>Loading practice…</div>}><LumatonePractice/></Suspense>}/>
           <Route path="/theremin/*" element={<Theremin/>}/>
           {/*<Route path="/mm/:panX?/:panY?/:zoom?" element={<MandelbrotMuse/>}/>*/}
         </Routes>

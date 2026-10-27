@@ -19,6 +19,9 @@ export function Lumatone() {
       </Link>
       <Heading as="h1" color="brand.900">Lumatone</Heading>
       <Link asChild textDecoration="underline" alignSelf="start">
+        <RouterLink to="/lumatone/practice">Practice melody with flute feedback</RouterLink>
+      </Link>
+      <Link asChild textDecoration="underline" alignSelf="start">
         <RouterLink to="/lumatone/xr">Explore Stella in 3D / WebXR</RouterLink>
       </Link>
 

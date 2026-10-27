@@ -7,8 +7,13 @@ import {toSymbol} from '../util';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
 import type {LumatoneChordData} from '../lumatoneTypes.ts';
 import {ArrowFromToHex, ChordDataFrame, HexagonPointy} from './ChordPrimitives.tsx';
+import {pitchLabel} from '../leadSheet/labels.ts';
+import type {LabelMode} from '../leadSheet/labels.ts';
 
-export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
+export function LumatoneChordCard({chordData, diagramOnly = false, labelMode = 'dozenal', commonNotes, guideNotes}: {
+  chordData: LumatoneChordData; diagramOnly?: boolean; labelMode?: LabelMode;
+  commonNotes?: readonly number[]; guideNotes?: readonly number[];
+}) {
   const {
     root = 60,
     intervals = [
@@ -73,10 +78,16 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
   const mag = hasRootMotion ? Math.sqrt(qFrom * qFrom + rFrom * rFrom) : 1;
   const arrowFrom = axialToCenters({q: qFrom, r: rFrom});
   const arrowTo = axialToCenters({q: 0.4 * (qFrom / mag), r: 0.4 * (rFrom / mag)});
+  const centers = all.map(([q, r]) => axialToCenters({q, r}));
+  const minX = Math.min(...centers.map(center => center.cx)) - hexRad - 2;
+  const minY = Math.min(...centers.map(center => center.cy)) - hexRad - 2;
+  const maxX = Math.max(...centers.map(center => center.cx)) + hexRad + 2;
+  const maxY = Math.max(...centers.map(center => center.cy)) + hexRad + 2;
+  const Frame = diagramOnly ? Fragment : ChordDataFrame;
 
   return (
-    <ChordDataFrame>
-      <Heading
+    <Frame>
+      {!diagramOnly && <Heading
         color="fg"
         fontWeight="md"
         position="absolute"
@@ -85,9 +96,9 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
         width="full"
       >
         {toSymbol(root)}{pcs.length ? '+' : ''}{pcs}
-      </Heading>
+      </Heading>}
 
-      <svg height="100%" width="100%" viewBox="0 0 100 100">
+      <svg height="100%" width="100%" viewBox={diagramOnly ? `${minX} ${minY} ${maxX - minX} ${maxY - minY}` : '0 0 100 100'} aria-hidden={diagramOnly || undefined}>
         {hasFromRootInterval && (
           <HexagonPointy
             {...axialToCenters({q: qFrom, r: rFrom})}
@@ -116,9 +127,15 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
           const noteNum = root + q * 2 + r * 7;
           const isRoot = q === 0 && r === 0;
           const {cx, cy} = axialToCenters({q, r});
+          const common = commonNotes?.includes(noteNum);
+          const guide = guideNotes?.includes(noteNum);
+          const outline = Array.from({length: 6}, (_, index) => {
+            const angle = Math.PI / 2 + index * Math.PI / 3;
+            return `${cx + Math.cos(angle) * 8.2},${cy + Math.sin(angle) * 8.2}`;
+          }).join(' ');
 
           return (
-            <Fragment key={idx}>
+            <g key={idx} data-common-tone={common ? noteNum : undefined} data-guide-tone={guide ? noteNum : undefined} opacity={guideNotes && !guide && !common ? isRoot ? 0.65 : 0.35 : 1}>
               <HexagonPointy
                 {...axialToCenters({q, r})}
                 fill={getNoteColorHsl(noteNum).toString({format: 'hex'})}
@@ -132,12 +149,12 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
                 textAnchor="middle"
                 dominantBaseline="central"
                 style={{
-                  fontSize: hexRad * 0.95,
+                  fontSize: hexRad * (pitchLabel(noteNum, labelMode).length > 1 ? 0.65 : 0.95),
                 }}
                 x={cx}
                 y={cy}
               >
-                {toSymbol(noteNum)}
+                {pitchLabel(noteNum, labelMode)}
               </text>
 
               <text
@@ -152,7 +169,9 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
               >
                 {Math.floor(noteNum / 12) - 1}
               </text>
-            </Fragment>
+              {common && <polygon points={outline} fill="none" stroke={isLight ? '#0e7490' : '#52e6ef'} strokeWidth={0.7}/>}
+              {guide && <circle cx={cx + 5.8} cy={cy - 5.5} r={1.3} fill={isLight ? '#b45309' : '#fbbf24'} stroke={isLight ? '#fff' : '#111820'} strokeWidth={0.4}/>}
+            </g>
           );
         })}
 
@@ -165,6 +184,6 @@ export function LumatoneChordCard({chordData}: {chordData: LumatoneChordData}) {
           />
         )}
       </svg>
-    </ChordDataFrame>
+    </Frame>
   );
 }
