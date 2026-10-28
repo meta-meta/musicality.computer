@@ -24,7 +24,9 @@ const fs = require('node:fs');
     assert.equal(pdf.headers.get('content-type'), 'application/pdf');
     assert.equal(Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
     assert.deepEqual(JSON.parse(fs.readFileSync('src/lumatone/practice/catalog.index.json', 'utf8')), []);
-    assert.deepEqual(JSON.parse(fs.readFileSync('src/lumatone/exercises/scores.json', 'utf8')), []);
+    const exercises = await server.transformRequest('/src/lumatone/exercises/scores.json');
+    assert.ok(!exercises.code.includes('private-arrangement:'), 'Exercises must use the public source');
+    assert.equal(JSON.parse(fs.readFileSync('src/lumatone/exercises/scores.json', 'utf8')).length, 9);
     assert.ok(!fs.existsSync('public/practice/scores') || fs.readdirSync('public/practice/scores').length === 0);
     console.log('Private development data loading and production exclusion pass.');
   } finally { await server.close(); }

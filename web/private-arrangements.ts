@@ -10,7 +10,6 @@ export function privateArrangements(): Plugin {
   const checkout = path.resolve(root, '../arrangements.local/web');
   const prefix = '\0private-arrangement:';
   const privateModules = new Set([
-    'src/lumatone/exercises/scores.json',
     'src/lumatone/practice/catalog.index.json',
     ...['openbook', 'effendi', 'wikifonia'].map(name => `src/lumatone/practice/${name}/catalog.report.json`),
   ].map(file => path.resolve(root, file)));
@@ -48,7 +47,7 @@ export function privateArrangements(): Plugin {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
-        if (!url.pathname.startsWith('/practice/scores/') && !url.pathname.startsWith('/lumatone-exercises/')) return next();
+        if (!url.pathname.startsWith('/practice/scores/')) return next();
         let file: string;
         try { file = path.resolve(checkout, 'public', '.' + decodeURIComponent(url.pathname)); }
         catch { res.statusCode = 400; return res.end(); }

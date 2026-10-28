@@ -21,10 +21,15 @@ const fs = require('node:fs');
   assert.ok(api.stellaChords.length >= 32);
   assert.equal(api.stellaScore.melody, api.stellaMelody);
   for (const chart of [api.sWonderful, api.thisWillBeOurYear, api.stellaByStarlight]) assert.ok(chart(57).length);
-  assert.deepEqual(api.exerciseScores, []);
+  assert.equal(api.exerciseScores.length, 9);
+  assert.equal(api.exerciseScores.flatMap(score => score.sections.flatMap(section => section.events)).length, 539);
+  for (const score of api.exerciseScores) {
+    assert.equal(fs.readFileSync('public/lumatone-exercises/' + score.source).subarray(0, 5).toString(), '%PDF-');
+  }
+  assert.ok(fs.readFileSync('src/lumatone/exercises/ExerciseTranscriptions.tsx', 'utf8').includes('Exercises by Dustin Getz'));
   assert.ok(fs.readFileSync('src/UkeChords.tsx', 'utf8').includes('<UkeChord'));
   assert.deepEqual(JSON.parse(fs.readFileSync('src/lumatone/practice/catalog.index.json', 'utf8')), []);
   assert.ok(!fs.existsSync('public/practice/scores') || !fs.readdirSync('public/practice/scores').length);
-  assert.ok(!fs.existsSync('public/lumatone-exercises') || !fs.readdirSync('public/lumatone-exercises').length);
-  console.log('Public arrangements and Stella practice available; imported catalogs and exercises excluded.');
+  assert.equal(fs.readdirSync('public/lumatone-exercises').filter(file => file.endsWith('.pdf')).length, 9);
+  console.log('Public arrangements and Stella practice available; credited Dustin Getz exercises available; imported catalogs excluded.');
 })().catch(error => {console.error(error); process.exitCode = 1;});

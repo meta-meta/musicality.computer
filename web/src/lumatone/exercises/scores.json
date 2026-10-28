@@ -1,1 +1,681 @@
-[]
+[
+  {"id": "2-5-1-6-in-C", "title": "ii–V–I–vi in C", "source": "2-5-1-6-in-C.pdf", "sections": [
+    {"title": "Basic progression", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 50, "notes": [50, 65, 69, 72]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "G7", "root": 43, "notes": [43, 65, 67, 71]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 48, "notes": [48, 64, 67, 71]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "Am7", "root": 45, "notes": [45, 64, 67, 72]}
+    ]}
+  ]},
+  {"id": "2-5-1-6-voicings-in-C", "title": "ii–V–I–VI · Voicing variations", "source": "2-5-1-6-voicings-in-C.pdf", "sections": [
+    {"title": "Closed, with root", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 62, "notes": [62, 65, 69, 72]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "G7", "root": 67, "notes": [62, 65, 67, 71]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "A7", "root": 69, "notes": [61, 64, 67, 69]},
+      {"bar": 5, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 62, "notes": [60, 62, 65, 69]},
+      {"bar": 6, "beat": 1, "duration": 4, "page": 1, "name": "G7", "root": 67, "notes": [59, 62, 65, 67]},
+      {"bar": 7, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [59, 60, 64, 67]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [59, 60, 64, 67]}
+    ]},
+    {"title": "Open, with root", "events": [
+      {"bar": 9, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 62, "notes": [62, 69, 72, 77]},
+      {"bar": 10, "beat": 1, "duration": 4, "page": 1, "name": "G7", "root": 67, "notes": [62, 67, 71, 77]},
+      {"bar": 11, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 67, 71, 76]},
+      {"bar": 12, "beat": 1, "duration": 4, "page": 1, "name": "A7", "root": 69, "notes": [61, 67, 69, 76]},
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 74, "notes": [60, 65, 69, 74]},
+      {"bar": 14, "beat": 1, "duration": 4, "page": 1, "name": "G7", "root": 67, "notes": [59, 65, 67, 74]},
+      {"bar": 15, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 72, "notes": [59, 64, 67, 72]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 72, "notes": [59, 64, 67, 72]}
+    ]},
+    {"title": "Closed, rootless", "events": [
+      {"bar": 17, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 18, "beat": 1, "duration": 4, "page": 1, "name": "G9", "root": 55, "notes": [59, 62, 65, 69]},
+      {"bar": 19, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "A7♭13♭9", "root": 57, "notes": [58, 61, 65, 67]},
+      {"bar": 21, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [57, 60, 64, 65]},
+      {"bar": 22, "beat": 1, "duration": 4, "page": 1, "name": "G9", "root": 55, "notes": [57, 59, 62, 65]},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]}
+    ]},
+    {"title": "Open, rootless", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "G9", "root": 55, "notes": [59, 65, 69, 74]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "A7♭13♭9", "root": 57, "notes": [58, 65, 67, 73]},
+      {"bar": 29, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [57, 64, 65, 72]},
+      {"bar": 30, "beat": 1, "duration": 4, "page": 1, "name": "G9", "root": 55, "notes": [57, 62, 65, 71]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]}
+    ]}
+  ]},
+  {"id": "2-5-1-6-vibes-12-keys", "title": "ii–V–I–VI · Twelve keys", "source": "2-5-1-6-vibes-12-keys.pdf", "sections": [
+    {"title": "C", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 62, "notes": [64, 65, 69, 72]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "G13♭9", "root": 55, "notes": [64, 65, 68, 71]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 72, "notes": [64, 67, 71, 72]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "A7♭13♭9", "root": 57, "notes": [65, 67, 70, 73]},
+      {"bar": 5, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 62, "notes": [64, 65, 69, 72]},
+      {"bar": 6, "beat": 1, "duration": 4, "page": 1, "name": "G13♭9", "root": 55, "notes": [64, 65, 68, 71]},
+      {"bar": 7, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [62, 64, 67, 71]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [62, 64, 67, 71]}
+    ]},
+    {"title": "B♭", "events": [
+      {"bar": 9, "beat": 1, "duration": 4, "page": 1, "name": "Cm9", "root": 60, "notes": [62, 63, 67, 70]},
+      {"bar": 10, "beat": 1, "duration": 4, "page": 1, "name": "F13♭9", "root": 53, "notes": [62, 63, 66, 69]},
+      {"bar": 11, "beat": 1, "duration": 4, "page": 1, "name": "B♭maj7", "root": 70, "notes": [62, 65, 69, 70]},
+      {"bar": 12, "beat": 1, "duration": 4, "page": 1, "name": "G7♭13♭9", "root": 55, "notes": [63, 65, 68, 71]},
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "Cm9", "root": 60, "notes": [62, 63, 67, 70]},
+      {"bar": 14, "beat": 1, "duration": 4, "page": 1, "name": "F13♭9", "root": 53, "notes": [62, 63, 66, 69]},
+      {"bar": 15, "beat": 1, "duration": 4, "page": 1, "name": "B♭maj9", "root": 58, "notes": [60, 62, 65, 69]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "B♭maj9", "root": 58, "notes": [60, 62, 65, 69]}
+    ]},
+    {"title": "A♭", "events": [
+      {"bar": 17, "beat": 1, "duration": 4, "page": 1, "name": "B♭m9", "root": 58, "notes": [60, 61, 65, 68]},
+      {"bar": 18, "beat": 1, "duration": 4, "page": 1, "name": "E♭13♭9", "root": 51, "notes": [60, 61, 64, 67]},
+      {"bar": 19, "beat": 1, "duration": 4, "page": 1, "name": "A♭maj7", "root": 68, "notes": [60, 63, 67, 68]},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "F7♭13♭9", "root": 53, "notes": [61, 63, 66, 69]},
+      {"bar": 21, "beat": 1, "duration": 4, "page": 1, "name": "B♭m9", "root": 58, "notes": [60, 61, 65, 68]},
+      {"bar": 22, "beat": 1, "duration": 4, "page": 1, "name": "E♭13♭9", "root": 51, "notes": [60, 61, 64, 67]},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "A♭maj9", "root": 56, "notes": [58, 60, 63, 67]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "A♭maj9", "root": 56, "notes": [58, 60, 63, 67]}
+    ]},
+    {"title": "G♭", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "A♭m9", "root": 56, "notes": [58, 59, 63, 66]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "D♭13♭9", "root": 49, "notes": [58, 59, 62, 65]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "G♭maj7", "root": 66, "notes": [58, 61, 65, 66]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "E♭7♭13♭9", "root": 51, "notes": [59, 61, 64, 67]},
+      {"bar": 29, "beat": 1, "duration": 4, "page": 1, "name": "A♭m9", "root": 56, "notes": [58, 59, 63, 66]},
+      {"bar": 30, "beat": 1, "duration": 4, "page": 1, "name": "D♭13♭9", "root": 49, "notes": [58, 59, 62, 65]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "G♭maj9", "root": 54, "notes": [58, 61, 65, 68]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "G♭maj9", "root": 54, "notes": [58, 61, 65, 68]}
+    ]},
+    {"title": "E", "events": [
+      {"bar": 33, "beat": 1, "duration": 4, "page": 1, "name": "F♯m9", "root": 54, "notes": [61, 64, 68, 69]},
+      {"bar": 34, "beat": 1, "duration": 4, "page": 1, "name": "B13♭9", "root": 59, "notes": [60, 63, 68, 69]},
+      {"bar": 35, "beat": 1, "duration": 4, "page": 1, "name": "Emaj7", "root": 64, "notes": [63, 64, 68, 71]},
+      {"bar": 36, "beat": 1, "duration": 4, "page": 1, "name": "C♯7♭13♭9", "root": 61, "notes": [62, 65, 69, 71]},
+      {"bar": 37, "beat": 1, "duration": 4, "page": 2, "name": "F♯m9", "root": 54, "notes": [61, 64, 68, 69]},
+      {"bar": 38, "beat": 1, "duration": 4, "page": 2, "name": "B13♭9", "root": 59, "notes": [60, 63, 68, 69]},
+      {"bar": 39, "beat": 1, "duration": 4, "page": 2, "name": "Emaj9", "root": 52, "notes": [59, 63, 66, 68]},
+      {"bar": 40, "beat": 1, "duration": 4, "page": 2, "name": "Emaj9", "root": 52, "notes": [59, 63, 66, 68]}
+    ]},
+    {"title": "D", "events": [
+      {"bar": 41, "beat": 1, "duration": 4, "page": 2, "name": "Em9", "root": 52, "notes": [59, 62, 66, 67]},
+      {"bar": 42, "beat": 1, "duration": 4, "page": 2, "name": "A13♭9", "root": 57, "notes": [58, 61, 66, 67]},
+      {"bar": 43, "beat": 1, "duration": 4, "page": 2, "name": "Dmaj7", "root": 62, "notes": [61, 62, 66, 69]},
+      {"bar": 44, "beat": 1, "duration": 4, "page": 2, "name": "B7♭13♭9", "root": 59, "notes": [60, 63, 67, 69]},
+      {"bar": 45, "beat": 1, "duration": 4, "page": 2, "name": "Em9", "root": 52, "notes": [59, 62, 66, 67]},
+      {"bar": 46, "beat": 1, "duration": 4, "page": 2, "name": "A13♭9", "root": 57, "notes": [58, 61, 66, 67]},
+      {"bar": 47, "beat": 1, "duration": 4, "page": 2, "name": "Dmaj9", "root": 50, "notes": [61, 64, 66, 69]},
+      {"bar": 48, "beat": 1, "duration": 4, "page": 2, "name": "Dmaj9", "root": 50, "notes": [61, 64, 66, 69]}
+    ]},
+    {"title": "D♭", "events": [
+      {"bar": 49, "beat": 1, "duration": 4, "page": 2, "name": "E♭m9", "root": 51, "notes": [61, 65, 66, 70]},
+      {"bar": 50, "beat": 1, "duration": 4, "page": 2, "name": "A♭13♭9", "root": 56, "notes": [60, 65, 66, 69]},
+      {"bar": 51, "beat": 1, "duration": 4, "page": 2, "name": "D♭maj7", "root": 61, "notes": [61, 65, 68, 72]},
+      {"bar": 52, "beat": 1, "duration": 4, "page": 2, "name": "B♭7♭13♭9", "root": 58, "notes": [62, 66, 68, 71]},
+      {"bar": 53, "beat": 1, "duration": 4, "page": 2, "name": "E♭m9", "root": 51, "notes": [61, 65, 66, 70]},
+      {"bar": 54, "beat": 1, "duration": 4, "page": 2, "name": "A♭13♭9", "root": 56, "notes": [60, 65, 66, 69]},
+      {"bar": 55, "beat": 1, "duration": 4, "page": 2, "name": "D♭maj9", "root": 49, "notes": [60, 63, 65, 68]},
+      {"bar": 56, "beat": 1, "duration": 4, "page": 2, "name": "D♭maj9", "root": 49, "notes": [60, 63, 65, 68]}
+    ]},
+    {"title": "B", "events": [
+      {"bar": 57, "beat": 1, "duration": 4, "page": 2, "name": "C♯m9", "root": 49, "notes": [59, 63, 64, 68]},
+      {"bar": 58, "beat": 1, "duration": 4, "page": 2, "name": "F♯13♭9", "root": 54, "notes": [58, 63, 64, 67]},
+      {"bar": 59, "beat": 1, "duration": 4, "page": 2, "name": "Bmaj7", "root": 59, "notes": [59, 63, 66, 70]},
+      {"bar": 60, "beat": 1, "duration": 4, "page": 2, "name": "G♯7♭13♭9", "root": 56, "notes": [60, 64, 66, 69]},
+      {"bar": 61, "beat": 1, "duration": 4, "page": 2, "name": "C♯m9", "root": 49, "notes": [59, 63, 64, 68]},
+      {"bar": 62, "beat": 1, "duration": 4, "page": 2, "name": "F♯13♭9", "root": 54, "notes": [58, 63, 64, 67]},
+      {"bar": 63, "beat": 1, "duration": 4, "page": 2, "name": "Bmaj9", "root": 47, "notes": [58, 61, 63, 66]},
+      {"bar": 64, "beat": 1, "duration": 4, "page": 2, "name": "Bmaj9", "root": 47, "notes": [58, 61, 63, 66]}
+    ]},
+    {"title": "A", "events": [
+      {"bar": 65, "beat": 1, "duration": 4, "page": 2, "name": "Bm9", "root": 59, "notes": [61, 62, 66, 69]},
+      {"bar": 66, "beat": 1, "duration": 4, "page": 2, "name": "E13♭9", "root": 52, "notes": [61, 62, 65, 68]},
+      {"bar": 67, "beat": 1, "duration": 4, "page": 2, "name": "Amaj7", "root": 69, "notes": [61, 64, 68, 69]},
+      {"bar": 68, "beat": 1, "duration": 4, "page": 2, "name": "F♯7♭13♭9", "root": 54, "notes": [62, 64, 67, 70]},
+      {"bar": 69, "beat": 1, "duration": 4, "page": 2, "name": "Bm9", "root": 59, "notes": [61, 62, 66, 69]},
+      {"bar": 70, "beat": 1, "duration": 4, "page": 2, "name": "E13♭9", "root": 52, "notes": [61, 62, 65, 68]},
+      {"bar": 71, "beat": 1, "duration": 4, "page": 2, "name": "Amaj9", "root": 57, "notes": [59, 61, 64, 68]},
+      {"bar": 72, "beat": 1, "duration": 4, "page": 2, "name": "Amaj9", "root": 57, "notes": [59, 61, 64, 68]}
+    ]},
+    {"title": "G", "events": [
+      {"bar": 73, "beat": 1, "duration": 4, "page": 2, "name": "Am9", "root": 57, "notes": [59, 60, 64, 67]},
+      {"bar": 74, "beat": 1, "duration": 4, "page": 2, "name": "D13♭9", "root": 50, "notes": [59, 60, 63, 66]},
+      {"bar": 75, "beat": 1, "duration": 4, "page": 2, "name": "Gmaj7", "root": 67, "notes": [59, 62, 66, 67]},
+      {"bar": 76, "beat": 1, "duration": 4, "page": 2, "name": "E7♭13♭9", "root": 52, "notes": [60, 62, 65, 68]},
+      {"bar": 77, "beat": 1, "duration": 4, "page": 3, "name": "Am9", "root": 57, "notes": [59, 60, 64, 67]},
+      {"bar": 78, "beat": 1, "duration": 4, "page": 3, "name": "D13♭9", "root": 50, "notes": [59, 60, 63, 66]},
+      {"bar": 79, "beat": 1, "duration": 4, "page": 3, "name": "Gmaj9", "root": 55, "notes": [59, 62, 66, 69]},
+      {"bar": 80, "beat": 1, "duration": 4, "page": 3, "name": "Gmaj9", "root": 55, "notes": [59, 62, 66, 69]}
+    ]},
+    {"title": "F", "events": [
+      {"bar": 81, "beat": 1, "duration": 4, "page": 3, "name": "Gm9", "root": 55, "notes": [58, 62, 65, 69]},
+      {"bar": 82, "beat": 1, "duration": 4, "page": 3, "name": "C13♭9", "root": 48, "notes": [58, 61, 64, 69]},
+      {"bar": 83, "beat": 1, "duration": 4, "page": 3, "name": "Fmaj7", "root": 65, "notes": [60, 64, 65, 69]},
+      {"bar": 84, "beat": 1, "duration": 4, "page": 3, "name": "D7♭13♭9", "root": 50, "notes": [60, 63, 66, 70]},
+      {"bar": 85, "beat": 1, "duration": 4, "page": 3, "name": "Gm9", "root": 55, "notes": [58, 62, 65, 69]},
+      {"bar": 86, "beat": 1, "duration": 4, "page": 3, "name": "C13♭9", "root": 48, "notes": [58, 61, 64, 69]},
+      {"bar": 87, "beat": 1, "duration": 4, "page": 3, "name": "Fmaj9", "root": 53, "notes": [60, 64, 67, 69]},
+      {"bar": 88, "beat": 1, "duration": 4, "page": 3, "name": "Fmaj9", "root": 53, "notes": [60, 64, 67, 69]}
+    ]},
+    {"title": "E♭", "events": [
+      {"bar": 89, "beat": 1, "duration": 4, "page": 3, "name": "Fm9", "root": 53, "notes": [60, 63, 67, 68]},
+      {"bar": 90, "beat": 1, "duration": 4, "page": 3, "name": "B♭13♭9", "root": 58, "notes": [59, 62, 67, 68]},
+      {"bar": 91, "beat": 1, "duration": 4, "page": 3, "name": "E♭maj7", "root": 63, "notes": [62, 63, 67, 70]},
+      {"bar": 92, "beat": 1, "duration": 4, "page": 3, "name": "C7♭13♭9", "root": 60, "notes": [61, 64, 68, 70]},
+      {"bar": 93, "beat": 1, "duration": 4, "page": 3, "name": "Fm9", "root": 53, "notes": [60, 63, 67, 68]},
+      {"bar": 94, "beat": 1, "duration": 4, "page": 3, "name": "B♭13♭9", "root": 58, "notes": [59, 62, 67, 68]},
+      {"bar": 95, "beat": 1, "duration": 4, "page": 3, "name": "E♭maj9", "root": 51, "notes": [58, 62, 65, 67]},
+      {"bar": 96, "beat": 1, "duration": 4, "page": 3, "name": "E♭maj9", "root": 51, "notes": [58, 62, 65, 67]}
+    ]}
+  ]},
+  {"id": "A-2-5-1-6-colours", "title": "A · Six colours", "source": "A-2-5-1-6-colours.pdf", "sections": [
+    {"title": "Sweet: closed", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "G13", "root": 55, "notes": [59, 64, 65, 69]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "C6/9", "root": 60, "notes": [64, 69, 74, 79]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "A13", "root": 57, "notes": [67, 71, 73, 78]}
+    ]},
+    {"title": "Sweet: open", "events": [
+      {"bar": 5, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 6, "beat": 1, "duration": 4, "page": 1, "name": "G13", "root": 55, "notes": [59, 65, 69, 76]},
+      {"bar": 7, "beat": 1, "duration": 4, "page": 1, "name": "C6/9", "root": 60, "notes": [64, 74, 79, 81]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "A13", "root": 57, "notes": [67, 73, 78, 83]}
+    ]},
+    {"title": "Sus: closed", "events": [
+      {"bar": 9, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 74, "notes": [64, 69, 74, 79]},
+      {"bar": 10, "beat": 1, "duration": 2, "page": 1, "name": "G9sus4", "root": 55, "notes": [65, 69, 72, 74]},
+      {"bar": 10, "beat": 3, "duration": 2, "page": 1, "name": "G13", "root": 55, "notes": [65, 69, 71, 76]},
+      {"bar": 11, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [64, 67, 71, 74]},
+      {"bar": 12, "beat": 1, "duration": 2, "page": 1, "name": "A9sus4", "root": 57, "notes": [64, 67, 71, 74]},
+      {"bar": 12, "beat": 3, "duration": 2, "page": 1, "name": "A7♭9", "root": 57, "notes": [64, 67, 70, 73]}
+    ]},
+    {"title": "Sus: open", "events": [
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 74, "notes": [64, 74, 79, 81]},
+      {"bar": 14, "beat": 1, "duration": 2, "page": 1, "name": "G9sus4", "root": 55, "notes": [65, 72, 74, 81]},
+      {"bar": 14, "beat": 3, "duration": 2, "page": 1, "name": "G13", "root": 55, "notes": [65, 71, 76, 81]},
+      {"bar": 15, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [64, 71, 74, 79]},
+      {"bar": 16, "beat": 1, "duration": 2, "page": 1, "name": "A9sus4", "root": 57, "notes": [64, 71, 74, 79]},
+      {"bar": 16, "beat": 3, "duration": 2, "page": 1, "name": "A7♭9", "root": 57, "notes": [64, 70, 73, 79]}
+    ]},
+    {"title": "Original: closed", "events": [
+      {"bar": 17, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 18, "beat": 1, "duration": 4, "page": 1, "name": "G13♭9", "root": 55, "notes": [59, 64, 65, 68]},
+      {"bar": 19, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "A7♭13♭9", "root": 57, "notes": [58, 61, 65, 67]}
+    ]},
+    {"title": "Original: open", "events": [
+      {"bar": 21, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 22, "beat": 1, "duration": 4, "page": 1, "name": "G13♭9", "root": 55, "notes": [59, 65, 68, 76]},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "A7♭13♭9", "root": 57, "notes": [58, 65, 67, 73]}
+    ]},
+    {"title": "Tritone subs: closed", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "D♭9♯11", "root": 49, "notes": [59, 63, 65, 67]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "E♭9♯11", "root": 51, "notes": [57, 61, 65, 67]}
+    ]},
+    {"title": "Tritone subs: open", "events": [
+      {"bar": 29, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 30, "beat": 1, "duration": 4, "page": 1, "name": "D♭9♯11", "root": 49, "notes": [59, 65, 67, 75]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "E♭9♯11", "root": 51, "notes": [57, 65, 67, 73]}
+    ]},
+    {"title": "Lydian: closed", "events": [
+      {"bar": 33, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 34, "beat": 1, "duration": 4, "page": 1, "name": "G13", "root": 55, "notes": [59, 64, 65, 69]},
+      {"bar": 35, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7♯11", "root": 60, "notes": [62, 64, 66, 71]},
+      {"bar": 36, "beat": 1, "duration": 4, "page": 1, "name": "A7♯9♭13", "root": 57, "notes": [61, 65, 67, 72]}
+    ]},
+    {"title": "Lydian: open", "events": [
+      {"bar": 37, "beat": 1, "duration": 4, "page": 2, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 38, "beat": 1, "duration": 4, "page": 2, "name": "G13", "root": 55, "notes": [59, 65, 69, 76]},
+      {"bar": 39, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj7♯11", "root": 60, "notes": [62, 66, 71, 76]},
+      {"bar": 40, "beat": 1, "duration": 4, "page": 2, "name": "A7♯9♭13", "root": 57, "notes": [61, 67, 72, 77]}
+    ]},
+    {"title": "Minor: closed", "events": [
+      {"bar": 41, "beat": 1, "duration": 4, "page": 2, "name": "Dm7♭5", "root": 62, "notes": [62, 65, 68, 72]},
+      {"bar": 42, "beat": 1, "duration": 4, "page": 2, "name": "G7♯9♭13", "root": 55, "notes": [63, 65, 70, 71]},
+      {"bar": 43, "beat": 1, "duration": 4, "page": 2, "name": "Cm6/9", "root": 60, "notes": [63, 69, 74, 79]},
+      {"bar": 44, "beat": 1, "duration": 4, "page": 2, "name": "A♭maj7♯11", "root": 68, "notes": [70, 72, 74, 79]}
+    ]},
+    {"title": "Minor: open", "events": [
+      {"bar": 45, "beat": 1, "duration": 4, "page": 2, "name": "Dm7♭5", "root": 62, "notes": [62, 68, 72, 77]},
+      {"bar": 46, "beat": 1, "duration": 4, "page": 2, "name": "G7♯9♭13", "root": 55, "notes": [63, 70, 71, 77]},
+      {"bar": 47, "beat": 1, "duration": 4, "page": 2, "name": "Cm6/9", "root": 60, "notes": [63, 74, 79, 81]},
+      {"bar": 48, "beat": 1, "duration": 4, "page": 2, "name": "A♭maj7♯11", "root": 68, "notes": [70, 74, 79, 84]}
+    ]}
+  ]},
+  {"id": "B-line-cliches", "title": "B · Line clichés", "source": "B-line-cliches.pdf", "sections": [
+    {"title": "Major cliché into minor plagal: closed", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "C", "root": 60, "notes": [60, 64, 67, 72]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "C7", "root": 60, "notes": [60, 64, 67, 70]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "C6", "root": 60, "notes": [60, 64, 67, 69]},
+      {"bar": 5, "beat": 1, "duration": 4, "page": 1, "name": "Fmaj7", "root": 53, "notes": [53, 64, 69, 72]},
+      {"bar": 6, "beat": 1, "duration": 4, "page": 1, "name": "Fm6", "root": 53, "notes": [53, 62, 68, 72]},
+      {"bar": 7, "beat": 1, "duration": 4, "page": 1, "name": "C6/9", "root": 60, "notes": [60, 64, 69, 74]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "C6/9", "root": 60, "notes": [60, 64, 69, 74]}
+    ]},
+    {"title": "Major cliché into minor plagal: open", "events": [
+      {"bar": 9, "beat": 1, "duration": 4, "page": 1, "name": "C", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 10, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 67, 71, 76]},
+      {"bar": 11, "beat": 1, "duration": 4, "page": 1, "name": "C7", "root": 60, "notes": [60, 67, 70, 76]},
+      {"bar": 12, "beat": 1, "duration": 4, "page": 1, "name": "C6", "root": 60, "notes": [60, 67, 69, 76]},
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "Fmaj7", "root": 53, "notes": [53, 69, 72, 76]},
+      {"bar": 14, "beat": 1, "duration": 4, "page": 1, "name": "Fm6", "root": 53, "notes": [53, 68, 72, 74]},
+      {"bar": 15, "beat": 1, "duration": 4, "page": 1, "name": "C6/9", "root": 60, "notes": [60, 69, 74, 76]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "C6/9", "root": 60, "notes": [60, 69, 74, 76]}
+    ]},
+    {"title": "Minor cliché into minor ii–V: closed", "events": [
+      {"bar": 17, "beat": 1, "duration": 4, "page": 1, "name": "Cm", "root": 60, "notes": [60, 63, 67, 72]},
+      {"bar": 18, "beat": 1, "duration": 4, "page": 1, "name": "Cmmaj7", "root": 60, "notes": [60, 63, 67, 71]},
+      {"bar": 19, "beat": 1, "duration": 4, "page": 1, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "Cm6", "root": 60, "notes": [60, 63, 67, 69]},
+      {"bar": 21, "beat": 1, "duration": 4, "page": 1, "name": "Dm7♭5", "root": 62, "notes": [62, 65, 68, 72]},
+      {"bar": 22, "beat": 1, "duration": 4, "page": 1, "name": "G7♭9", "root": 55, "notes": [55, 65, 68, 71]},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "Cm6/9", "root": 60, "notes": [60, 63, 69, 74]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "Cm6/9", "root": 60, "notes": [60, 63, 69, 74]}
+    ]},
+    {"title": "Minor cliché into minor ii–V: open", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "Cm", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "Cmmaj7", "root": 60, "notes": [60, 67, 71, 75]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "Cm7", "root": 60, "notes": [60, 67, 70, 75]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "Cm6", "root": 60, "notes": [60, 67, 69, 75]},
+      {"bar": 29, "beat": 1, "duration": 4, "page": 1, "name": "Dm7♭5", "root": 62, "notes": [62, 68, 72, 77]},
+      {"bar": 30, "beat": 1, "duration": 4, "page": 1, "name": "G7♭9", "root": 55, "notes": [55, 68, 71, 77]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "Cm6/9", "root": 60, "notes": [60, 69, 74, 75]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "Cm6/9", "root": 60, "notes": [60, 69, 74, 75]}
+    ]},
+    {"title": "Front door, back door: closed", "events": [
+      {"bar": 33, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 62, "notes": [62, 64, 65, 72]},
+      {"bar": 34, "beat": 1, "duration": 4, "page": 1, "name": "G13", "root": 55, "notes": [55, 64, 65, 71]},
+      {"bar": 35, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [60, 62, 64, 71]},
+      {"bar": 36, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [60, 62, 64, 71]},
+      {"bar": 37, "beat": 1, "duration": 4, "page": 2, "name": "Fm9", "root": 53, "notes": [53, 63, 67, 68]},
+      {"bar": 38, "beat": 1, "duration": 4, "page": 2, "name": "B♭13", "root": 58, "notes": [58, 62, 67, 68]},
+      {"bar": 39, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 60, "notes": [60, 62, 64, 71]},
+      {"bar": 40, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 60, "notes": [60, 62, 64, 71]}
+    ]},
+    {"title": "Front door, back door: open", "events": [
+      {"bar": 41, "beat": 1, "duration": 4, "page": 2, "name": "Dm9", "root": 62, "notes": [62, 65, 72, 76]},
+      {"bar": 42, "beat": 1, "duration": 4, "page": 2, "name": "G13", "root": 55, "notes": [55, 65, 71, 76]},
+      {"bar": 43, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 60, "notes": [60, 64, 71, 74]},
+      {"bar": 44, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 60, "notes": [60, 64, 71, 74]},
+      {"bar": 45, "beat": 1, "duration": 4, "page": 2, "name": "Fm9", "root": 53, "notes": [53, 67, 68, 75]},
+      {"bar": 46, "beat": 1, "duration": 4, "page": 2, "name": "B♭13", "root": 58, "notes": [58, 67, 68, 74]},
+      {"bar": 47, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 60, "notes": [60, 64, 71, 74]},
+      {"bar": 48, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 60, "notes": [60, 64, 71, 74]}
+    ]}
+  ]},
+  {"id": "C-moving-shapes", "title": "C · Moving shapes", "source": "C-moving-shapes.pdf", "sections": [
+    {"title": "Quartal planing (So What): closed", "events": [
+      {"bar": 1, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 74, "notes": [64, 69, 74, 79]},
+      {"bar": 1, "beat": 3, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [65, 71, 76, 81]},
+      {"bar": 2, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [67, 72, 77, 83]},
+      {"bar": 2, "beat": 3, "duration": 2, "page": 1, "name": "Dm11", "root": 74, "notes": [69, 74, 79, 84]},
+      {"bar": 3, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [67, 72, 77, 83]},
+      {"bar": 3, "beat": 3, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [65, 71, 76, 81]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 74, "notes": [64, 69, 74, 79]},
+      {"bar": 5, "beat": 1, "duration": 2, "page": 1, "name": "E♭m11", "root": 75, "notes": [65, 70, 75, 80]},
+      {"bar": 5, "beat": 3, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [66, 72, 77, 82]},
+      {"bar": 6, "beat": 1, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [68, 73, 78, 84]},
+      {"bar": 6, "beat": 3, "duration": 2, "page": 1, "name": "E♭m11", "root": 75, "notes": [70, 75, 80, 85]},
+      {"bar": 7, "beat": 1, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [68, 73, 78, 84]},
+      {"bar": 7, "beat": 3, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [66, 72, 77, 82]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "E♭m11", "root": 75, "notes": [65, 70, 75, 80]}
+    ]},
+    {"title": "Quartal planing (So What): open", "events": [
+      {"bar": 9, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 74, "notes": [64, 74, 79, 81]},
+      {"bar": 9, "beat": 3, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [65, 76, 81, 83]},
+      {"bar": 10, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [67, 77, 83, 84]},
+      {"bar": 10, "beat": 3, "duration": 2, "page": 1, "name": "Dm11", "root": 86, "notes": [69, 79, 84, 86]},
+      {"bar": 11, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [67, 77, 83, 84]},
+      {"bar": 11, "beat": 3, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [65, 76, 81, 83]},
+      {"bar": 12, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 74, "notes": [64, 74, 79, 81]},
+      {"bar": 13, "beat": 1, "duration": 2, "page": 1, "name": "E♭m11", "root": 75, "notes": [65, 75, 80, 82]},
+      {"bar": 13, "beat": 3, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [66, 77, 82, 84]},
+      {"bar": 14, "beat": 1, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [68, 78, 84, 85]},
+      {"bar": 14, "beat": 3, "duration": 2, "page": 1, "name": "E♭m11", "root": 87, "notes": [70, 80, 85, 87]},
+      {"bar": 15, "beat": 1, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [68, 78, 84, 85]},
+      {"bar": 15, "beat": 3, "duration": 2, "page": 1, "name": "E♭m11", "root": 63, "notes": [66, 77, 82, 84]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "E♭m11", "root": 75, "notes": [65, 75, 80, 82]}
+    ]},
+    {"title": "Lydian constant structure: closed", "events": [
+      {"bar": 17, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7♯11", "root": 60, "notes": [64, 66, 71, 74]},
+      {"bar": 18, "beat": 1, "duration": 4, "page": 1, "name": "B♭maj7♯11", "root": 58, "notes": [62, 64, 69, 72]},
+      {"bar": 19, "beat": 1, "duration": 4, "page": 1, "name": "A♭maj7♯11", "root": 56, "notes": [60, 62, 67, 70]},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "D♭maj7♯11", "root": 61, "notes": [65, 67, 72, 75]}
+    ]},
+    {"title": "Lydian constant structure: open", "events": [
+      {"bar": 21, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7♯11", "root": 60, "notes": [64, 71, 74, 78]},
+      {"bar": 22, "beat": 1, "duration": 4, "page": 1, "name": "B♭maj7♯11", "root": 58, "notes": [62, 69, 72, 76]},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "A♭maj7♯11", "root": 56, "notes": [60, 67, 70, 74]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "D♭maj7♯11", "root": 61, "notes": [65, 72, 75, 79]}
+    ]},
+    {"title": "Passing diminished: closed", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "C♯dim7", "root": 61, "notes": [61, 64, 67, 70]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 62, "notes": [62, 65, 69, 72]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "D♯dim7", "root": 63, "notes": [63, 66, 69, 72]},
+      {"bar": 29, "beat": 1, "duration": 4, "page": 1, "name": "Em7", "root": 64, "notes": [64, 67, 71, 74]},
+      {"bar": 30, "beat": 1, "duration": 4, "page": 1, "name": "A7", "root": 57, "notes": [57, 67, 73, 76]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 62, "notes": [62, 69, 72, 77]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "G7", "root": 55, "notes": [55, 71, 74, 77]}
+    ]},
+    {"title": "Passing diminished: open", "events": [
+      {"bar": 33, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 67, 71, 76]},
+      {"bar": 34, "beat": 1, "duration": 4, "page": 1, "name": "C♯dim7", "root": 61, "notes": [61, 67, 70, 76]},
+      {"bar": 35, "beat": 1, "duration": 4, "page": 1, "name": "Dm7", "root": 62, "notes": [62, 69, 72, 77]},
+      {"bar": 36, "beat": 1, "duration": 4, "page": 1, "name": "D♯dim7", "root": 63, "notes": [63, 69, 72, 78]},
+      {"bar": 37, "beat": 1, "duration": 4, "page": 2, "name": "Em7", "root": 64, "notes": [64, 71, 74, 79]},
+      {"bar": 38, "beat": 1, "duration": 4, "page": 2, "name": "A7", "root": 57, "notes": [57, 73, 76, 79]},
+      {"bar": 39, "beat": 1, "duration": 4, "page": 2, "name": "Dm7", "root": 62, "notes": [62, 72, 77, 81]},
+      {"bar": 40, "beat": 1, "duration": 4, "page": 2, "name": "G7", "root": 55, "notes": [55, 74, 77, 83]}
+    ]}
+  ]},
+  {"id": "D-pedals-and-slides", "title": "D · Pedals and slides", "source": "D-pedals-and-slides.pdf", "sections": [
+    {"title": "Slash chords over a pedal: closed", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "C", "root": 60, "notes": [60, 64, 67, 72]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "D/C", "root": 62, "notes": [60, 62, 66, 69]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "B♭/C", "root": 70, "notes": [60, 62, 65, 70]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "C", "root": 60, "notes": [60, 64, 67, 72]},
+      {"bar": 5, "beat": 1, "duration": 4, "page": 1, "name": "G", "root": 55, "notes": [55, 62, 67, 71]},
+      {"bar": 6, "beat": 1, "duration": 4, "page": 1, "name": "A♭/G", "root": 68, "notes": [55, 63, 68, 72]},
+      {"bar": 7, "beat": 1, "duration": 4, "page": 1, "name": "F/G", "root": 65, "notes": [55, 65, 69, 72]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "G", "root": 55, "notes": [55, 62, 67, 71]}
+    ]},
+    {"title": "Slash chords over a pedal: open", "events": [
+      {"bar": 9, "beat": 1, "duration": 4, "page": 1, "name": "C", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 10, "beat": 1, "duration": 4, "page": 1, "name": "D/C", "root": 74, "notes": [60, 66, 69, 74]},
+      {"bar": 11, "beat": 1, "duration": 4, "page": 1, "name": "B♭/C", "root": 70, "notes": [60, 65, 70, 74]},
+      {"bar": 12, "beat": 1, "duration": 4, "page": 1, "name": "C", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "G", "root": 55, "notes": [55, 67, 71, 74]},
+      {"bar": 14, "beat": 1, "duration": 4, "page": 1, "name": "A♭/G", "root": 68, "notes": [55, 68, 72, 75]},
+      {"bar": 15, "beat": 1, "duration": 4, "page": 1, "name": "F/G", "root": 77, "notes": [55, 69, 72, 77]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "G", "root": 55, "notes": [55, 67, 71, 74]}
+    ]},
+    {"title": "Chromatic ii–Vs: closed", "events": [
+      {"bar": 17, "beat": 1, "duration": 2, "page": 1, "name": "Em9", "root": 52, "notes": [62, 66, 67, 71]},
+      {"bar": 17, "beat": 3, "duration": 2, "page": 1, "name": "A13", "root": 57, "notes": [61, 66, 67, 71]},
+      {"bar": 18, "beat": 1, "duration": 2, "page": 1, "name": "E♭m9", "root": 51, "notes": [61, 65, 66, 70]},
+      {"bar": 18, "beat": 3, "duration": 2, "page": 1, "name": "A♭13", "root": 56, "notes": [60, 65, 66, 70]},
+      {"bar": 19, "beat": 1, "duration": 2, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 19, "beat": 3, "duration": 2, "page": 1, "name": "G13", "root": 55, "notes": [59, 64, 65, 69]},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 21, "beat": 1, "duration": 2, "page": 1, "name": "Em9", "root": 52, "notes": [59, 62, 66, 67]},
+      {"bar": 21, "beat": 3, "duration": 2, "page": 1, "name": "E♭9♯11", "root": 51, "notes": [57, 61, 65, 67]},
+      {"bar": 22, "beat": 1, "duration": 2, "page": 1, "name": "Dm9", "root": 50, "notes": [57, 60, 64, 65]},
+      {"bar": 22, "beat": 3, "duration": 2, "page": 1, "name": "D♭9♯11", "root": 49, "notes": [59, 63, 65, 67]},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]}
+    ]},
+    {"title": "Chromatic ii–Vs: open", "events": [
+      {"bar": 25, "beat": 1, "duration": 2, "page": 1, "name": "Em9", "root": 52, "notes": [62, 67, 71, 78]},
+      {"bar": 25, "beat": 3, "duration": 2, "page": 1, "name": "A13", "root": 57, "notes": [61, 67, 71, 78]},
+      {"bar": 26, "beat": 1, "duration": 2, "page": 1, "name": "E♭m9", "root": 51, "notes": [61, 66, 70, 77]},
+      {"bar": 26, "beat": 3, "duration": 2, "page": 1, "name": "A♭13", "root": 56, "notes": [60, 66, 70, 77]},
+      {"bar": 27, "beat": 1, "duration": 2, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 27, "beat": 3, "duration": 2, "page": 1, "name": "G13", "root": 55, "notes": [59, 65, 69, 76]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 29, "beat": 1, "duration": 2, "page": 1, "name": "Em9", "root": 52, "notes": [59, 66, 67, 74]},
+      {"bar": 29, "beat": 3, "duration": 2, "page": 1, "name": "E♭9♯11", "root": 51, "notes": [57, 65, 67, 73]},
+      {"bar": 30, "beat": 1, "duration": 2, "page": 1, "name": "Dm9", "root": 50, "notes": [57, 64, 65, 72]},
+      {"bar": 30, "beat": 3, "duration": 2, "page": 1, "name": "D♭9♯11", "root": 49, "notes": [59, 65, 67, 75]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]}
+    ]}
+  ]},
+  {"id": "E-finishing-touches", "title": "E · Finishing touches", "source": "E-finishing-touches.pdf", "sections": [
+    {"title": "add9 and lush m11: closed", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "Cadd9", "root": 72, "notes": [62, 64, 67, 72]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "Am11", "root": 57, "notes": [60, 62, 67, 71]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 62, "notes": [64, 65, 67, 72]},
+      {"bar": 4, "beat": 1, "duration": 2, "page": 1, "name": "G9sus4", "root": 55, "notes": [62, 65, 69, 72]},
+      {"bar": 4, "beat": 3, "duration": 2, "page": 1, "name": "G13", "root": 55, "notes": [64, 65, 69, 71]},
+      {"bar": 5, "beat": 1, "duration": 4, "page": 1, "name": "Em11", "root": 52, "notes": [62, 66, 67, 69]},
+      {"bar": 6, "beat": 1, "duration": 4, "page": 1, "name": "Am11", "root": 57, "notes": [60, 62, 67, 71]},
+      {"bar": 7, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [64, 65, 67, 72]},
+      {"bar": 7, "beat": 3, "duration": 2, "page": 1, "name": "G9sus4", "root": 55, "notes": [62, 65, 69, 72]},
+      {"bar": 8, "beat": 1, "duration": 4, "page": 1, "name": "Cadd9", "root": 72, "notes": [62, 64, 67, 72]}
+    ]},
+    {"title": "add9 and lush m11: open", "events": [
+      {"bar": 9, "beat": 1, "duration": 4, "page": 1, "name": "Cadd9", "root": 72, "notes": [62, 67, 72, 76]},
+      {"bar": 10, "beat": 1, "duration": 4, "page": 1, "name": "Am11", "root": 57, "notes": [60, 67, 71, 74]},
+      {"bar": 11, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 62, "notes": [64, 67, 72, 77]},
+      {"bar": 12, "beat": 1, "duration": 2, "page": 1, "name": "G9sus4", "root": 55, "notes": [62, 69, 72, 77]},
+      {"bar": 12, "beat": 3, "duration": 2, "page": 1, "name": "G13", "root": 55, "notes": [64, 69, 71, 77]},
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "Em11", "root": 52, "notes": [62, 67, 69, 78]},
+      {"bar": 14, "beat": 1, "duration": 4, "page": 1, "name": "Am11", "root": 57, "notes": [60, 67, 71, 74]},
+      {"bar": 15, "beat": 1, "duration": 2, "page": 1, "name": "Dm11", "root": 62, "notes": [64, 67, 72, 77]},
+      {"bar": 15, "beat": 3, "duration": 2, "page": 1, "name": "G9sus4", "root": 55, "notes": [62, 69, 72, 77]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "Cadd9", "root": 72, "notes": [62, 67, 72, 76]}
+    ]},
+    {"title": "Upper structures (LH guide tones, RH triad)", "events": [
+      {"bar": 17, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76], "upperStructure": "Am"},
+      {"bar": 18, "beat": 1, "duration": 4, "page": 1, "name": "G13♭9", "root": 55, "notes": [59, 65, 68, 76], "upperStructure": "E"},
+      {"bar": 19, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74], "upperStructure": "G"},
+      {"bar": 20, "beat": 1, "duration": 4, "page": 1, "name": "A7♭13♭9", "root": 57, "notes": [61, 67, 70, 77], "upperStructure": "B♭m"},
+      {"bar": 21, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76], "upperStructure": "Am"},
+      {"bar": 22, "beat": 1, "duration": 4, "page": 1, "name": "G7♯9♭13", "root": 55, "notes": [59, 65, 70, 75], "upperStructure": "E♭"},
+      {"bar": 23, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7♯11", "root": 48, "notes": [59, 64, 66, 69], "upperStructure": "D"},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "A7♯9♭13", "root": 57, "notes": [61, 67, 72, 77], "upperStructure": "F"}
+    ]},
+    {"title": "Clusters (seconds)", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 62, "notes": [60, 62, 64, 65]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "G9", "root": 67, "notes": [65, 67, 69, 71]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [59, 60, 62, 64]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "A7♭9", "root": 69, "notes": [67, 69, 70, 73]},
+      {"bar": 29, "beat": 1, "duration": 4, "page": 1, "name": "Dm11", "root": 62, "notes": [64, 65, 67, 69]},
+      {"bar": 30, "beat": 1, "duration": 4, "page": 1, "name": "G13", "root": 67, "notes": [64, 65, 67, 71]},
+      {"bar": 31, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 60, "notes": [59, 60, 62, 64]},
+      {"bar": 32, "beat": 1, "duration": 4, "page": 1, "name": "A7♭9", "root": 69, "notes": [67, 69, 70, 73]}
+    ]},
+    {"title": "Spreads (a 10th in the left hand)", "events": [
+      {"bar": 33, "beat": 1, "duration": 4, "page": 1, "name": "Dm9", "root": 50, "notes": [53, 69, 72, 76]},
+      {"bar": 34, "beat": 1, "duration": 4, "page": 1, "name": "G13", "root": 43, "notes": [53, 69, 71, 76]},
+      {"bar": 35, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj9", "root": 48, "notes": [55, 71, 74, 76]},
+      {"bar": 36, "beat": 1, "duration": 4, "page": 1, "name": "A7♭9", "root": 45, "notes": [55, 70, 73, 76]},
+      {"bar": 37, "beat": 1, "duration": 4, "page": 2, "name": "Dm9", "root": 50, "notes": [53, 69, 72, 76]},
+      {"bar": 38, "beat": 1, "duration": 4, "page": 2, "name": "G13♭9", "root": 43, "notes": [53, 68, 71, 76]},
+      {"bar": 39, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 48, "notes": [59, 74, 76, 79]},
+      {"bar": 40, "beat": 1, "duration": 4, "page": 2, "name": "A7♭13♭9", "root": 45, "notes": [55, 70, 73, 77]}
+    ]},
+    {"title": "iii–VI–ii–V turnaround: closed", "events": [
+      {"bar": 41, "beat": 1, "duration": 4, "page": 2, "name": "Em9", "root": 52, "notes": [62, 66, 67, 71]},
+      {"bar": 42, "beat": 1, "duration": 4, "page": 2, "name": "A7♭13♭9", "root": 57, "notes": [61, 65, 67, 70]},
+      {"bar": 43, "beat": 1, "duration": 4, "page": 2, "name": "Dm9", "root": 50, "notes": [60, 64, 65, 69]},
+      {"bar": 44, "beat": 1, "duration": 4, "page": 2, "name": "G13♭9", "root": 55, "notes": [59, 64, 65, 68]},
+      {"bar": 45, "beat": 1, "duration": 2, "page": 2, "name": "Em9", "root": 52, "notes": [59, 62, 66, 67]},
+      {"bar": 45, "beat": 3, "duration": 2, "page": 2, "name": "A7♭13♭9", "root": 57, "notes": [58, 61, 65, 67]},
+      {"bar": 46, "beat": 1, "duration": 2, "page": 2, "name": "Dm9", "root": 50, "notes": [57, 60, 64, 65]},
+      {"bar": 46, "beat": 3, "duration": 2, "page": 2, "name": "G13♭9", "root": 55, "notes": [59, 64, 65, 68]},
+      {"bar": 47, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]},
+      {"bar": 48, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 48, "notes": [59, 62, 64, 67]}
+    ]},
+    {"title": "iii–VI–ii–V turnaround: open", "events": [
+      {"bar": 49, "beat": 1, "duration": 4, "page": 2, "name": "Em9", "root": 52, "notes": [62, 67, 71, 78]},
+      {"bar": 50, "beat": 1, "duration": 4, "page": 2, "name": "A7♭13♭9", "root": 57, "notes": [61, 67, 70, 77]},
+      {"bar": 51, "beat": 1, "duration": 4, "page": 2, "name": "Dm9", "root": 50, "notes": [60, 65, 69, 76]},
+      {"bar": 52, "beat": 1, "duration": 4, "page": 2, "name": "G13♭9", "root": 55, "notes": [59, 65, 68, 76]},
+      {"bar": 53, "beat": 1, "duration": 2, "page": 2, "name": "Em9", "root": 52, "notes": [59, 66, 67, 74]},
+      {"bar": 53, "beat": 3, "duration": 2, "page": 2, "name": "A7♭13♭9", "root": 57, "notes": [58, 65, 67, 73]},
+      {"bar": 54, "beat": 1, "duration": 2, "page": 2, "name": "Dm9", "root": 50, "notes": [57, 64, 65, 72]},
+      {"bar": 54, "beat": 3, "duration": 2, "page": 2, "name": "G13♭9", "root": 55, "notes": [59, 65, 68, 76]},
+      {"bar": 55, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]},
+      {"bar": 56, "beat": 1, "duration": 4, "page": 2, "name": "Cmaj9", "root": 48, "notes": [59, 64, 67, 74]}
+    ]}
+  ]},
+  {"id": "F-modes", "title": "F · The modes", "source": "F-modes.pdf", "sections": [
+    {"title": "Lydian · characteristic ♯4", "events": [
+      {"bar": 1, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 2, "beat": 1, "duration": 4, "page": 1, "name": "D/C", "root": 62, "notes": [60, 62, 66, 69]},
+      {"bar": 3, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 4, "beat": 1, "duration": 4, "page": 1, "name": "D/C", "root": 62, "notes": [60, 62, 66, 69]},
+      {"bar": 5, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]},
+      {"bar": 5, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 71, 74]},
+      {"bar": 6, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 6, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 78]},
+      {"bar": 7, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 76, 79]},
+      {"bar": 7, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 78, 81]},
+      {"bar": 8, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 83]},
+      {"bar": 8, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 81, 84]},
+      {"bar": 9, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 83]},
+      {"bar": 9, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 78, 81]},
+      {"bar": 10, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 76, 79]},
+      {"bar": 10, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 78]},
+      {"bar": 11, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 11, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 71, 74]},
+      {"bar": 12, "beat": 1, "duration": 4, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]}
+    ]},
+    {"title": "Ionian · characteristic 4", "events": [
+      {"bar": 13, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 14, "beat": 1, "duration": 4, "page": 1, "name": "F/C", "root": 65, "notes": [60, 65, 69, 72]},
+      {"bar": 15, "beat": 1, "duration": 4, "page": 1, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71]},
+      {"bar": 16, "beat": 1, "duration": 4, "page": 1, "name": "F/C", "root": 65, "notes": [60, 65, 69, 72]},
+      {"bar": 17, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]},
+      {"bar": 17, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 71, 74]},
+      {"bar": 18, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 18, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 19, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 76, 79]},
+      {"bar": 19, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 81]},
+      {"bar": 20, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 83]},
+      {"bar": 20, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 81, 84]},
+      {"bar": 21, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 83]},
+      {"bar": 21, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 81]},
+      {"bar": 22, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 76, 79]},
+      {"bar": 22, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 23, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 23, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 71, 74]},
+      {"bar": 24, "beat": 1, "duration": 4, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]}
+    ]},
+    {"title": "Mixolydian · characteristic ♭7", "events": [
+      {"bar": 25, "beat": 1, "duration": 4, "page": 1, "name": "C7", "root": 60, "notes": [60, 64, 67, 70]},
+      {"bar": 26, "beat": 1, "duration": 4, "page": 1, "name": "B♭/C", "root": 70, "notes": [60, 62, 65, 70]},
+      {"bar": 27, "beat": 1, "duration": 4, "page": 1, "name": "C7", "root": 60, "notes": [60, 64, 67, 70]},
+      {"bar": 28, "beat": 1, "duration": 4, "page": 1, "name": "B♭/C", "root": 70, "notes": [60, 62, 65, 70]},
+      {"bar": 29, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]},
+      {"bar": 29, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 74]},
+      {"bar": 30, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 30, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 31, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 76, 79]},
+      {"bar": 31, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 81]},
+      {"bar": 32, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 32, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 81, 84]},
+      {"bar": 33, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 33, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 81]},
+      {"bar": 34, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 76, 79]},
+      {"bar": 34, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 35, "beat": 1, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 76]},
+      {"bar": 35, "beat": 3, "duration": 2, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 74]},
+      {"bar": 36, "beat": 1, "duration": 4, "page": 1, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]}
+    ]},
+    {"title": "Dorian · characteristic 6", "events": [
+      {"bar": 37, "beat": 1, "duration": 4, "page": 2, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 38, "beat": 1, "duration": 4, "page": 2, "name": "F/C", "root": 65, "notes": [60, 65, 69, 72]},
+      {"bar": 39, "beat": 1, "duration": 4, "page": 2, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 40, "beat": 1, "duration": 4, "page": 2, "name": "F/C", "root": 65, "notes": [60, 65, 69, 72]},
+      {"bar": 41, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]},
+      {"bar": 41, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 74]},
+      {"bar": 42, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 42, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 43, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 75, 79]},
+      {"bar": 43, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 81]},
+      {"bar": 44, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 44, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 81, 84]},
+      {"bar": 45, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 45, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 81]},
+      {"bar": 46, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 75, 79]},
+      {"bar": 46, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 47, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 47, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 74]},
+      {"bar": 48, "beat": 1, "duration": 4, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 69, 72]}
+    ]},
+    {"title": "Aeolian · characteristic ♭6", "events": [
+      {"bar": 49, "beat": 1, "duration": 4, "page": 2, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 50, "beat": 1, "duration": 4, "page": 2, "name": "A♭/C", "root": 68, "notes": [60, 63, 68, 72]},
+      {"bar": 51, "beat": 1, "duration": 4, "page": 2, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 52, "beat": 1, "duration": 4, "page": 2, "name": "A♭/C", "root": 68, "notes": [60, 63, 68, 72]},
+      {"bar": 53, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 68, 72]},
+      {"bar": 53, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 74]},
+      {"bar": 54, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 54, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 55, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 75, 79]},
+      {"bar": 55, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 80]},
+      {"bar": 56, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 56, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 80, 84]},
+      {"bar": 57, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 57, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 80]},
+      {"bar": 58, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 75, 79]},
+      {"bar": 58, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 74, 77]},
+      {"bar": 59, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 59, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 74]},
+      {"bar": 60, "beat": 1, "duration": 4, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 68, 72]}
+    ]},
+    {"title": "Phrygian · characteristic ♭2", "events": [
+      {"bar": 61, "beat": 1, "duration": 4, "page": 2, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 62, "beat": 1, "duration": 4, "page": 2, "name": "D♭/C", "root": 61, "notes": [60, 61, 65, 68]},
+      {"bar": 63, "beat": 1, "duration": 4, "page": 2, "name": "Cm7", "root": 60, "notes": [60, 63, 67, 70]},
+      {"bar": 64, "beat": 1, "duration": 4, "page": 2, "name": "D♭/C", "root": 61, "notes": [60, 61, 65, 68]},
+      {"bar": 65, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 68, 72]},
+      {"bar": 65, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 73]},
+      {"bar": 66, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 66, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 73, 77]},
+      {"bar": 67, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 75, 79]},
+      {"bar": 67, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 80]},
+      {"bar": 68, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 68, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 80, 84]},
+      {"bar": 69, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 79, 82]},
+      {"bar": 69, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 77, 80]},
+      {"bar": 70, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 75, 79]},
+      {"bar": 70, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 73, 77]},
+      {"bar": 71, "beat": 1, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 72, 75]},
+      {"bar": 71, "beat": 3, "duration": 2, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 70, 73]},
+      {"bar": 72, "beat": 1, "duration": 4, "page": 2, "name": "C drone · thirds", "root": 60, "notes": [60, 67, 68, 72]}
+    ]},
+    {"title": "Locrian · characteristic ♭5", "events": [
+      {"bar": 73, "beat": 1, "duration": 4, "page": 3, "name": "Cm7♭5", "root": 60, "notes": [60, 63, 66, 70]},
+      {"bar": 74, "beat": 1, "duration": 4, "page": 3, "name": "G♭/C", "root": 66, "notes": [60, 61, 66, 70]},
+      {"bar": 75, "beat": 1, "duration": 4, "page": 3, "name": "Cm7♭5", "root": 60, "notes": [60, 63, 66, 70]},
+      {"bar": 76, "beat": 1, "duration": 4, "page": 3, "name": "G♭/C", "root": 66, "notes": [60, 61, 66, 70]},
+      {"bar": 77, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 68, 72]},
+      {"bar": 77, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 70, 73]},
+      {"bar": 78, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 72, 75]},
+      {"bar": 78, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 73, 77]},
+      {"bar": 79, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 75, 78]},
+      {"bar": 79, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 77, 80]},
+      {"bar": 80, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 78, 82]},
+      {"bar": 80, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 80, 84]},
+      {"bar": 81, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 78, 82]},
+      {"bar": 81, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 77, 80]},
+      {"bar": 82, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 75, 78]},
+      {"bar": 82, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 73, 77]},
+      {"bar": 83, "beat": 1, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 72, 75]},
+      {"bar": 83, "beat": 3, "duration": 2, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 70, 73]},
+      {"bar": 84, "beat": 1, "duration": 4, "page": 3, "name": "C drone · thirds", "root": 60, "notes": [60, 66, 68, 72]}
+    ]},
+    {"title": "Modes of C major: closed", "events": [
+      {"bar": 85, "beat": 1, "duration": 4, "page": 3, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71], "mode": "Ionian"},
+      {"bar": 86, "beat": 1, "duration": 4, "page": 3, "name": "Dm7", "root": 62, "notes": [62, 65, 69, 72], "mode": "Dorian"},
+      {"bar": 87, "beat": 1, "duration": 4, "page": 3, "name": "Em7", "root": 64, "notes": [64, 67, 71, 74], "mode": "Phrygian"},
+      {"bar": 88, "beat": 1, "duration": 4, "page": 3, "name": "Fmaj7♯11", "root": 53, "notes": [53, 69, 71, 76], "mode": "Lydian"},
+      {"bar": 89, "beat": 1, "duration": 4, "page": 3, "name": "G7", "root": 55, "notes": [55, 65, 71, 74], "mode": "Mixolydian"},
+      {"bar": 90, "beat": 1, "duration": 4, "page": 3, "name": "Am7", "root": 57, "notes": [57, 64, 67, 72], "mode": "Aeolian"},
+      {"bar": 91, "beat": 1, "duration": 4, "page": 3, "name": "Bm7♭5", "root": 59, "notes": [59, 65, 69, 74], "mode": "Locrian"},
+      {"bar": 92, "beat": 1, "duration": 4, "page": 3, "name": "Cmaj7", "root": 60, "notes": [60, 64, 67, 71], "mode": "Ionian"}
+    ]},
+    {"title": "Modes of C major: open", "events": [
+      {"bar": 93, "beat": 1, "duration": 4, "page": 3, "name": "Cmaj7", "root": 60, "notes": [60, 67, 71, 76], "mode": "Ionian"},
+      {"bar": 94, "beat": 1, "duration": 4, "page": 3, "name": "Dm7", "root": 62, "notes": [62, 69, 72, 77], "mode": "Dorian"},
+      {"bar": 95, "beat": 1, "duration": 4, "page": 3, "name": "Em7", "root": 64, "notes": [64, 71, 74, 79], "mode": "Phrygian"},
+      {"bar": 96, "beat": 1, "duration": 4, "page": 3, "name": "Fmaj7♯11", "root": 53, "notes": [53, 71, 76, 81], "mode": "Lydian"},
+      {"bar": 97, "beat": 1, "duration": 4, "page": 3, "name": "G7", "root": 55, "notes": [55, 71, 74, 77], "mode": "Mixolydian"},
+      {"bar": 98, "beat": 1, "duration": 4, "page": 3, "name": "Am7", "root": 57, "notes": [57, 67, 72, 76], "mode": "Aeolian"},
+      {"bar": 99, "beat": 1, "duration": 4, "page": 3, "name": "Bm7♭5", "root": 59, "notes": [59, 69, 74, 77], "mode": "Locrian"},
+      {"bar": 100, "beat": 1, "duration": 4, "page": 3, "name": "Cmaj7", "root": 60, "notes": [60, 67, 71, 76], "mode": "Ionian"}
+    ]}
+  ]}
+]
