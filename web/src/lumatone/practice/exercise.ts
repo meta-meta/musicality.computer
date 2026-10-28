@@ -29,14 +29,14 @@ export function matchesPracticePitch(expected: number, played: number, cents: nu
 
 export function judgeEntrance(beat: number, note: number, cents: number, bpm: number, transpose: number,
   options: {pass: number; entryBeat: number; loop: boolean; loopStart: number; loopEnd: number; allowLowOctaveUp?: boolean;
-    next?: {entryBeat: number; endBeat: number; pass: number} | null}) : Attempt | null {
+    melody?: typeof exercise; next?: {entryBeat: number; endBeat: number; pass: number} | null}) : Attempt | null {
   if (beat < options.entryBeat - 0.5) return null;
   let nearest: Attempt | null = null;
   const passes = [{pass: options.pass, entry: options.entryBeat, end: options.loopEnd, offset: 0}];
   if (options.next) passes.push({pass: options.next.pass, entry: options.next.entryBeat, end: options.next.endBeat, offset: options.loopEnd - options.next.entryBeat});
   else if (options.loop) passes.push({pass: options.pass + 1, entry: options.loopStart, end: options.loopEnd, offset: options.loopEnd - options.loopStart});
   for (const candidate of passes) {
-    for (const [index, target] of exercise.entries()) {
+    for (const [index, target] of (options.melody ?? exercise).entries()) {
       if (target.start + target.duration <= candidate.entry || target.start >= candidate.end) continue;
       const onset = Math.max(target.start, candidate.entry) + candidate.offset;
       const errorMs = (beat - onset) * 60000 / bpm;

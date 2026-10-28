@@ -12,10 +12,11 @@ const targets: Record<string, {tonic: number; quality: string; degree: string}> 
   vi: {tonic: 7, quality: 'minor', degree: 'sixth'},
 };
 
-export const ChordFunctionPopover = memo(function ChordFunctionPopover({analysis, name, mode}: {analysis: string; name: string; mode: LabelMode}) {
+export const ChordFunctionPopover = memo(function ChordFunctionPopover({analysis, name, mode, keyTranspose = 0}: {keyTranspose?: number; analysis: string; name: string; mode: LabelMode}) {
   const [open, setOpen] = useState(false);
-  const n = (note: number) => pitchLabel(note, mode);
+  const n = (note: number) => pitchLabel(note + keyTranspose, mode);
   const c = (root: number, quality: '7' | 'm7' | 'maj7') => {
+    root += keyTranspose;
     const intervals = quality === '7' ? [0, 4, 7, 10] : quality === 'm7' ? [0, 3, 7, 10] : [0, 4, 7, 11];
     return chordLabel({name: `${pitchLabel(root, 'jazz')}${quality}`, notes: intervals.map((interval, index) => ({note: root + interval, root: index === 0}))}, mode);
   };

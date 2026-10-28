@@ -5,14 +5,14 @@ export const HISTORY_KEY = 'musicality.practice-history.v1';
 export const HISTORY_FORMAT = 'musicality.practice-history';
 export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 export type HistorySettings = {
-  bpm: number; transpose: number; freeTime: boolean; allowLowOctaveUp: boolean;
+  bpm: number; transpose: number; keyTranspose?: number; freeTime: boolean; allowLowOctaveUp: boolean;
   loop: boolean; loopStart: number | null; loopEnd: number | null; latencyMs: number;
 };
 export type HistoryJudgement = Attempt & {
   id: string; at: string; expectedNote: number; location: string; start: number; duration: number; latencyMs: number;
 };
 export type PracticeSession = {
-  id: string; piece: 'stella-by-starlight'; startedAt: string; updatedAt: string; endedAt: string | null;
+  id: string; piece: string; title?: string; tonic?: number; startedAt: string; updatedAt: string; endedAt: string | null;
   settings: HistorySettings; judgements: HistoryJudgement[];
 };
 export type PracticeHistoryData = {format: typeof HISTORY_FORMAT; version: 1; sessions: PracticeSession[]};
@@ -40,7 +40,7 @@ function date(value: unknown): string {
   if (!Number.isFinite(Date.parse(result))) throw new Error('Invalid history date.');
   return new Date(result).toISOString();
 }
-function boundary(value: unknown): number | null {return value === null ? null : number(value, -1, 128);}
+function boundary(value: unknown): number | null {return value === null ? null : number(value, -16, 10000);}
 
 // Build fresh known-field objects: imported JSON cannot inject markup, settings,
 // object properties, or storage keys into the app.
@@ -53,7 +53,7 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
   let total = 0;
   const sessions = root.sessions.map(value => {
     const s = object(value), config = object(s.settings);
-    if (s.piece !== 'stella-by-starlight' || !Array.isArray(s.judgements)) throw new Error('Invalid session data.');
+    if (typeof s.piece !== 'string' || !/^(stella-by-starlight|openbook-[a-z0-9_]+)$/.test(s.piece) || !Array.isArray(s.judgements)) throw new Error('Invalid session data.');
     total += s.judgements.length;
     if (total > 100000) throw new Error('Too many judgements in this file.');
     const id = text(s.id, 100);
@@ -61,6 +61,7 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
     ids.add(id);
     const settings: HistorySettings = {
       bpm: number(config.bpm, 40, 180), transpose: number(config.transpose, -48, 48, true),
+      keyTranspose: config.keyTranspose === undefined ? 0 : number(config.keyTranspose, -6, 5, true),
       freeTime: bool(config.freeTime), allowLowOctaveUp: bool(config.allowLowOctaveUp), loop: bool(config.loop),
       loopStart: boundary(config.loopStart), loopEnd: boundary(config.loopEnd), latencyMs: number(config.latencyMs, -300, 500),
     };
@@ -74,10 +75,10 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
         id, at: date(a.at), index: number(a.index, 0, 10000, true), cycle: number(a.cycle, 0, 10000000, true),
         note: number(a.note, 0, 127, true), cents: number(a.cents, -100, 100), errorMs: number(a.errorMs, -10000, 10000),
         correctPitch: bool(a.correctPitch), freeTime: bool(a.freeTime), expectedNote: number(a.expectedNote, 0, 127, true),
-        location: text(a.location), start: number(a.start, -1, 128), duration: number(a.duration, 0.001, 129), latencyMs: number(a.latencyMs, -300, 500),
+        location: text(a.location), start: number(a.start, -16, 10000), duration: number(a.duration, 0.001, 10000), latencyMs: number(a.latencyMs, -300, 500),
       };
     }).sort((a, b) => a.at.localeCompare(b.at));
-    const session: PracticeSession = {id, piece: 'stella-by-starlight', startedAt: date(s.startedAt), updatedAt: date(s.updatedAt), endedAt: s.endedAt === null ? null : date(s.endedAt), settings, judgements};
+    const session: PracticeSession = {id, piece: s.piece as string, title: s.title === undefined ? (s.piece === 'stella-by-starlight' ? 'Stella by Starlight' : s.piece as string) : text(s.title), tonic: s.tonic === undefined ? 10 : number(s.tonic, 0, 11, true), startedAt: date(s.startedAt), updatedAt: date(s.updatedAt), endedAt: s.endedAt === null ? null : date(s.endedAt), settings, judgements};
     if (session.updatedAt < session.startedAt || (session.endedAt && session.endedAt < session.startedAt) || judgements.some(a => a.at < session.startedAt || a.at > session.updatedAt)) throw new Error('Inconsistent session dates.');
     return session;
   });
@@ -89,7 +90,7 @@ export function mergePracticeHistories(local: PracticeHistoryData, incoming: Pra
   for (const session of incoming.sessions) {
     const old = sessions.get(session.id);
     if (!old) {sessions.set(session.id, session); continue;}
-    if (old.piece !== session.piece || old.startedAt !== session.startedAt || !sameFields(old.settings, session.settings)) throw new Error('A session ID conflicts with different saved settings. Nothing was imported.');
+    if (old.piece !== session.piece || old.startedAt !== session.startedAt || !sameFields({...old.settings, keyTranspose: old.settings.keyTranspose ?? 0}, {...session.settings, keyTranspose: session.settings.keyTranspose ?? 0})) throw new Error('A session ID conflicts with different saved settings. Nothing was imported.');
     const events = new Map(old.judgements.map(event => [event.id, event]));
     for (const event of session.judgements) {
       const existing = events.get(event.id);

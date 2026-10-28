@@ -1,9 +1,10 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {Box, chakra, Text} from '@chakra-ui/react';
 import {memo, useMemo} from 'react';
-import {chordLabel, noteName} from '../leadSheet/labels.ts';
+import {chordLabel, noteName, pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
-import {LENGTH, START, TIMING_TOLERANCE} from './exercise.ts';
+import {TIMING_TOLERANCE} from './exercise.ts';
 import type {Attempt, PracticeChord} from './exercise.ts';
 import {ChordFunctionPopover} from './ChordFunctionPopover.tsx';
 import {HarmonyStripGraphic} from './HarmonyStripGraphic.tsx';
@@ -13,11 +14,12 @@ import {melodyRoleLabel, melodyRoleSegments} from './melodyRole.ts';
 import type {ChordConnections} from './analysis.ts';
 import {ChordConnectionsPopover} from './ChordConnectionsPopover.tsx';
 
-export const PracticeMelodyCell = memo(function PracticeMelodyCell({note, attempt, missed, mode, transpose, showRoles, active, running, freeTime, onSeek, onMelody}: {
-  note: MelodyAttack; attempt?: Attempt; missed: boolean; mode: LabelMode; transpose: number; showRoles: boolean;
+export const PracticeMelodyCell = memo(function PracticeMelodyCell({note, attempt, missed, mode, transpose, pieceHarmonies, showRoles, active, running, freeTime, onSeek, onMelody}: {
+  note: MelodyAttack; attempt?: Attempt; missed: boolean; mode: LabelMode; transpose: number; pieceHarmonies?: PracticeChord[]; showRoles: boolean;
   active: boolean; running: boolean; freeTime: boolean; onSeek: (beat: number) => void; onMelody: (note: MelodyAttack) => void;
 }) {
-  const roles = useMemo(() => showRoles ? melodyRoleSegments(note.note + transpose, note.start, note.duration) : undefined, [showRoles, note, transpose]);
+  const {LENGTH, START} = usePracticeScore();
+  const roles = useMemo(() => showRoles ? melodyRoleSegments(note.note + transpose, note.start, note.duration, pieceHarmonies) : undefined, [showRoles, note, transpose, pieceHarmonies]);
   const roleDescription = useMemo(() => roles?.map(segment => segment.role && segment.chord
     ? `${segment.role.description} (${melodyRoleLabel(segment.role, mode)}) over ${chordLabel(segment.chord, mode)}; ${segment.role.inVoicing ? 'in' : 'outside'} the displayed voicing`
     : 'Pickup: no chord sounding').join(' → '), [roles, mode]);
@@ -35,16 +37,17 @@ export const PracticeMelodyCell = memo(function PracticeMelodyCell({note, attemp
   </Box>;
 });
 
-export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, previous, mode, showTransitions, active, running, onSeek, onHarmony, connections, showCommon, showVoiceLeading, showGuides}: {
-  chord: PracticeChord; previous?: PracticeChord; mode: LabelMode; showTransitions: boolean; active: boolean; running: boolean;
+export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, previous, mode, keyTranspose = 0, showTransitions, active, running, onSeek, onHarmony, connections, showCommon, showVoiceLeading, showGuides}: {
+  chord: PracticeChord; previous?: PracticeChord; mode: LabelMode; keyTranspose?: number; showTransitions: boolean; active: boolean; running: boolean;
   onSeek: (beat: number) => void; onHarmony: (chord: PracticeChord) => void;
   connections: ChordConnections; showCommon: boolean; showVoiceLeading: boolean; showGuides: boolean;
 }) {
+  const {LENGTH, START} = usePracticeScore();
   const name = chordLabel(chord, mode);
   return <Box position="absolute" left={`${(chord.start - START) / LENGTH * 100}%`} width={`${chord.duration / LENGTH * 100}%`} height="100%">
     <chakra.button type="button" data-active-chord={active ? 'true' : undefined} data-harmony-start={chord.start}
-      aria-label={`${running ? 'Cue' : 'Play'} chord ${name} in bar ${chord.bar}, function ${chord.function} in B flat`} textAlign="left" cursor="pointer"
-      title={`${name} · ${chord.function} in B♭ · bar ${chord.bar} · ${chord.duration} beats`}
+      aria-label={`${running ? 'Cue' : 'Play'} chord ${name} in bar ${chord.bar}, function ${chord.function} in ${pitchLabel(10 + keyTranspose, mode)} major`} textAlign="left" cursor="pointer"
+      title={`${name} · ${chord.function} in ${pitchLabel(10 + keyTranspose, mode)} · bar ${chord.bar} · ${chord.duration} beats`}
       onClick={() => running ? onSeek(chord.start) : onHarmony(chord)} _focusVisible={{outline: '2px solid', outlineColor: 'cyan.400', outlineOffset: '-2px'}}
       width="100%" height="100%" display="flex" flexDirection="column" alignItems="stretch" borderWidth="1px" borderBottomWidth={active ? '2px' : '1px'} borderColor={active ? 'fg.muted' : 'border'} bg={active ? 'bg.muted' : undefined} px={2} py={1} fontSize="sm">
       <Text as="span" display="block" fontSize="xs" lineHeight="18px" color="fg.muted">Bar {chord.bar}</Text>
@@ -54,7 +57,7 @@ export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, pre
         <HarmonyStripGraphic chord={chord} previous={showTransitions ? previous : undefined} mode={mode} commonNotes={showCommon ? connections.common : undefined} guideNotes={showGuides ? connections.guides : undefined}/>
       </Box>
     </chakra.button>
-    <ChordFunctionPopover analysis={chord.function} name={name} mode={mode}/>
+    {chord.function && <ChordFunctionPopover keyTranspose={keyTranspose} analysis={chord.function} name={name} mode={mode}/>}
     {(showCommon || showVoiceLeading) && <ChordConnectionsPopover chord={chord} previous={previous} connections={connections} mode={mode} voiceLeading={showVoiceLeading}/>}
   </Box>;
 });

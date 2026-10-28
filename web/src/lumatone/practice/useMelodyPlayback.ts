@@ -1,5 +1,6 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
-import {END, exercise, harmonies, START} from './exercise.ts';
+
 import {nextBeatTime, positionAtTime} from './transport.ts';
 import type {Segment} from './transport.ts';
 import {createFollower, followEntrance, tickFollower} from './fluteFollower.ts';
@@ -8,13 +9,14 @@ import {sound} from './sound.ts';
 import type {Voice} from './sound.ts';
 import {useNoteAudition} from './useNoteAudition.ts';
 
-type Options = {bpm: number; transpose: number; guide: boolean; metronome: boolean; loop: boolean; loopStart: number | null; loopEnd: number | null; harmonySound: boolean; harmonyVolume: number; followFlute: boolean; allowLowOctaveUp: boolean};
+type Options = {bpm: number; transpose: number; harmonyTranspose?: number; guide: boolean; metronome: boolean; loop: boolean; loopStart: number | null; loopEnd: number | null; harmonySound: boolean; harmonyVolume: number; followFlute: boolean; allowLowOctaveUp: boolean};
 type Position = {beat: number; pass: number; entryBeat: number; endBeat: number};
 type Transport = {context: AudioContext; harmonyGain: GainNode; segments: Segment[]; voices: Voice[]; frame: number; timer: number; nextId: number; scheduled: Set<string>; schedule: () => void; pending: {time: number; beat: number} | null};
 type Follower = {context: AudioContext; harmonyGain: GainNode; state: FollowState; voices: Voice[]; frame: number; chord: number; guide: number; guideVoice?: Voice; tick: number};
 
 
 export function useMelodyPlayback(options: Options) {
+  const {score, END, exercise, harmonies, START} = usePracticeScore();
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
   const pausedAt = useRef<number | null>(null);
@@ -67,7 +69,7 @@ export function useMelodyPlayback(options: Options) {
     if (saved.beat < saved.entryBeat) publish({...saved, beat: saved.entryBeat});
   }, [release, publish]);
   useEffect(() => release, [release]);
-  useEffect(() => {stop();}, [options.bpm, options.transpose, options.loop, options.loopStart, options.loopEnd, options.followFlute, stop]);
+  useEffect(() => {stop();}, [options.bpm, options.transpose, options.harmonyTranspose, options.loop, options.loopStart, options.loopEnd, options.followFlute, stop]);
   useEffect(() => {
     const hidden = () => {if (document.hidden) stop();};
     document.addEventListener('visibilitychange', hidden);
@@ -116,7 +118,7 @@ export function useMelodyPlayback(options: Options) {
       const settings = currentOptions.current;
       const end = settings.loop && beat < (settings.loopEnd ?? END) ? settings.loopEnd ?? END : END;
       following.voices.forEach(voice => voice.stopAt(following.context.currentTime + 0.012));
-      following.state = createFollower(beat, end, following.state.pass + 1, performance.now() / 1000, 0);
+      following.state = createFollower(beat, end, following.state.pass + 1, performance.now() / 1000, 0, exercise);
       following.chord = following.guide = -1;
       publish(following.state);
       setWaiting(following.state.waiting);
@@ -182,7 +184,7 @@ export function useMelodyPlayback(options: Options) {
       if (config.followFlute) {
         transport.current = undefined;
         const following: Follower = {context, harmonyGain,
-          state: createFollower(from, endBeat, savedPosition.current.pass + 1, performance.now() / 1000 + 0.1),
+          state: createFollower(from, endBeat, savedPosition.current.pass + 1, performance.now() / 1000 + 0.1, 4, exercise),
           voices: [], frame: 0, chord: -1, guide: -1, tick: -Infinity};
         follower.current = following;
         publish(following.state);
@@ -207,7 +209,7 @@ export function useMelodyPlayback(options: Options) {
             if (chordIndex >= 0) {
               const chord = harmonies[chordIndex];
               const duration = Math.max(0.05, (Math.min(chord.start + chord.duration, state.endBeat) - state.beat) * seconds);
-              following.voices.push(...chord.notes.map(note => sound(context, 440 * 2 ** ((note.note - 69) / 12), now + 0.015,
+              following.voices.push(...chord.notes.map(note => sound(context, 440 * 2 ** ((note.note + (settings.harmonyTranspose ?? 0) - 69) / 12), now + 0.015,
                 duration, 0.08 / Math.sqrt(chord.notes.length), harmonyGain, 0.07, 0.18)));
             }
           }
@@ -225,7 +227,7 @@ export function useMelodyPlayback(options: Options) {
           const tick = Math.floor(state.beat);
           if (state.countIn && tick !== following.tick) {
             following.tick = tick;
-            following.voices.push(sound(context, tick % 4 === 0 ? 1200 : 850, now, 0.045, 0.045));
+            following.voices.push(sound(context, score.bars.some(start => Math.abs(start - tick) < 1e-6) ? 1200 : 850, now, 0.045, 0.045));
           }
           if (state.finished) {stop(); return;}
           following.frame = requestAnimationFrame(animateFollow);
@@ -276,12 +278,12 @@ export function useMelodyPlayback(options: Options) {
           harmonies.forEach((chord, index) => {
             const onset = Math.max(chord.start, segment.entryBeat), end = Math.min(chord.start + chord.duration, segment.endBeat);
             add('chord-' + index, onset, (at, duration) => chord.notes.map(note =>
-              sound(context, 440 * 2 ** ((note.note - 69) / 12), at, duration, 0.08 / Math.sqrt(chord.notes.length), harmonyGain, 0.07, 0.18)), end);
+              sound(context, 440 * 2 ** ((note.note + (settings.harmonyTranspose ?? 0) - 69) / 12), at, duration, 0.08 / Math.sqrt(chord.notes.length), harmonyGain, 0.07, 0.18)), end);
           });
           const localNow = segment.beat + (now - segment.time) / seconds;
           for (let tick = Math.max(Math.ceil(segment.beat), Math.floor(localNow)); tick < Math.min(segment.endBeat, localNow + 1); tick++) {
             if (!settings.metronome && tick >= segment.entryBeat) continue;
-            add('tick-' + tick, tick, at => [sound(context, tick % 4 === 0 ? 1200 : 850, at, 0.045, 0.045)], Math.min(tick + 0.1, segment.endBeat));
+            add('tick-' + tick, tick, at => [sound(context, score.bars.some(start => Math.abs(start - tick) < 1e-6) ? 1200 : 850, at, 0.045, 0.045)], Math.min(tick + 0.1, segment.endBeat));
           }
         }
       };

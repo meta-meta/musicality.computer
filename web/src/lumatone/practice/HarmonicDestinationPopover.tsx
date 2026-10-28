@@ -1,3 +1,4 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {chakra, Stack, Text} from '@chakra-ui/react';
 import {memo, useState} from 'react';
 import {Tooltip} from '../../components/chakra-ui/tooltip.tsx';
@@ -5,9 +6,10 @@ import {chordLabel, pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {HarmonicDestination} from './analysis.ts';
 import {pc} from './analysis.ts';
-import {LENGTH, START} from './exercise.ts';
 
-export const HarmonicDestinationPopover = memo(function HarmonicDestinationPopover({group, mode}: {group: HarmonicDestination; mode: LabelMode}) {
+
+export const HarmonicDestinationPopover = memo(function HarmonicDestinationPopover({group, mode, keyTranspose = 0}: {keyTranspose?: number; group: HarmonicDestination; mode: LabelMode}) {
+  const {LENGTH, START} = usePracticeScore();
   const [open, setOpen] = useState(false);
   const key = `${pitchLabel(group.tonic, mode)} ${group.quality}`;
   const dominant = chordLabel(group.dominant, mode);
@@ -20,7 +22,7 @@ export const HarmonicDestinationPopover = memo(function HarmonicDestinationPopov
   return <Tooltip open={open} onOpenChange={details => setOpen(details.open)} openDelay={200} closeDelay={150} closeOnClick={false} closeOnScroll={false} interactive portalled showArrow
     contentProps={{maxWidth: 'min(360px, calc(100vw - 24px))', p: 3, bg: 'bg.panel', color: 'fg', borderWidth: '1px', boxShadow: 'md'}}
     content={<Stack gap={2} fontFamily="'JetBrains Mono', monospace" fontSize="sm">
-      <Text fontWeight="semibold">Toward {key} · {group.degree} in {pitchLabel(10, mode)}</Text>
+      <Text fontWeight="semibold">Toward {key} · {group.degree} in {pitchLabel(10 + keyTranspose, mode)}</Text>
       {group.backdoor ? <>
         <Text>{dominant} is ♭VII7 relative to this target: a dominant seventh chord rooted a whole step below it, suggesting a backdoor resolution.</Text>
         <Text>Its seventh, {seventh}, can fall a semitone to {pitchLabel(group.tonic + 7, mode)}, the target’s fifth; its root can rise a whole step to {pitchLabel(group.tonic, mode)}.</Text>

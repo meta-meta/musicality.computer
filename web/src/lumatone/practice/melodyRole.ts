@@ -22,11 +22,11 @@ export function melodyRoleLabel(role: MelodyRole, mode: LabelMode) {
   return `+${pitchLabel(pc(role.semitones), 'dozenal')}`;
 }
 
-export function melodyRoleSegments(note: number, start: number, duration: number): MelodyRoleSegment[] {
+export function melodyRoleSegments(note: number, start: number, duration: number, chords = harmonies): MelodyRoleSegment[] {
   const result: MelodyRoleSegment[] = [];
   const end = start + duration;
   if (start < 0) result.push({start, duration: Math.min(end, 0) - start});
-  for (const chord of harmonies) {
+  for (const chord of chords) {
     const from = Math.max(start, chord.start), to = Math.min(end, chord.start + chord.duration);
     if (to - from > 1e-7) result.push({start: from, duration: to - from, chord, role: melodyRole(note, chord)});
   }

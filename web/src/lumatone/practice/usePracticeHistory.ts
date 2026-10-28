@@ -1,5 +1,6 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {exercise} from './exercise.ts';
+
 import type {Attempt} from './exercise.ts';
 import {emptyHistory, HISTORY_KEY, mergePracticeHistories, parsePracticeHistory} from './practiceHistory.ts';
 import type {HistoryJudgement, HistorySettings, PracticeSession} from './practiceHistory.ts';
@@ -15,6 +16,7 @@ function load() {
 }
 
 export function usePracticeHistory(settings: HistorySettings) {
+  const {exercise, score} = usePracticeScore();
   const [initial] = useState(load);
   const [data, setData] = useState(initial.data);
   const [error, setError] = useState(initial.error);
@@ -57,9 +59,9 @@ export function usePracticeHistory(settings: HistorySettings) {
   const begin = useCallback(() => {
     finish();
     const at = new Date().toISOString();
-    active.current = {id: crypto.randomUUID(), piece: 'stella-by-starlight', startedAt: at, updatedAt: at, endedAt: null, settings: {...config.current}, judgements: []};
+    active.current = {id: crypto.randomUUID(), piece: score.id, title: score.title, tonic: score.tonic, startedAt: at, updatedAt: at, endedAt: null, settings: {...config.current}, judgements: []};
     dedup.current = '';
-  }, [finish]);
+  }, [finish, score]);
 
   const record = useCallback((attempt: Attempt, articulation?: number) => {
     if (!active.current) begin();
@@ -82,7 +84,7 @@ export function usePracticeHistory(settings: HistorySettings) {
     if (mounted.current) setActiveId(session.id);
     // Batch storage/summary updates independently of the audio and pitch clocks.
     if (timer.current === undefined) timer.current = window.setTimeout(flush, 750);
-  }, [begin, flush]);
+  }, [begin, flush, exercise]);
 
   const exportJSON = useCallback(() => {
     flush();

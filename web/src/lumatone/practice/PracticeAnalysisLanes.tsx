@@ -1,12 +1,15 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {Box, Flex, Text} from '@chakra-ui/react';
 import {memo, useMemo} from 'react';
 import {noteName} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
-import {beatLabel, LENGTH, START} from './exercise.ts';
+
 import {harmonicGroups, melodicMotions, motifs, motionLabel, phraseGroups} from './analysis.ts';
+import {transposeChord} from './transposition.ts';
 import {HarmonicDestinationPopover} from './HarmonicDestinationPopover.tsx';
 
 export const PhraseAnalysisLanes = memo(function PhraseAnalysisLanes({starts, mode}: {starts: number[]; mode: LabelMode}) {
+  const {beatLabel, LENGTH, START} = usePracticeScore();
   const phrases = useMemo(() => phraseGroups(starts), [starts]);
   return <>
     <Flex align="center" role="group" aria-label="Editable phrase groups">
@@ -33,6 +36,7 @@ export const PhraseAnalysisLanes = memo(function PhraseAnalysisLanes({starts, mo
 });
 
 export const MelodicIntervalLane = memo(function MelodicIntervalLane({mode, transpose}: {mode: LabelMode; transpose: number}) {
+  const {LENGTH, START} = usePracticeScore();
   return <Flex align="center" role="group" aria-label="Intervals from previous melody attack">
     <Text width="72px" flexShrink={0} position="sticky" left={0} bg="bg" zIndex={3} fontSize="xs" color="fg.muted">Intervals</Text>
     <Box position="relative" flex={1} height="25px">
@@ -47,11 +51,14 @@ export const MelodicIntervalLane = memo(function MelodicIntervalLane({mode, tran
   </Flex>;
 });
 
-export const HarmonicDestinationLane = memo(function HarmonicDestinationLane({mode}: {mode: LabelMode}) {
+export const HarmonicDestinationLane = memo(function HarmonicDestinationLane({mode, keyTranspose = 0}: {mode: LabelMode; keyTranspose?: number}) {
+  const groups = useMemo(() => harmonicGroups.map(group => ({...group, tonic: group.tonic + keyTranspose,
+    dominant: transposeChord(group.dominant, keyTranspose), preparation: group.preparation ? transposeChord(group.preparation, keyTranspose) : undefined,
+    next: group.next ? transposeChord(group.next, keyTranspose) : undefined})), [keyTranspose]);
   return <Flex align="center" role="group" aria-label="Local harmonic destinations">
     <Text width="72px" flexShrink={0} position="sticky" left={0} bg="bg" zIndex={3} fontSize="xs" color="fg.muted">Toward</Text>
     <Box position="relative" flex={1} height="27px">
-      {harmonicGroups.map(group => <HarmonicDestinationPopover key={group.start} group={group} mode={mode} />)}
+      {groups.map(group => <HarmonicDestinationPopover key={group.start} group={group} mode={mode} keyTranspose={keyTranspose} />)}
     </Box>
   </Flex>;
 });

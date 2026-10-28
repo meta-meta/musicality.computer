@@ -1,8 +1,9 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {Box, Flex, Text} from '@chakra-ui/react';
 import {useColorModeValue} from '../../components/chakra-ui/color-mode.tsx';
 import {noteName} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
-import {exercise, isPracticeHit, TIMING_TOLERANCE} from './exercise.ts';
+import {isPracticeHit, TIMING_TOLERANCE} from './exercise.ts';
 import type {Attempt} from './exercise.ts';
 
 const timingX = (ms: number) => 160 + Math.max(-400, Math.min(400, ms)) / 400 * 128;
@@ -15,6 +16,7 @@ export function PracticeJudgement({attempt, freeTime, running, listening, betwee
   attempt: Attempt | null; freeTime: boolean; running: boolean; listening: boolean;
   betweenTargets: boolean; mode: LabelMode; transpose: number;
 }) {
+  const {exercise} = usePracticeScore();
   const green = useColorModeValue('#15803d', '#4ade80');
   const amber = useColorModeValue('#b45309', '#f5b66a');
   const cyan = useColorModeValue('#0e7490', '#52e6ef');

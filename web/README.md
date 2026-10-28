@@ -46,6 +46,49 @@ playback runs, navigation queues on the next beat, as strip clicks do; seeking
 to the end stops playback. Inputs, sliders, and editable text retain their own
 keyboard behavior. Focused buttons and note hexes retain native Space actions.
 
+The practice page's **Key** selector transposes Stella's melody and harmony
+together into any of the 12 keys (B♭ major by default). Playback, audition,
+flute targets, hex positions, chord labels, and analysis follow the chosen key.
+**Register** independently shifts the melody by octaves. Key names follow the
+Dozenal/Jazz label setting; pause playback before changing key or register.
+Saved practice sessions include their key, and older history imports retain
+their original B♭ context. **Show melody** hides the melody strip and board
+cues independently of guide sound, harmony, and live input highlights.
+
+The practice page also has a collapsible **MIDI configuration** section. Select
+**Lumatone In** to show held MIDI notes and chords on the hex board with a
+contrasting border and played-note fill. Highlights clear on release, MIDI
+all-notes-off/all-sound-off, device changes, or disconnection. MIDI highlights
+are independent of microphone input and do not create flute judgements or
+trigger guide audio.
+
+**Tune** and **Find a tune** select from the original Stella arrangement and
+153 imported OpenBook tunes. Selecting a tune resets its transport, microphone,
+loop points, and practice settings. Source links, typesetter/composer credits,
+copyright metadata, and interpretation notes appear below the timeline.
+Cheek to Cheek and Waltz for Debby are listed as needing source correction;
+their upstream melody/harmony data is incomplete or inconsistent. Imported
+chord voicings are generated; the manual Roman-numeral/phrase analysis remains
+specific to the original Stella arrangement. Imported tunes still have melodic
+roles, key changes, MIDI highlights, flute judging/following, and practice history.
+History defaults to the selected tune, with an option to review all tunes.
+
+To regenerate the catalog, download the OpenBook source and portable LilyPond
+2.24.4 into an ignored `*.local` folder. From `web/`, run (adjust local paths):
+
+```powershell
+python -X utf8 scripts/import-openbook.py --source openbook-import.local/book-openbook-master --lilypond openbook-import.local/tools/lilypond-2.24.4/bin/lilypond.exe --out src/lumatone/practice/openbook/catalog.json --work openbook-import.local/compiled
+node scripts/test-openbook.cjs
+```
+
+The importer compiles each default version, resolves relative pitches, tuplets,
+and repeat endings, joins tied melody segments, and checks both streams have
+the same length with ordered, non-overlapping events. Grace notes are omitted;
+melody chords use their upper note. D.S./D.C. jumps are kept in written order
+and flagged in the tune's notes. Full provenance and known limitations are in
+`src/lumatone/practice/openbook/README.md`. The compiler and upstream source are
+build-time tools only; users need neither to practice with the generated data.
+
 **Practice history** below the timeline records judgements locally under
 `musicality.practice-history.v1`. Sessions begin with a fresh practice run;
 pausing/resuming keeps the same session. Judgements are batched to localStorage

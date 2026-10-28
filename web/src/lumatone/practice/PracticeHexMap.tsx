@@ -1,3 +1,4 @@
+import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
 import {getNoteColorHsl} from '../colors.ts';
@@ -5,8 +6,11 @@ import {pointyHexAxialToPixel} from '../hexUtils.ts';
 import {pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
+
 import type {PracticeChord} from './exercise.ts';
 import type {UpcomingAttack} from './lookahead.ts';
+
+import {transposePosition} from './transposition.ts';
 
 const RADIUS = 27;
 const referenceCells = Array.from({length: 10}, (_, row) => Array.from({length: 11}, (_, col) => {
@@ -23,7 +27,8 @@ const points = Array.from({length: 6}, (_, index) => {
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = []}: {
+  midiNotes?: number[];
   target?: MelodyAttack; futureAttacks: UpcomingAttack[]; progress: number;
   targetHit?: boolean;
   heard: number | null; transpose: number; mode: LabelMode;
@@ -34,6 +39,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   practicing: boolean;
   showGuideTones?: boolean;
 }) {
+  const {exercise} = usePracticeScore();
   const {colorMode} = useColorMode();
   const isLight = colorMode === 'light';
   const targetColor = isLight ? '#111' : '#fff';
@@ -75,8 +81,16 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     const base = isLight ? color.range('white')(0.3) : color;
     return {normal: base.toString({format: 'hex'}), played: base.range(isLight ? 'black' : 'white')(0.25).toString({format: 'hex'})};
   }), [cells, isLight]);
-  const atTarget = (cell: typeof cells[number], note?: MelodyAttack) => note && cell.q === note.at.q - transpose / 12 && cell.r === note.at.r + transpose / 6;
+  const melodyOffset = transposePosition({q: 0, r: 0}, transpose);
+  const atTarget = (cell: typeof cells[number], note?: MelodyAttack) => note && cell.q === note.at.q + melodyOffset.q && cell.r === note.at.r + melodyOffset.r;
   const targetCell = cells.find(cell => atTarget(cell, target));
+  const midiCells = new Set(midiNotes.map(note => {
+    const matches = cells.filter(cell => cell.note === note);
+    const melody = exercise.find(attack => attack.note + transpose === note);
+    return matches.find(cell => atTarget(cell, target))
+      ?? matches.find(cell => atTarget(cell, melody))
+      ?? matches.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
+  }));
   const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
   const heardCells = cells.filter(cell => cell.note === heard);
   const heardCell = heardCells.find(cell => atTarget(cell, target))
@@ -102,6 +116,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
       {cells.map((cell, index) => {
         const active = atTarget(cell, target);
         const live = cell === heardCell;
+        const midi = midiCells.has(cell);
         const chordTone = harmony?.notes.find(note => note.at.q === cell.q && note.at.r === cell.r);
         const root = harmony?.notes.find(note => note.root);
         const guideTone = showGuideTones && chordTone && root && [3, 4, 10, 11].includes(((chordTone.note - root.note) % 12 + 12) % 12);
@@ -116,7 +131,8 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
                event.preventDefault();
                if (!event.repeat) onPlayNote(cell.note);
              }}>
-            <polygon points={points} fill={active || live || cell === previewCell || chordTone ? colors[index].played : colors[index].normal} opacity={active || live || !showGuideTones || !chordTone || guideTone ? 1 : chordTone.root ? 0.65 : 0.35}/>
+            <polygon points={points} fill={active || live || midi || cell === previewCell || chordTone ? colors[index].played : colors[index].normal} opacity={active || live || midi || !showGuideTones || !chordTone || guideTone ? 1 : chordTone.root ? 0.65 : 0.35}/>
+            {midi && <polygon data-midi-note={cell.note} points={points} fill="none" stroke={targetColor} strokeWidth={1.6} pointerEvents="none"/>}
             {live && <g data-flute-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
               <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
               <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
