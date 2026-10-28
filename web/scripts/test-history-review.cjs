@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const esbuild=require('esbuild');
 const built=esbuild.buildSync({entryPoints:['src/lumatone/practice/historyReview.ts'],bundle:true,write:false,format:'cjs',platform:'node'});
 const mod={exports:{}};new Function('module','exports','require',built.outputFiles[0].text)(mod,mod.exports,require);
-const {reviewHistorySession:review,historyRate:rate,historyBarRanges:ranges,reviewHistoryPasses:passes}=mod.exports;
+const {reviewHistorySession:review,historyRate:rate,historyBarRanges:ranges,reviewHistoryPasses:passes,historyCoverage:coverage}=mod.exports;
 const score={id:'fixture',start:-1,end:10,bars:[0,3,8],melody:[-1,0,3,8].map((start,index)=>({start,duration:1,note:60+index})),chords:[]};
 const settings={transpose:2,freeTime:false};
 const judgement=(index,cycle,correctPitch,errorMs=0,extras={})=>({index,cycle,correctPitch,errorMs,start:score.melody[index].start,duration:1,
@@ -27,6 +27,12 @@ const stale=review(score,{...session,judgements:[judgement(0,1,true,0,{start:4})
 assert.equal(stale.stale,1);assert.equal(stale.total.attempts,0);
 assert.equal(review(score,{...session,piece:'another'}).total.attempts,0);
 assert.equal(ranges({...score,start:0})[0].label,'Bar 1');
+assert.equal(coverage(result),.75,'Coverage uses distinct notes, not accuracy');
+assert.equal(coverage(review(score,{...session,judgements:[]})),0);
+const repeated=review(score,{...session,judgements:Array.from({length:100},(_,cycle)=>judgement(0,cycle,true))});
+assert.equal(coverage(repeated),.25,'Repeated loop attempts cannot inflate song coverage');
+const half=review(score,{...session,judgements:[judgement(0,1,false),judgement(1,1,false)]});
+assert.equal(coverage(half),.5,'Exactly half remains visible, even with incorrect notes');
 const split=passes(score,session);
 assert.deepEqual(split.map(pass=>pass.cycle),[1,2]);
 assert.equal(split[0].review.total.attempts,3);

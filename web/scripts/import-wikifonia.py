@@ -31,7 +31,7 @@ for entry in manifest[:args.limit]:
         failures.append({'file':original,'source':entry['url'],'reason':str(error)})
 report={'sourceFiles':min(len(manifest),args.limit or len(manifest)),'imported':len(scores),'duplicates':duplicates,
         'melodyOnly':sum(not score['chords'] for score in scores),'failures':failures}
-output=HERE.parent/'src/lumatone/practice/wikifonia'
+output=HERE.parent.parent/'arrangements.local/web/src/lumatone/practice/wikifonia'
 output.mkdir(parents=True,exist_ok=True)
 if args.limit:
     (args.source/'sample.report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')

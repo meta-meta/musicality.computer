@@ -1,6 +1,8 @@
 import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
-import {detectPitch, EntranceTracker, PitchStabilizer} from './pitch.ts';
+import {capturedPitchTime, detectPitch, EntranceTracker, PITCH_POLL_MS, PITCH_WINDOW, PitchStabilizer} from './pitch.ts';
 import type {Entrance, Pitch} from './pitch.ts';
+import {audioSetup} from './timingCalibration.ts';
+import type {AudioSetup} from './timingCalibration.ts';
 
 type Input = {context: AudioContext; stream: MediaStream; source: MediaStreamAudioSourceNode; analyser: AnalyserNode; mute: GainNode; frame: number};
 
@@ -9,6 +11,7 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
   const [pitch, setPitch] = useState<Pitch | null>(null);
   const [status, setStatus] = useState<'off' | 'starting' | 'listening'>('off');
   const [error, setError] = useState('');
+  const [setup,setSetup] = useState<AudioSetup|null>(null);
   const input = useRef<Input>();
   const generation = useRef(0);
   const callback = useRef(onEntrance);
@@ -50,7 +53,7 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
       context = new AudioContext();
       const source = context.createMediaStreamSource(stream);
       const analyser = context.createAnalyser();
-      analyser.fftSize = 2048;
+      analyser.fftSize = PITCH_WINDOW;
       const mute = context.createGain();
       mute.gain.value = 0;
       source.connect(analyser);
@@ -60,6 +63,9 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
       input.current = current;
       await context.resume();
       if (token !== generation.current) return false;
+      const nextSetup = await audioSetup(context,stream);
+      if (token !== generation.current) return false;
+      setSetup(nextSetup);
       const samples = new Float32Array(analyser.fftSize);
       const stabilizer = new PitchStabilizer();
       // The stabilizer already confirms two frames; don't add another delay.
@@ -68,12 +74,12 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
       let lastFrame = -Infinity;
       const read = (now: number) => {
         if (input.current !== current) return;
-        if (now - lastFrame >= 30) {
+        if (now - lastFrame >= PITCH_POLL_MS) {
           lastFrame = now;
           analyser.getFloatTimeDomainData(samples);
           const detected = detectPitch(samples, current.context.sampleRate);
           // Timestamp the center of the captured waveform rather than the UI update.
-          const time = now - samples.length / current.context.sampleRate * 500;
+          const time = capturedPitchTime(now,current.context.sampleRate);
           const stable = stabilizer.update(detected, time);
           startTransition(() => setPitch(stable?.pitch ?? null));
           const entrance = tracker.update(stable?.pitch ?? null, stable?.time ?? time);
@@ -101,5 +107,5 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
       return false;
     }
   };
-  return {pitch, status, error, start, stop};
+  return {pitch, status, error, setup, start, stop};
 }

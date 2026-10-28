@@ -2,7 +2,7 @@ import {Box, Flex, Text} from '@chakra-ui/react';
 import {memo, useMemo, useState} from 'react';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import type {PracticeSession} from './practiceHistory.ts';
-import {historyMetricCounts, historyRate, reviewHistoryPasses, reviewHistorySession} from './historyReview.ts';
+import {historyCoverage,historyMetricCounts, historyRate, reviewHistoryPasses, reviewHistorySession} from './historyReview.ts';
 import type {HistoryMetric, SessionReview} from './historyReview.ts';
 import type {PracticeScore} from './scores.ts';
 
@@ -27,14 +27,16 @@ export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,s
   sessions:PracticeSession[];selected:string|null;selectedPass:number|null;onReview:(id:string,bar:number|null,cycle?:number|null)=>void;
 }) {
   const {score}=usePracticeScore();
+  const [hideIncomplete,setHideIncomplete]=useState(false);
   const [expandPasses,setExpandPasses]=useState(false);
   const [metric,setMetric]=useState<HistoryMetric>('pitch');
   const [hover,setHover]=useState<{column:number;bar:number|null}|null>(null);
   const orderedSessions=useMemo(()=>sessions.filter(session=>session.piece===score.id)
     .sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt)),[sessions,score.id]);
-  const columns=useMemo(()=>orderedSessions.flatMap((session,i)=>expandPasses
+  const allColumns=useMemo(()=>orderedSessions.flatMap((session,i)=>expandPasses
     ? passReviews(score,session).slice().reverse().map(pass=>({session,sessionNumber:orderedSessions.length-i,id:`${session.id}:pass:${pass.cycle}`,cycle:pass.cycle as number|null,startedAt:pass.startedAt,review:pass.review}))
     : [{session,sessionNumber:orderedSessions.length-i,id:session.id,cycle:null as number|null,startedAt:session.startedAt,review:review(score,session)}]),[orderedSessions,score,expandPasses]);
+  const columns=useMemo(()=>hideIncomplete?allColumns.filter(column=>historyCoverage(column.review)>=.5):allColumns,[allColumns,hideIncomplete]);
   if (!orderedSessions.length) return null;
   const bars=columns[0]?.review.bars??review(score,orderedSessions[0]).bars;
   const width=Math.max(640,columns.length*44+94),left=72,step=(width-left-20)/Math.max(1,columns.length);
@@ -55,11 +57,14 @@ export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,s
       <label>History graph <select aria-label="History graph metric" value={metric} onChange={event=>setMetric(event.target.value as HistoryMetric)}>
         <option value="pitch">First-try pitch</option><option value="timing">On-time entrances</option><option value="both">Full hits</option>
       </select></label>
-      <Text fontSize="xs" color="fg.muted">{score.title} · {orderedSessions.length} sessions{expandPasses ? ` · ${columns.length} recorded passes` : ""} · newest → oldest</Text>
+      <Text fontSize="xs" color="fg.muted">{score.title} · {orderedSessions.length} sessions{expandPasses ? ` · ${columns.length} of ${allColumns.length} recorded passes shown` : hideIncomplete ? ` · ${columns.length} shown` : ""} · newest → oldest</Text>
       <label><input type="checkbox" checked={expandPasses} onChange={event=>{setExpandPasses(event.target.checked);setHover(null);}}/> Show individual passes</label>
+      <label><input aria-label="Hide history below 50% judged" type="checkbox" checked={hideIncomplete} onChange={event=>{setHideIncomplete(event.target.checked);setHover(null);}}/> Hide sessions/passes with &lt;50% judged</label>
     </Flex>
     <Text fontSize="xs" color="fg.muted">{expandPasses ? 'Each column is one recorded pass, grouped by session, aligned with its point above. First judgements are shown without averaging passes together; passes with no judgements are not recorded.' : 'Each column is one session, aligned with its point above.'} Each row is a bar of the whole piece. Scroll horizontally through the full history. Click a point for the session review, or a cell to review that bar.</Text>
-    <Box overflowX="auto" mt={2}>
+    {hideIncomplete&&<Text fontSize="xs" color="fg.muted">Coverage counts distinct melody attacks judged across the whole piece, regardless of success. Repeating a small loop doesn’t increase coverage. This filters chart columns; the history table remains available.</Text>}
+    {!columns.length&&<Text fontSize="sm" mt={3}>No {expandPasses?'passes':'sessions'} have at least 50% of this piece judged. Turn off the coverage filter to see partial practice.</Text>}
+    <Box overflowX="auto" mt={2} display={columns.length?'block':'none'}>
       <svg role="group" aria-label="Session progress and whole-piece judgement map" viewBox={`0 0 ${width} ${bottom+46}`}
         style={{width:'100%',minWidth:width,display:'block',fontFamily:'inherit'}}>
         <style>{'.history-session:focus {outline: none} .history-session:focus-visible .history-column-frame {stroke: currentColor; stroke-width:2}'}</style>

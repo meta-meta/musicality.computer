@@ -1,0 +1,9 @@
+
+# Private arrangement checkout; never publish with the app.
+/arrangements.local/
+
+/web/stats.html
+
+/web/public/practice/scores/
+/web/public/lumatone-exercises/
+/web/src/lumatone/practice/openbook/catalog.json

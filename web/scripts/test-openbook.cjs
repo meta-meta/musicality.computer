@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const esbuild = require('esbuild');
+const {privateDataPlugin, privateRoot} = require('./private-data-test.cjs');
 
 (async () => {
   const result = await esbuild.build({stdin: {contents: `
@@ -11,14 +12,14 @@ const esbuild = require('esbuild');
     export * from './src/lumatone/practice/navigation.ts';
     export * from './src/lumatone/practice/transposition.ts';
     export * from './src/lumatone/practice/practiceHistory.ts';
-  `, resolveDir: process.cwd(), loader: 'ts'}, bundle: true, write: false, format: 'cjs', platform: 'node', define: {'import.meta.env.BASE_URL': JSON.stringify('/')}});
+  `, resolveDir: process.cwd(), loader: 'ts'}, plugins: [privateDataPlugin], bundle: true, write: false, format: 'cjs', platform: 'node', define: {'import.meta.env.BASE_URL': JSON.stringify('/')}});
   const mod = {exports: {}};
   new Function('module', 'exports', 'require', result.outputFiles[0].text)(mod, mod.exports, require);
   const api = mod.exports;
   const fs = require('node:fs');
   const index = api.practiceScores;
   const scores = index.map(entry => entry.id === 'stella-by-starlight' ? api.stellaScore
-    : JSON.parse(fs.readFileSync('public/practice/scores/' + entry.file, 'utf8')));
+    : JSON.parse(fs.readFileSync(require('node:path').join(privateRoot, 'public/practice/scores', entry.file), 'utf8')));
   assert.equal(new Set(index.map(entry => entry.id)).size, index.length);
   for (const entry of index.filter(entry => entry.file)) {
     assert.ok(!('melody' in entry) && !('chords' in entry));
@@ -138,7 +139,7 @@ const esbuild = require('esbuild');
     requests++;
     assert.ok(url.startsWith('/practice/scores/'));
     assert.ok(options.signal instanceof AbortSignal);
-    return {ok: true, json: async () => JSON.parse(fs.readFileSync('public' + url, 'utf8'))};
+    return {ok: true, json: async () => JSON.parse(fs.readFileSync(require('node:path').join(privateRoot, 'public', url), 'utf8'))};
   };
   try {
     assert.equal((await api.loadPracticeScore(index[0])).id, 'stella-by-starlight');

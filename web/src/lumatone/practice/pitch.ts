@@ -1,3 +1,8 @@
+// Shared by live flute input and timing calibration.
+export const PITCH_WINDOW = 2048;
+export const PITCH_POLL_MS = 30;
+export const capturedPitchTime = (now: number, sampleRate: number) => now - PITCH_WINDOW / sampleRate * 500;
+
 export type Pitch = {frequency: number; note: number; cents: number; clarity: number; rms: number};
 
 // YIN's cumulative mean normalized difference, with a parabolic lag estimate.

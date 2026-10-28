@@ -1,5 +1,29 @@
 # musicality.computer web
 
+## Private local arrangements
+
+All arrangement data, lyrics, exercise PDFs, catalogs, and source reports live in
+`meta-meta/musicality-arrangements`, a separate private repository. From the app root:
+
+```powershell
+git clone git@github.com:meta-meta/musicality-arrangements.git arrangements.local
+cd web
+npm run dev -- --port 5180 --strictPort
+```
+
+Vite overlays modules and serves score JSON/PDFs from `arrangements.local/web/`
+only during development. Production builds always use empty public placeholders,
+even when the private checkout is installed. Public practice/XR pages show an empty
+state. Scores still load on demand, rather than downloading the entire collection.
+
+All arrangement data paths described below are relative to the private checkout's
+`web/` directory. Import commands run from this frontend and use ignored caches;
+`publish-practice.py` writes only into `../arrangements.local/web/`. Commit data
+changes from the private checkout and app changes from the public repository.
+Never copy private scores into this frontend's `public/` folder. Private storage
+does not grant reuse rights. Catalog integration tests require the private checkout;
+generic algorithm tests work without it.
+
 The Lumatone MIDI editor, transcriptions, and chord composer are available at
 `/lumatone`, linked from the home page. MIDI device configuration is available on
 both pages, with collapsible configuration and editor sections on `/lumatone`.
@@ -475,3 +499,59 @@ pass (and optionally its bar). **Review entire session** clears both filters.
 Pass timestamps use their earliest judgement. Empty/unrecorded passes cannot be
 reconstructed and are not invented; stored transport pass numbers are preserved.
 Expansion changes only the view, not saved sessions or the suggestion algorithm.
+
+### Automatic input timing calibration
+
+In **Flute input**, open **Auto-calibrate**, then choose **Start calibration**.
+Use the same output setup as practice. Let the microphone hear the speakers, or
+hold a headphone earcup near it, stay quiet, and keep the tab visible. Ten short
+sine tones play over roughly 13 seconds. The regular flute listener and paused
+transport stop before the test; calibration never records practice judgements.
+Click **Listen to flute** afterward to resume normal input.
+
+The test uses the same 2048-sample pitch window, 30 ms polling, YIN detector,
+stabilizer, entrance tracker, and center-of-window timestamps as live input.
+Offsets are measured against scheduled playback on the transport's clock
+convention: they include output, microphone, and residual detection delay rather
+than claiming to isolate microphone latency. One detection is accepted per tone.
+At least six consistent detections are required; median/MAD filtering removes
+outliers. Excessive timing spread or offsets outside the existing -300 to 500 ms
+range produce an error and leave the correction unchanged. Results are rounded
+to the manual control's 10 ms step and require **Apply and save correction**.
+
+Only device metadata and numeric results are saved, never microphone audio.
+Profiles live under `musicality.timing-calibration.v1` in localStorage. The last applied/used calibration restores immediately on page load. Starting
+normal microphone input verifies the browser-reported device/output and sample
+rate while stopped. A matching profile is restored and remembered as last used;
+a different uncalibrated setup resets a previously restored correction to zero
+with a notice. Default-output identification is best effort;
+recalibrate after device/routing changes even if the browser reports the same
+name. Manual adjustments remain available and do not rewrite the saved measured
+profile. Malformed stored data is not silently overwritten. Storage failures
+still allow applying the result for the current page.
+
+Cancellation, unmount, hidden tabs, disconnected devices, and interrupted audio
+release test capture/playback resources. Calibration is unavailable during
+practice or free-time mode. Validate with
+`node scripts/test-timing-calibration.cjs` from `web/`; its synthetic loopback
+feeds the actual pitch pipeline with 0/120/240 ms delays. Physical microphone,
+speaker/headphone routing and permission prompts require a real-device test.
+
+### Transport preferences and coverage filtering
+
+The playhead controls include loop, tempo (40–180 BPM), and flute listening next
+to play/pause. Both tempo controls and both loop toggles share the same state.
+Tempo and loop-enabled preferences persist across reloads/tunes in localStorage
+under `musicality.practice-settings.v1`; loop boundaries remain tune-specific and
+are not carried into another piece. These settings keep the existing restriction
+on editing tempo/loop while playing. Listening retains the current sound options.
+
+In the history graph, **Hide sessions/passes with <50% judged** filters the active
+session or pass view. Coverage is distinct valid melody attacks judged divided by
+all melody attacks in the piece, independent of success and timing mode. Repeated
+attempts/passes through a short loop do not inflate coverage. Exactly 50% remains
+visible. The full saved history/detail table remains available, and an empty state
+allows turning the filter off when no columns qualify.
+
+Validate with `node scripts/test-practice-settings.cjs` and
+`node scripts/test-history-review.cjs` from `web/`.

@@ -13,15 +13,16 @@ import {noteName} from '../leadSheet/labels.ts';
 
 type TranscriptionId = 'thisWillBeOurYear' | 'sWonderful' | 'stellaByStarlight' | `exercise:${string}`;
 
+const chartAvailable: Record<string, boolean> = {thisWillBeOurYear: !!thisWillBeOurYear(57).length, sWonderful: !!sWonderful(57).length, stellaByStarlight: !!stellaByStarlight(57).length};
 const transcriptionOptions: {label: string; value: TranscriptionId}[] = [
   {label: 'This Will Be Our Year', value: 'thisWillBeOurYear'},
   {label: "S'Wonderful", value: 'sWonderful'},
   {label: 'Stella by Starlight', value: 'stellaByStarlight'},
   ...exerciseScores.map(score => ({label: `Exercises · ${score.title}`, value: `exercise:${score.id}` as TranscriptionId})),
-];
+].filter(option => option.value.startsWith('exercise:') || chartAvailable[option.value]) as {label: string; value: TranscriptionId}[];
 
 export function LumatoneTranscriptions() {
-  const [selectedTranscription, setSelectedTranscription] = useState<TranscriptionId>('thisWillBeOurYear');
+  const [selectedTranscription, setSelectedTranscription] = useState<TranscriptionId>(transcriptionOptions[0]?.value ?? 'thisWillBeOurYear');
   const [error, setError] = useState('');
   const {playChord, playNote, releasePreview} = useNoteAudition(setError);
   const transpose = 57;
@@ -41,6 +42,7 @@ export function LumatoneTranscriptions() {
   return (
     <Stack>
       <Heading size="md">Transcriptions:</Heading>
+      {!transcriptionOptions.length && <Text>No local transcriptions are installed.</Text>}
 
       <NativeSelectRoot size="sm" width="min(100%, 30rem)">
         <NativeSelectField

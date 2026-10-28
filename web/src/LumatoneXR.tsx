@@ -21,6 +21,10 @@ class SceneBoundary extends Component<{children: ReactNode}, {failed: boolean}> 
 }
 
 export default function LumatoneXR() {
+  if (!stellaMelody.length) return <Text p={6}>No local arrangement is installed for the XR view.</Text>;
+  return <ArrangementXR/>;
+}
+function ArrangementXR() {
   const {colorMode} = useColorMode();
   const [store] = useState(() => createXRStore({emulate: false, offerSession: false, enterGrantedSession: false}));
   const [selected, setSelected] = useState(5);

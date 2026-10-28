@@ -308,5 +308,5 @@ export function useMelodyPlayback(options: Options) {
       setError(reason instanceof Error ? reason.message : 'Playback could not start.');
     }
   };
-  return {running, paused, ...position, pendingBeat, previewNote, positionAt, seek, start, stop, pause, resume, playNote, playChord, followPitch, waiting, error};
+  return {running, paused, ...position, pendingBeat, previewNote, positionAt, seek, start, stop, pause, resume, playNote, playChord, followPitch, waiting, error, stopPreview: () => {releasePreview();setPreviewNote(null);}};
 }

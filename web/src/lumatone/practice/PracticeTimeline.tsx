@@ -1,5 +1,6 @@
 import {Box, Button, chakra, Flex, Stack, Text} from '@chakra-ui/react';
 import {useCallback, useEffect, useMemo, useRef} from 'react';
+import {PracticeTempoInput} from './PracticeTempoInput.tsx';
 import {chordLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
@@ -15,14 +16,15 @@ import {HarmonicDestinationLane, MelodicIntervalLane, PhraseAnalysisLanes} from 
 
 
 export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendingBeat, target, harmony, mode, transpose, keyTranspose = 0, pieceHarmonies, showHarmony, showMelody = true, showMelodyRoles, showChordTransitions, bpm,
-  loop, loopStart, loopEnd, onLoopStart, onLoopEnd, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts, onTogglePlayback, onBack, transportDisabled}: {
+  loop, loopStart, loopEnd, onLoopChange, onLoopStart, onLoopEnd, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts, onTogglePlayback, onToggleListening, microphoneStarting, onBpmChange, onBack, transportDisabled}: {
   beat: number; entryBeat: number; endBeat: number; pass: number; running: boolean; pendingBeat: number | null;
   target?: MelodyAttack; harmony?: PracticeChord; mode: LabelMode; transpose: number; keyTranspose?: number; pieceHarmonies: PracticeChord[]; showHarmony: boolean; showMelody?: boolean; showMelodyRoles: boolean; showChordTransitions: boolean; bpm: number;
-  loop: boolean; loopStart: number | null; loopEnd: number | null;
+  loop: boolean; loopStart: number | null; loopEnd: number | null; onLoopChange: (enabled: boolean) => void;
   onLoopStart: (beat: number | null) => void; onLoopEnd: (beat: number | null) => void;
   onSeek: (beat: number) => void; onMelody: (note: MelodyAttack) => void; onHarmony: (chord: PracticeChord) => void;
   attempts: Record<string, Attempt>; listening: boolean; freeTime: boolean;
   analysis: AnalysisOptions; phraseStarts: number[];
+  onToggleListening: () => void; microphoneStarting: boolean; onBpmChange: (value:number) => void;
   onTogglePlayback: () => void; onBack: () => void; transportDisabled: boolean;
 }) {
   const {score, beatLabel, END, exercise, LENGTH, START} = usePracticeScore();
@@ -66,11 +68,19 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <Box data-testid="overview-playhead" pointerEvents="none" position="absolute" left={`min(calc(100% - 2px), ${percent(position)}%)`} top={0} bottom={0} width="2px" bg="cyan.400"/>
         {pendingBeat !== null && <Box pointerEvents="none" position="absolute" left={`${percent(pendingBeat)}%`} top={0} bottom={0} width="2px" bg="orange.400"/>}
       </Box>
-      <Flex gap={2} align="center" fontSize="sm">
+      <Flex gap={2} align="center" wrap="wrap" fontSize="sm">
         <Button size="sm" variant="outline" aria-label="Previous loop point or beginning" title="Previous loop point or beginning ([)" onClick={onBack}>⏮</Button>
         <Button size="sm" aria-label={running ? 'Pause playback' : 'Play playback'} title="Play / pause (Space)" disabled={transportDisabled} onClick={onTogglePlayback}>{running ? '⏸' : '▶'}</Button>
+        <Button size="sm" variant={loop ? 'solid' : 'outline'} colorPalette={loop ? 'cyan' : undefined}
+          aria-label="Loop playback" aria-pressed={loop} title={running ? 'Pause to change looping' : loop ? 'Looping on' : 'Looping off'}
+          disabled={running || transportDisabled} onClick={() => onLoopChange(!loop)}>↻</Button>
+        <Flex as="label" gap={1} align="center"><PracticeTempoInput label="Playhead tempo" bpm={bpm} onChange={onBpmChange} disabled={running || transportDisabled}/> BPM</Flex>
+        <Button size="sm" variant={listening ? 'solid' : 'outline'} aria-pressed={listening}
+          aria-label={listening ? 'Stop microphone at playhead' : 'Listen to flute at playhead'} disabled={transportDisabled} onClick={onToggleListening}>
+          {microphoneStarting ? 'Opening…' : listening ? 'Listening' : 'Listen'}
+        </Button>
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
-        <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: 1, minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
+        <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: '1 1 160px', minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
       <Text fontSize="xs" color="fg.muted">Space: play/pause · [ / ]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. Shortcuts leave text fields and sliders alone.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">

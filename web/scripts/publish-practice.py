@@ -4,7 +4,9 @@ import hashlib
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]/'arrangements.local'/'web'
+if not ROOT.is_dir():
+    raise SystemExit('Clone the private arrangements repository into arrangements.local first.')
 
 def publish(catalog, collection):
     folder = ROOT/'public/practice/scores'
@@ -35,3 +37,10 @@ if __name__ == '__main__':
     parser.add_argument('--collection',required=True)
     args = parser.parse_args()
     publish(json.loads(args.catalog.read_text(encoding='utf-8')),args.collection)
+
+    report = args.catalog.with_suffix('.report.json')
+    if report.exists() and args.collection in ('OpenBook', 'Effendi', 'Wikifonia'):
+        import shutil
+        destination = ROOT/'src/lumatone/practice'/args.collection.lower()/'catalog.report.json'
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(report, destination)

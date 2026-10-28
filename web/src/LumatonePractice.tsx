@@ -7,9 +7,13 @@ import type {Attempt} from './lumatone/practice/exercise.ts';
 import {PracticeHexMap} from './lumatone/practice/PracticeHexMap.tsx';
 import {PracticeTuner} from './lumatone/practice/PracticeTuner.tsx';
 import {PracticeJudgement} from './lumatone/practice/PracticeJudgement.tsx';
+import {latestSavedCalibration} from './lumatone/practice/timingCalibration.ts';
+import {TimingCalibration} from './lumatone/practice/TimingCalibration.tsx';
 import {useFluteInput} from './lumatone/practice/useFluteInput.ts';
 import {useMelodyPlayback} from './lumatone/practice/useMelodyPlayback.ts';
 import {PracticeLyrics} from './lumatone/practice/PracticeLyrics.tsx';
+import {PracticeTempoInput} from './lumatone/practice/PracticeTempoInput.tsx';
+import {usePracticeSettings} from './lumatone/practice/usePracticeSettings.ts';
 import {PracticeTimeline} from './lumatone/practice/PracticeTimeline.tsx';
 import {PracticeAnalysisControls} from './lumatone/practice/PracticeAnalysisControls.tsx';
 import {defaultAnalysis, defaultPhraseStarts} from './lumatone/practice/analysis.ts';
@@ -32,7 +36,7 @@ import {pitchLabel} from './lumatone/leadSheet/labels.ts';
 function PracticePiece() {
   const {score, START, END, exercise, harmonies} = usePracticeScore();
   const midiNotes = usePracticeMidi();
-  const [bpm, setBpm] = useState(80);
+  const {bpm,setBpm,loop,setLoop,settingsError} = usePracticeSettings();
   const [register, setRegister] = useState(0);
   const [key, setKey] = useState(score.tonic);
   const keyTranspose = ((key - score.tonic + 18) % 12) - 6;
@@ -52,7 +56,6 @@ function PracticePiece() {
   const [phraseStarts, setPhraseStarts] = useState(defaultPhraseStarts);
   const [harmonySound, setHarmonySound] = useState(score.chords.length > 0);
   const [harmonyVolume, setHarmonyVolume] = useState(35);
-  const [loop, setLoop] = useState(true);
   const [loopStart, setLoopStart] = useState<number | null>(null);
   const [loopEnd, setLoopEnd] = useState<number | null>(null);
   const changeLoopStart = (value: number | null) => {
@@ -66,7 +69,10 @@ function PracticePiece() {
     if (point !== null && loopStart !== null && point <= loopStart) setLoopStart(null);
   };
   const [mode, setMode] = useState<LabelMode>('dozenal');
-  const [latency, setLatency] = useState(0);
+  const [latency, setLatency] = useState(()=>{
+    try {return latestSavedCalibration(window.localStorage)?.correction??0;} catch {return 0;}
+  });
+  const [calibrating,setCalibrating] = useState(false);
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
   const [lastAttempt, setLastAttempt] = useState<Attempt | null>(null);
   const [betweenTargets, setBetweenTargets] = useState(false);
@@ -74,7 +80,7 @@ function PracticePiece() {
   const history = usePracticeHistory({bpm, transpose, keyTranspose, freeTime: followFlute, allowLowOctaveUp, loop, loopStart, loopEnd, latencyMs: latency});
   useEffect(() => {setAttempts({}); setLastAttempt(null); setBetweenTargets(false);}, [bpm, transpose, loopStart, loopEnd, followFlute, allowLowOctaveUp]);
   const microphone = useFluteInput(entrance => {
-    if (followFlute) return;
+    if (followFlute || calibrating) return;
     const position = playback.positionAt(entrance.time - latency);
     if (!position || position.beat < position.entryBeat - 0.5) return;
     const attempt = judgeEntrance(position.beat, entrance.pitch.note, entrance.pitch.cents, bpm, transpose,
@@ -86,7 +92,7 @@ function PracticePiece() {
       history.record(attempt);
     }
   }, (reading, articulation) => {
-    if (!followFlute || !reading) return;
+    if (!followFlute || !reading || calibrating) return;
     const attempt = playback.followPitch(reading.pitch.note, reading.pitch.cents, reading.time, articulation);
     if (!attempt) return;
     setLastAttempt(attempt);
@@ -101,7 +107,7 @@ function PracticePiece() {
     stop(); finishHistory();
     setLoopStart(start); setLoopEnd(end); setLoop(true);
     suggestionSeek.current(start);
-  },[stop,finishHistory]);
+  },[stop,finishHistory,setLoop]);
   useEffect(() => {
     if (followFlute && running && microphone.status === 'off') stop();
   }, [followFlute, running, microphone.status, stop]);
@@ -122,7 +128,7 @@ function PracticePiece() {
   const progress = target && noteEnd > noteStart ? (beat - noteStart) / (noteEnd - noteStart) : 0;
   const pitch = microphone.pitch;
   const togglePlayback = async () => {
-    if (microphone.status === 'starting') return;
+    if (microphone.status === 'starting' || calibrating) return;
     if (playback.running) {playback.pause(); return;}
     if (followFlute && microphone.status !== 'listening' && !await microphone.start()) return;
     if (playback.paused) {await playback.resume(); return;}
@@ -130,10 +136,15 @@ function PracticePiece() {
     history.begin();
     await playback.start();
   };
+  const toggleListening = () => {
+    if(microphone.status==='starting'||calibrating)return;
+    if(microphone.status==='listening')microphone.stop();
+    else void microphone.start();
+  };
   const navigationBeat = playback.pendingBeat ?? Math.max(beat, playback.entryBeat);
   const goBack = () => playback.seek(adjacentLoopPoint(navigationBeat, -1, loopStart, loopEnd, score));
   usePracticeShortcuts({beat: navigationBeat, loopStart, loopEnd, onToggle: () => void togglePlayback(), onSeek: playback.seek,
-    onPlayChord: () => {if (harmony) void playback.playChord(harmony.notes.map(note => note.note));}});
+    onPlayChord: () => {if (!calibrating && harmony) void playback.playChord(harmony.notes.map(note => note.note));}});
   return (
     <Stack p={3} gap={4} maxWidth="1200px" mx="auto" fontFamily="'JetBrains Mono', monospace">
       <Link asChild textDecoration="underline" alignSelf="start"><RouterLink to="/lumatone">Back to Lumatone</RouterLink></Link>
@@ -149,21 +160,16 @@ function PracticePiece() {
         </AccordionItem>
       </AccordionRoot>
       <Flex gap={3} align="center" wrap="wrap">
-        <Button disabled={microphone.status === 'starting'} onClick={() => void togglePlayback()}>{playback.running ? 'Pause practice' : playback.paused ? 'Resume practice' : 'Start practice'}</Button>
-        <Button variant="outline" disabled={microphone.status === 'starting'} onClick={() => {
-          if (microphone.status === 'listening') microphone.stop();
-          else void microphone.start();
-        }}>{microphone.status === 'starting' ? 'Opening microphone…' : microphone.status === 'listening' ? 'Stop microphone' : 'Listen to flute'}</Button>
+        <Button disabled={microphone.status === 'starting' || calibrating} onClick={() => void togglePlayback()}>{playback.running ? 'Pause practice' : playback.paused ? 'Resume practice' : 'Start practice'}</Button>
+        <Button variant="outline" disabled={microphone.status === 'starting' || calibrating} onClick={toggleListening}>{microphone.status === 'starting' ? 'Opening microphone…' : microphone.status === 'listening' ? 'Stop microphone' : 'Listen to flute'}</Button>
       </Flex>
+      {settingsError && <Text role="status" color="orange.500" fontSize="xs">{settingsError}</Text>}
       <Flex gap={3} wrap="wrap" align="stretch">
       <Box as="fieldset" flex="1 1 260px" minWidth={0} borderWidth="1px" borderRadius="md" p={3}>
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Playback</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2} align="center">Tempo
-          <input aria-label="Tempo" type="number" min={40} max={180} defaultValue={80} disabled={playback.running} style={{width: 65}} onBlur={event => {
-            const value = Math.max(40, Math.min(180, Number(event.target.value) || 80));
-            setBpm(value); event.target.value = String(value);
-          }}/> BPM
+          <PracticeTempoInput bpm={bpm} onChange={setBpm} disabled={playback.running || calibrating}/> BPMM
         </Flex>
         <Flex as="label" gap={2} align="center">Key
           <select aria-label="Key" value={key} disabled={playback.running} onChange={event => setKey(Number(event.target.value))}>
@@ -182,13 +188,15 @@ function PracticePiece() {
       <Box as="fieldset" flex="1 1 260px" minWidth={0} borderWidth="1px" borderRadius="md" p={3}>
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Flute input</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
-        <Flex as="label" gap={2}><input type="checkbox" checked={followFlute} disabled={playback.running} onChange={event => setFollowFlute(event.target.checked)}/>Follow flute (free time)</Flex>
+        <Flex as="label" gap={2}><input type="checkbox" checked={followFlute} disabled={playback.running || calibrating} onChange={event => setFollowFlute(event.target.checked)}/>Follow flute (free time)</Flex>
         <Flex as="label" gap={2}><input type="checkbox" checked={allowLowOctaveUp} disabled={playback.running} onChange={event => setAllowLowOctaveUp(event.target.checked)}/>Accept octave up below C4</Flex>
         <Flex as="label" gap={2} align="center">Input timing correction
-          <input aria-label="Input timing correction" type="number" min={-300} max={500} step={10} value={latency} disabled={followFlute} style={{width: 75}} onChange={event => setLatency(Math.max(-300, Math.min(500, Number(event.target.value) || 0)))}/> ms
+          <input aria-label="Input timing correction" type="number" min={-300} max={500} step={10} value={latency} disabled={followFlute || calibrating} style={{width: 75}} onChange={event => setLatency(Math.max(-300, Math.min(500, Number(event.target.value) || 0)))}/> ms
         </Flex>
         </Flex>
         <Text fontSize="xs" color="fg.muted" mt={2}>Positive timing correction compensates for delayed input.</Text>
+        <TimingCalibration disabled={playback.running || followFlute || microphone.status==='starting'} setup={microphone.status==='listening'?microphone.setup:null}
+          onPrepare={()=>{stop();playback.stopPreview();finishHistory();microphone.stop();}} onBusy={setCalibrating} onCorrection={setLatency}/>
         {followFlute && <Text fontSize="xs" color="fg.muted" mt={2}>Play at your own pace. A held matching pitch within ±35 cents advances the playhead; repeated notes need a new articulation. Tempo sets motion between notes and sound lengths. No early/late grading.</Text>}
       </Box>
       <Box as="fieldset" flex="1 1 260px" minWidth={0} borderWidth="1px" borderRadius="md" p={3}>
@@ -230,16 +238,16 @@ function PracticePiece() {
         {playback.running && <PracticeJudgement attempt={lastAttempt} freeTime={followFlute} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap midiNotes={midiNotes} target={showMelody ? target : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks : []} progress={progress} heard={pitch?.note ?? null} heardCents={pitch?.cents ?? null} transpose={transpose} mode={mode} harmony={showHarmony ? harmony : undefined} previewNote={playback.previewNote} practicing={playback.running} onPlayNote={note => void playback.playNote(note)} showGuideTones={analysis.guideTones}/>
+      <PracticeHexMap midiNotes={midiNotes} target={showMelody ? target : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks : []} progress={progress} heard={pitch?.note ?? null} heardCents={pitch?.cents ?? null} transpose={transpose} mode={mode} harmony={showHarmony ? harmony : undefined} previewNote={playback.previewNote} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note);}} showGuideTones={analysis.guideTones}/>
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
         cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}
       <PracticeTimeline beat={beat} entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} running={playback.running}
-        onTogglePlayback={() => void togglePlayback()} onBack={goBack} transportDisabled={microphone.status === 'starting'}
+        onTogglePlayback={() => void togglePlayback()} onToggleListening={toggleListening} microphoneStarting={microphone.status==='starting'} onBpmChange={setBpm} onBack={goBack} transportDisabled={microphone.status === 'starting' || calibrating}
         pendingBeat={playback.pendingBeat} target={target} harmony={harmony} mode={mode} transpose={transpose} keyTranspose={keyTranspose} pieceHarmonies={pieceHarmonies} showHarmony={showHarmony} showMelody={showMelody} showMelodyRoles={showMelody && showMelodyRoles} showChordTransitions={showChordTransitions} bpm={bpm}
-        loop={loop} loopStart={loopStart} loopEnd={loopEnd} onLoopStart={changeLoopStart} onLoopEnd={changeLoopEnd} onSeek={playback.seek}
-        onMelody={note => {playback.seek(note.start); void playback.playNote(note.note + transpose);}}
-        onHarmony={chord => {playback.seek(chord.start); void playback.playChord(chord.notes.map(note => note.note));}}
+        loop={loop} loopStart={loopStart} loopEnd={loopEnd} onLoopChange={setLoop} onLoopStart={changeLoopStart} onLoopEnd={changeLoopEnd} onSeek={playback.seek}
+        onMelody={note => {if(calibrating)return;playback.seek(note.start); void playback.playNote(note.note + transpose);}}
+        onHarmony={chord => {if(calibrating)return;playback.seek(chord.start); void playback.playChord(chord.notes.map(note => note.note));}}
         attempts={attempts} listening={microphone.status === 'listening'} freeTime={followFlute} analysis={analysis} phraseStarts={phraseStarts}/>
       <PracticeSuggestions data={history.data} running={playback.running} bpm={bpm} transpose={transpose}
         keyTranspose={keyTranspose} freeTime={followFlute} allowLowOctaveUp={allowLowOctaveUp} onApply={applySuggestedLoop}/>
@@ -252,6 +260,11 @@ function PracticePiece() {
   );
 }
 export default function LumatonePractice() {
+  if (!practiceScores.length) return <Text p={6}>No local arrangements are installed.</Text>;
+  return <PracticeLibrary/>;
+}
+
+function PracticeLibrary() {
   const [selected, setSelected] = useState(practiceScores[0].id);
   const [score, setScore] = useState(stellaScore);
   const [loadError, setLoadError] = useState('');
@@ -267,7 +280,7 @@ export default function LumatonePractice() {
   }, [selected, retry]);
   const [search, setSearch] = useState('');
   const [collection, setCollection] = useState('all');
-  const failures = [...importReport.failures.map(item => ({...item, collection: 'OpenBook'})), ...effendiReport.failures.map(item => ({...item, collection: 'Effendi'})), ...wikifoniaReport.failures.map(item => ({...item, collection: 'Wikifonia'}))];
+  const failures = [...(importReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'OpenBook'})), ...(effendiReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'Effendi'})), ...(wikifoniaReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'Wikifonia'}))];
   const matches = practiceScores.filter(piece => piece.id === selected || ((collection === 'all' || piece.collection === collection || (collection === 'custom' && !piece.collection)) && `${piece.title} ${piece.composer} ${piece.edition ?? ''}`.toLowerCase().includes(search.toLowerCase())));
   return <>
     <Flex gap={3} wrap="wrap" align="center" p={3} maxWidth="1200px" mx="auto">

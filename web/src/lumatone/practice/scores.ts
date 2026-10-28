@@ -15,8 +15,8 @@ export const stellaScore: PracticeScore = {id: 'stella-by-starlight', title: 'St
   composer: 'Victor Young', tonic: 10, quality: 'major', start: -1, end: 128,
   bars: Array.from({length: 32}, (_, i) => i * 4), melody: exercise, chords: harmonies};
 export type PracticeScoreEntry = Pick<PracticeScore, 'id' | 'title' | 'composer' | 'collection' | 'edition'> & {file?: string; melodyOnly: boolean; hasLyrics?: boolean};
-export const practiceScores: PracticeScoreEntry[] = [{id: stellaScore.id, title: stellaScore.title,
-  composer: stellaScore.composer, melodyOnly: false}, ...catalogIndex];
+export const practiceScores: PracticeScoreEntry[] = [...(exercise.length ? [{id: stellaScore.id, title: stellaScore.title,
+  composer: stellaScore.composer, melodyOnly: false}] : []), ...catalogIndex];
 const cache = new Map<string, PracticeScore>();
 export async function loadPracticeScore(entry: PracticeScoreEntry, signal?: AbortSignal): Promise<PracticeScore> {
   if (entry.id === stellaScore.id) return stellaScore;

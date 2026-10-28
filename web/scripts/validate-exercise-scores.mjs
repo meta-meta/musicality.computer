@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const scores = JSON.parse(readFileSync(new URL('../src/lumatone/exercises/scores.json', import.meta.url), 'utf8'));
+const scores = JSON.parse(readFileSync(new URL('../../arrangements.local/web/src/lumatone/exercises/scores.json', import.meta.url), 'utf8'));
 const byId = Object.fromEntries(scores.map(score => [score.id, score]));
 const events = id => byId[id].sections.flatMap(section => section.events);
 

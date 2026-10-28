@@ -64,3 +64,9 @@ export function reviewHistoryPasses(score:PracticeScore,session:PracticeSession)
     review:reviewHistorySession(score,{...session,judgements})}))
     .sort((a,b)=>Date.parse(a.startedAt)-Date.parse(b.startedAt)||a.cycle-b.cycle);
 }
+
+export function historyCoverage(review:SessionReview) {
+  const notes=review.bars.reduce((sum,bar)=>sum+bar.notes,0);
+  const observed=review.bars.reduce((sum,bar)=>sum+bar.observed,0);
+  return notes?observed/notes:0;
+}

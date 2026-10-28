@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const built=esbuild.buildSync({entryPoints:['src/lumatone/practice/usePracticeSettings.ts'],bundle:true,write:false,format:'cjs',platform:'node'});
+const mod={exports:{}};new Function('module','exports','require',built.outputFiles[0].text)(mod,mod.exports,require);
+const {readPracticeSettings:read,PRACTICE_SETTINGS_KEY:key}=mod.exports;
+const backing=new Map(),storage={getItem:key=>backing.get(key)??null};
+assert.deepEqual(read(storage),{bpm:80,loop:true});
+backing.set(key,JSON.stringify({bpm:95,loop:false}));
+assert.deepEqual(read(storage),{bpm:95,loop:false});
+assert.deepEqual(read({getItem:key=>backing.get(key)??null}),{bpm:95,loop:false},'Reload restores both preferences, including false');
+backing.set(key,JSON.stringify({bpm:500,loop:'false'}));
+assert.deepEqual(read(storage),{bpm:80,loop:true});
+backing.set(key,JSON.stringify({bpm:40,loop:false}));assert.equal(read(storage).bpm,40);
+backing.set(key,JSON.stringify({bpm:180,loop:true}));assert.equal(read(storage).bpm,180);
+backing.set(key,'null');assert.deepEqual(read(storage),{bpm:80,loop:true});
+console.log('Passed practice preferences: reload, false loop state, tempo bounds, defaults and malformed fields.');
