@@ -1,11 +1,13 @@
 import {usePracticeScore} from './PracticeScoreContext.tsx';
-import {Box, Button, Flex, Heading, Stack, Text} from '@chakra-ui/react';
-import {memo, useMemo, useRef, useState} from 'react';
+import {Box, Button, chakra, Flex, Heading, Stack, Text} from '@chakra-ui/react';
+import {memo, useCallback, useMemo, useRef, useState} from 'react';
 import {noteName, pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import {isPracticeHit, TIMING_TOLERANCE} from './exercise.ts';
 import {MAX_IMPORT_BYTES, summarisePracticeSession} from './practiceHistory.ts';
 import type {PracticeHistoryData, PracticeSession} from './practiceHistory.ts';
+import {PracticeHistoryGraph} from './PracticeHistoryGraph.tsx';
+import {historyBarRanges} from './historyReview.ts';
 
 const summaries = new WeakMap<PracticeSession, ReturnType<typeof summarisePracticeSession>>();
 function summary(session: PracticeSession) {
@@ -32,6 +34,10 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
 }) {
   const {score} = usePracticeScore();
   const [allTunes, setAllTunes] = useState(false);
+  const [expanded,setExpanded] = useState(false);
+  const [selectedPass,setSelectedPass]=useState<number|null>(null);
+  const [selectedBar,setSelectedBar] = useState<number|null>(null);
+  const barRanges=useMemo(()=>historyBarRanges(score),[score]);
   const file = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState('');
   const [importError, setImportError] = useState('');
@@ -41,13 +47,13 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(0);
   const rows = useMemo(() => data.sessions.filter(session => allTunes || session.piece === score.id).map(session => ({session, metrics: summary(session)})), [data.sessions, allTunes, score.id]);
-  const recent = rows.slice(0, 20).reverse();
+  const reviewSession=useCallback((id:string,bar:number|null,cycle:number|null=null)=>{setSelected(id);setSelectedBar(bar);setSelectedPass(cycle);setPage(0);setFilter('all');},[]);
   const session = data.sessions.find(item => item.id === selected);
-  const judgements = useMemo(() => session?.judgements.filter(a => filter === 'pitch' ? !a.correctPitch : filter === 'timing' ? !a.freeTime && Math.abs(a.errorMs) > TIMING_TOLERANCE : filter === 'hits' ? isPracticeHit(a) : true).slice().reverse() ?? [], [session, filter]);
+  const judgements = useMemo(() => session?.judgements.filter(a=>selectedPass===null || a.cycle===selectedPass).filter(a => selectedBar===null || (a.start >= barRanges[selectedBar].start && a.start < barRanges[selectedBar].end)).filter(a => filter === 'pitch' ? !a.correctPitch : filter === 'timing' ? !a.freeTime && Math.abs(a.errorMs) > TIMING_TOLERANCE : filter === 'hits' ? isPracticeHit(a) : true).slice().reverse() ?? [], [session, filter, selectedBar, barRanges, selectedPass]);
   const shown = judgements.slice(page * 50, page * 50 + 50);
-  const points = recent.map(({metrics}, index) => `${30 + index * 520 / Math.max(1, recent.length - 1)},${105 - metrics.pitch / Math.max(1, metrics.notes) * 90}`).join(' ');
 
-  return <Box as="details" borderWidth="1px" borderRadius="md" p={3} data-testid="practice-history">
+
+  return <chakra.details borderWidth="1px" borderRadius="md" p={3} data-testid="practice-history" onToggle={event=>setExpanded(event.currentTarget.open)}>
     <Box as="summary" cursor="pointer" fontSize="sm">Practice history · {data.sessions.length} {data.sessions.length === 1 ? 'session' : 'sessions'}{activeId ? running ? ' · recording' : ' · paused' : ''}</Box>
     <Stack gap={3} mt={3}>
       <Text fontSize="sm" color="fg.muted">Judgements save automatically in this browser. No audio is stored. Each note/pass counts once in the summaries; corrections stay in the detail log. Notes without a detected judgement are not counted.</Text>
@@ -71,37 +77,13 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
       {error && <Text role="alert" color="orange.500" fontSize="sm">{error}</Text>}
       {importError && <Text role="alert" color="red.500" fontSize="sm">{importError}</Text>}
       {notice && <Text role="status" fontSize="sm">{notice}</Text>}
-      <label><input type="checkbox" checked={allTunes} onChange={event => {setAllTunes(event.target.checked); setSelected(null);}}/> Show history for all tunes</label>
+      <label><input type="checkbox" checked={allTunes} onChange={event => {setAllTunes(event.target.checked); setSelected(null); setSelectedBar(null); setSelectedPass(null);}}/> Show history for all tunes</label>
       {!rows.length ? <Text fontSize="sm" color="fg.muted">No saved judgements yet. Listen to your flute during practice to start a history.</Text> : <>
-        {recent.length >= 2 && <Box>
-          <Text fontSize="xs" color="fg.muted">First-try pitch · last {recent.length} sessions, oldest → newest</Text>
-          <svg role="img" aria-label="First-try pitch accuracy across recent sessions, from zero to one hundred percent" viewBox="0 0 570 125" style={{width: '100%', maxWidth: 650, height: 130}}>
-            <text x={0} y={19} style={{fontSize: 10}} fill="currentColor">100</text><text x={12} y={109} style={{fontSize: 10}} fill="currentColor">0</text>
-            <path d="M 30 15 H 550 M 30 105 H 550" stroke="currentColor" opacity={0.15}/>
-            <polyline points={points} fill="none" stroke="var(--chakra-colors-cyan-600)" strokeWidth={2}/>
-            {recent.map(({session, metrics}, index) => <circle key={session.id} cx={30 + index * 520 / Math.max(1, recent.length - 1)} cy={105 - metrics.pitch / Math.max(1, metrics.notes) * 90} r={3} fill="var(--chakra-colors-cyan-600)">
-              <title>{`${dateLabel(session.startedAt)}: ${percentage(metrics.pitch, metrics.notes)} first-try pitch, ${session.settings.bpm} BPM, ${session.settings.freeTime ? 'free time' : 'timed'}`}</title>
-            </circle>)}
-          </svg>
-        </Box>}
-        <Box overflowX="auto">
-          <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left'}}>
-            <thead><tr>{['Session', 'Mode / tempo', 'Judged notes', 'First-try pitch', 'After corrections', 'On-time entrances', ''].map(label => <th key={label} style={{padding: 8, whiteSpace: 'nowrap'}}>{label}</th>)}</tr></thead>
-            <tbody>{rows.slice(0, limit).map(({session, metrics}) => <tr key={session.id} data-history-session={session.id}>
-              <td style={{padding: 8, whiteSpace: 'nowrap'}}>{session.title ?? session.piece}<br/>{dateLabel(session.startedAt)}<br/><Text as="span" color="fg.muted">{activeId === session.id ? running ? 'Recording' : 'Paused' : session.endedAt ? 'Finished' : 'Saved'}</Text></td>
-              <td style={{padding: 8, whiteSpace: 'nowrap'}}>{session.settings.freeTime ? 'Free time' : 'Timed'} · {session.settings.bpm} BPM</td>
-              <td style={{padding: 8}}>{metrics.notes}</td><td style={{padding: 8}}>{percentage(metrics.pitch, metrics.notes)}</td>
-              <td style={{padding: 8}}>{percentage(metrics.recovered, metrics.notes)}</td>
-              <td style={{padding: 8}}>{percentage(metrics.onTime, metrics.timed)}{metrics.meanTiming !== null && <><br/>{Math.round(metrics.meanTiming)} ms mean error</>}</td>
-              <td style={{padding: 8}}><Button size="xs" variant="outline" aria-label={`Review practice session ${dateLabel(session.startedAt)}`} onClick={() => {setSelected(session.id); setPage(0);}}>Review</Button></td>
-            </tr>)}</tbody>
-          </table>
-        </Box>
-        {rows.length > limit && <Button size="sm" variant="ghost" alignSelf="start" onClick={() => setLimit(value => value + 20)}>Show more sessions</Button>}
-        <Text fontSize="xs" color="fg.muted">First-try pitch uses the first judgement for each note/pass. After corrections counts any correct-pitch judgement. On-time entrances uses ±{TIMING_TOLERANCE} ms independently of pitch; free-time sessions have no timing score. Compare sessions for the same tune with similar tempos and ranges.</Text>
-      </>}
+        {expanded && <PracticeHistoryGraph sessions={data.sessions} selected={selected} selectedPass={selectedPass} onReview={reviewSession}/>}
+        {allTunes && <Text fontSize="xs" color="fg.muted">The graph stays on the selected tune; the table below includes all tunes.</Text>}
       {session && <Stack gap={2} borderTopWidth="1px" pt={3}>
-        <Heading size="sm">Session · {dateLabel(session.startedAt)}</Heading>
+        <Heading size="sm">Session · {dateLabel(session.startedAt)}{selectedPass!==null ? ` · Pass ${selectedPass}` : ''}{selectedBar!==null ? ` · ${barRanges[selectedBar].label}` : ''}</Heading>
+        {(selectedBar!==null || selectedPass!==null) && <Button size="xs" variant="outline" alignSelf="start" onClick={()=>{setSelectedBar(null);setSelectedPass(null);setPage(0);}}>Review entire session</Button>}
         <Text fontSize="xs" color="fg.muted">{session.title ?? session.piece} · {pitchLabel((session.tonic ?? 10) + (session.settings.keyTranspose ?? 0), mode)} · {session.settings.bpm} BPM · melody transposition {session.settings.transpose} semitones · {session.settings.loop ? `loop ${session.settings.loopStart ?? -1} to ${session.settings.loopEnd ?? 128} beats` : 'loop off'} · octave-up acceptance {session.settings.allowLowOctaveUp ? 'on' : 'off'} · input correction {session.settings.latencyMs} ms</Text>
         <Flex as="label" gap={2} fontSize="sm">Show
           <select aria-label="History judgement filter" value={filter} onChange={event => {setFilter(event.target.value); setPage(0);}}>
@@ -125,9 +107,26 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
           <Button size="xs" variant="outline" disabled={page === 0} onClick={() => setPage(value => value - 1)}>Newer</Button>
           <Text fontSize="xs">{judgements.length ? `${page * 50 + 1}–${Math.min(page * 50 + 50, judgements.length)} of ${judgements.length}` : '0 judgements'}</Text>
           <Button size="xs" variant="outline" disabled={(page + 1) * 50 >= judgements.length} onClick={() => setPage(value => value + 1)}>Older</Button>
-          <Button size="xs" variant="ghost" onClick={() => setSelected(null)}>Close review</Button>
+          <Button size="xs" variant="ghost" onClick={() => {setSelected(null);setSelectedBar(null);setSelectedPass(null);}}>Close review</Button>
         </Flex>
       </Stack>}
+        <Box overflowX="auto">
+          <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left'}}>
+            <thead><tr>{['Session', 'Mode / tempo', 'Judged notes', 'First-try pitch', 'After corrections', 'On-time entrances', ''].map(label => <th key={label} style={{padding: 8, whiteSpace: 'nowrap'}}>{label}</th>)}</tr></thead>
+            <tbody>{rows.slice(0, limit).map(({session, metrics}) => <tr key={session.id} data-history-session={session.id}>
+              <td style={{padding: 8, whiteSpace: 'nowrap'}}>{session.title ?? session.piece}<br/>{dateLabel(session.startedAt)}<br/><Text as="span" color="fg.muted">{activeId === session.id ? running ? 'Recording' : 'Paused' : session.endedAt ? 'Finished' : 'Saved'}</Text></td>
+              <td style={{padding: 8, whiteSpace: 'nowrap'}}>{session.settings.freeTime ? 'Free time' : 'Timed'} · {session.settings.bpm} BPM</td>
+              <td style={{padding: 8}}>{metrics.notes}</td><td style={{padding: 8}}>{percentage(metrics.pitch, metrics.notes)}</td>
+              <td style={{padding: 8}}>{percentage(metrics.recovered, metrics.notes)}</td>
+              <td style={{padding: 8}}>{percentage(metrics.onTime, metrics.timed)}{metrics.meanTiming !== null && <><br/>{Math.round(metrics.meanTiming)} ms mean error</>}</td>
+              <td style={{padding: 8}}><Button size="xs" variant="outline" aria-label={`Review practice session ${dateLabel(session.startedAt)}`} onClick={() => reviewSession(session.id,null)}>Review</Button></td>
+            </tr>)}</tbody>
+          </table>
+        </Box>
+        {rows.length > limit && <Button size="sm" variant="ghost" alignSelf="start" onClick={() => setLimit(value => value + 20)}>Show more sessions</Button>}
+        <Text fontSize="xs" color="fg.muted">First-try pitch uses the first judgement for each note/pass. After corrections counts any correct-pitch judgement. On-time entrances uses ±{TIMING_TOLERANCE} ms independently of pitch; free-time sessions have no timing score. Compare sessions for the same tune with similar tempos and ranges.</Text>
+      </>}
+
     </Stack>
-  </Box>;
+  </chakra.details>;
 });

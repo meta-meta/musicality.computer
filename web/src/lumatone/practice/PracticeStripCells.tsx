@@ -42,12 +42,13 @@ export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, pre
   onSeek: (beat: number) => void; onHarmony: (chord: PracticeChord) => void;
   connections: ChordConnections; showCommon: boolean; showVoiceLeading: boolean; showGuides: boolean;
 }) {
-  const {LENGTH, START} = usePracticeScore();
+  const {LENGTH, START, score} = usePracticeScore();
   const name = chordLabel(chord, mode);
+  const keyName = `${pitchLabel(score.tonic + keyTranspose, mode)} ${score.quality}`;
   return <Box position="absolute" left={`${(chord.start - START) / LENGTH * 100}%`} width={`${chord.duration / LENGTH * 100}%`} height="100%">
     <chakra.button type="button" data-active-chord={active ? 'true' : undefined} data-harmony-start={chord.start}
-      aria-label={`${running ? 'Cue' : 'Play'} chord ${name} in bar ${chord.bar}, function ${chord.function} in ${pitchLabel(10 + keyTranspose, mode)} major`} textAlign="left" cursor="pointer"
-      title={`${name} · ${chord.function} in ${pitchLabel(10 + keyTranspose, mode)} · bar ${chord.bar} · ${chord.duration} beats`}
+      aria-label={`${running ? 'Cue' : 'Play'} chord ${name} in bar ${chord.bar}${chord.function ? `, function ${chord.function}` : ''}, key ${keyName}`} textAlign="left" cursor="pointer"
+      title={`${name}${chord.function ? ` · ${chord.function}` : ''} · ${keyName} · bar ${chord.bar} · ${chord.duration} beats`}
       onClick={() => running ? onSeek(chord.start) : onHarmony(chord)} _focusVisible={{outline: '2px solid', outlineColor: 'cyan.400', outlineOffset: '-2px'}}
       width="100%" height="100%" display="flex" flexDirection="column" alignItems="stretch" borderWidth="1px" borderBottomWidth={active ? '2px' : '1px'} borderColor={active ? 'fg.muted' : 'border'} bg={active ? 'bg.muted' : undefined} px={2} py={1} fontSize="sm">
       <Text as="span" display="block" fontSize="xs" lineHeight="18px" color="fg.muted">Bar {chord.bar}</Text>

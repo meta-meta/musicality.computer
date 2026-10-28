@@ -63,7 +63,15 @@ are independent of microphone input and do not create flute judgements or
 trigger guide audio.
 
 **Tune** and **Find a tune** select from the original Stella arrangement and
-153 imported OpenBook tunes. Selecting a tune resets its transport, microphone,
+153 imported OpenBook tunes, 471 Effendi arrangements, and 5,439 Wikifonia arrangements. **Collection** filters
+the selection; volume/instrument variants retain their source filenames. Links
+to both OpenBook and Effendi are beside the selector. The Effendi set includes
+39 explicitly marked melody-only arrangements; their chord controls are
+disabled. Fifteen other Effendi files need source review and are listed in
+import notes. See `src/lumatone/practice/effendi/README.md` for provenance,
+conversion details, limitations, and refresh commands.
+
+Selecting a tune resets its transport, microphone,
 loop points, and practice settings. Source links, typesetter/composer credits,
 copyright metadata, and interpretation notes appear below the timeline.
 Cheek to Cheek and Waltz for Debby are listed as needing source correction;
@@ -73,11 +81,12 @@ specific to the original Stella arrangement. Imported tunes still have melodic
 roles, key changes, MIDI highlights, flute judging/following, and practice history.
 History defaults to the selected tune, with an option to review all tunes.
 
-To regenerate the catalog, download the OpenBook source and portable LilyPond
+To regenerate the OpenBook conversion, download the OpenBook source and portable LilyPond
 2.24.4 into an ignored `*.local` folder. From `web/`, run (adjust local paths):
 
 ```powershell
-python -X utf8 scripts/import-openbook.py --source openbook-import.local/book-openbook-master --lilypond openbook-import.local/tools/lilypond-2.24.4/bin/lilypond.exe --out src/lumatone/practice/openbook/catalog.json --work openbook-import.local/compiled
+python -X utf8 scripts/import-openbook.py --source openbook-import.local/book-openbook-master --lilypond openbook-import.local/tools/lilypond-2.24.4/bin/lilypond.exe --out openbook-import.local/catalog.json --work openbook-import.local/compiled
+python -X utf8 scripts/publish-practice.py openbook-import.local/catalog.json --collection OpenBook
 node scripts/test-openbook.cjs
 ```
 
@@ -354,3 +363,115 @@ export default {
 - Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
 - Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
 - Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+
+### On-demand practice collections
+
+The practice page bundles only `catalog.index.json` (search metadata). Each selected
+score is fetched from `public/practice/scores/` and the eight most recently opened
+scores are cached in memory. Selecting a different tune stops/unmounts the previous
+practice session immediately. Failed requests show a retry button. Score filenames
+include a content hash so updated scores get a new URL. Static hosting is sufficient;
+no MusicXML parsing or music compiler runs in the browser. Tune searches show at most
+200 matches; narrow the collection/title/composer search to see more specific results.
+
+For Effendi, convert into a local cache and publish the results:
+
+```powershell
+python -X utf8 scripts/fetch-effendi.py effendi-import.local/source
+python -X utf8 scripts/import-effendi.py --source effendi-import.local/source --out effendi-import.local/catalog.json
+python -X utf8 scripts/publish-practice.py effendi-import.local/catalog.json --collection Effendi
+```
+
+For ChoCo's Wikifonia archive (run from `web/`):
+
+```powershell
+git clone --depth 1 --filter=blob:none --no-checkout https://github.com/smashub/choco.git wikifonia-import.local/choco
+python -X utf8 scripts/fetch-wikifonia.py --repo wikifonia-import.local/choco --out wikifonia-import.local/source
+python -X utf8 scripts/import-wikifonia.py --source wikifonia-import.local/source --limit 30
+python -X utf8 scripts/import-wikifonia.py --source wikifonia-import.local/source
+python -X utf8 scripts/test-effendi.py
+node scripts/test-openbook.cjs
+```
+
+The fetcher pins source URLs to the clone's revision and uses blob hashes as cache
+filenames to support source titles containing Windows-incompatible characters.
+Conversion reuses the Effendi MusicXML parser; the sample command writes a report
+without publishing. Full conversion publishes individual scores, search metadata,
+and `src/lumatone/practice/wikifonia/catalog.report.json`. Unsupported/ambiguous
+sources are excluded with a reason; source links, rights, and credits are retained.
+Imported voicings are generated from chord symbols, not original piano arrangements.
+
+### Timed lyrics
+
+MusicXML imports preserve note-aligned lyric syllables, verse numbers, source line
+breaks, ties, melismas, and expanded bar repeats. Tunes with timed lyrics show a
+`lyrics` marker in the selector and a **Show lyrics** display setting. The lyric
+panel follows the playhead (including seeks, loops and free-time flute following),
+underlines the active syllable, and keeps two equal-sized lyric rows. The rows
+alternate karaoke-style: the upcoming line stays in place as it becomes current,
+and the finished row refreshes with the following phrase. Upcoming syllables use
+the **Upcoming attacks** count, shared note-cue colors/opacity, and last-beat outline
+contraction. Cues follow playback, pause, count-in and loop timing; wraps preview
+the loop's first lyric line. These outlines are independent of Show melody. Multiple source verses
+have a manual verse selector; repeats do not guess which verse should be sung.
+Lines follow source breaks where present, with short readable groups otherwise.
+Lyrics are loaded only with their selected score. Tunes without lyrics have no
+lyric panel or lyric setting. This adds lyrics from MusicXML sources (Wikifonia
+and Effendi); the LilyPond/OpenBook pipeline does not yet export timed lyric events.
+
+### Suggested practice loops
+
+The practice page offers a balanced mix, near-miss polishing, recurring trouble
+spots, and confidence passages. Suggestions use the most recent 5/10/20 matching
+sessions for the selected tune. Users can choose pitch, timing, or both and a
+1/2/4-bar loop. Settings match key/register, free-time mode, low-note octave
+acceptance, and tempo within 10 BPM by default; the filter can be broadened.
+
+Only the first chronological judgement per note/pass is counted; corrections and
+continuous detector readings do not inflate evidence. Each note contributes at
+most its latest 12 attempts. Notes with no judgement are unknown; free-time
+attempts never contribute timing errors. Snapshot pitches/start/duration must
+still match the current score, or the old judgement is excluded. At least two
+passes are required. Confidence uses >=85% success; polishing 65–99%; both need
+at least half of the passage's attacks observed. Trouble spots require <65%
+success with errors across at least three passes. Balanced suggestions do not
+overlap, and can yield fewer than three loops. These thresholds are heuristics,
+not established psychological prescriptions.
+
+Ranking refreshes when paused/stopped, outside the playback clock. **Use loop**
+finishes the current session, enables the chosen loop, and cues its start without
+starting playback. Existing transport controls/loop markers are used. History
+stays in the browser and is not changed by the ranking itself.
+
+Validate with `node scripts/test-practice-suggestions.cjs` from `web/`.
+
+### Aligned history map
+
+Practice history combines a session progress line with whole-piece cross sections
+on the same session columns. All sessions for the selected tune appear newest to oldest, with horizontal
+scrolling to keep each session column readable; the graph stays on that tune even when the history table
+shows all tunes. Switch between first-try pitch, on-time entrances, and full hits;
+the line and bar cells always use the same metric. Each row represents a bar (with
+beat-proportional height, including pickups and meter changes). Cells aggregate
+attack judgements, not sustained-note duration. Colours indicate >=85%, 65–84%,
+and <65% success. Unjudged cells are grey; free-time attempts have no timing score.
+Missing timing values create gaps in the line rather than zero-percent points.
+
+Click a point to review a session or a cell to filter its detail log to that bar.
+Tab to a session column, use up/down arrows to select a bar, and Enter to review.
+The detail log retains corrections; map statistics count only the earliest
+judgement for each note/pass. Judgements whose pitch/start/duration no longer
+match the selected score are excluded from the map. Session results are cached
+by immutable history object, and the graph mounts only when history is expanded.
+
+Validate with `node scripts/test-history-review.cjs` from `web/`.
+
+**Show individual passes** expands the history graph into one column per recorded
+pass, grouped by session with session/pass labels and separators. Sessions and
+their passes are displayed newest first; original pass numbers are preserved. Both the line
+and bar map use that pass alone, keeping the first judgement per note; corrections
+remain in the detail log. Clicking a pass point/cell filters the review to that
+pass (and optionally its bar). **Review entire session** clears both filters.
+Pass timestamps use their earliest judgement. Empty/unrecorded passes cannot be
+reconstructed and are not invented; stored transport pass numbers are preserved.
+Expansion changes only the view, not saved sessions or the suggestion algorithm.

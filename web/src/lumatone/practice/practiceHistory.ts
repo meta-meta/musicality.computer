@@ -53,7 +53,7 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
   let total = 0;
   const sessions = root.sessions.map(value => {
     const s = object(value), config = object(s.settings);
-    if (typeof s.piece !== 'string' || !/^(stella-by-starlight|openbook-[a-z0-9_]+)$/.test(s.piece) || !Array.isArray(s.judgements)) throw new Error('Invalid session data.');
+    if (typeof s.piece !== 'string' || !/^(stella-by-starlight|openbook-[a-z0-9_]+|effendi-[a-z0-9_-]+|wikifonia-[a-z0-9_-]+)$/.test(s.piece) || !Array.isArray(s.judgements)) throw new Error('Invalid session data.');
     total += s.judgements.length;
     if (total > 100000) throw new Error('Too many judgements in this file.');
     const id = text(s.id, 100);

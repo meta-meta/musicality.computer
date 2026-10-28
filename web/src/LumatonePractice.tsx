@@ -1,5 +1,5 @@
 import {Box, Button, Flex, Heading, Link, Stack, Text} from '@chakra-ui/react';
-import {useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Link as RouterLink} from 'react-router-dom';
 import type {LabelMode} from './lumatone/leadSheet/labels.ts';
 import {judgeEntrance, recordPracticeAttempt} from './lumatone/practice/exercise.ts';
@@ -9,7 +9,7 @@ import {PracticeTuner} from './lumatone/practice/PracticeTuner.tsx';
 import {PracticeJudgement} from './lumatone/practice/PracticeJudgement.tsx';
 import {useFluteInput} from './lumatone/practice/useFluteInput.ts';
 import {useMelodyPlayback} from './lumatone/practice/useMelodyPlayback.ts';
-
+import {PracticeLyrics} from './lumatone/practice/PracticeLyrics.tsx';
 import {PracticeTimeline} from './lumatone/practice/PracticeTimeline.tsx';
 import {PracticeAnalysisControls} from './lumatone/practice/PracticeAnalysisControls.tsx';
 import {defaultAnalysis, defaultPhraseStarts} from './lumatone/practice/analysis.ts';
@@ -17,16 +17,18 @@ import {usePracticeShortcuts} from './lumatone/practice/usePracticeShortcuts.ts'
 import {adjacentLoopPoint} from './lumatone/practice/navigation.ts';
 import {upcomingAttacks} from './lumatone/practice/lookahead.ts';
 import {usePracticeHistory} from './lumatone/practice/usePracticeHistory.ts';
+import {PracticeSuggestions} from './lumatone/practice/PracticeSuggestions.tsx';
 import {PracticeHistoryPanel} from './lumatone/practice/PracticeHistoryPanel.tsx';
 import MidiConfig from './MidiConfig.tsx';
 import {AccordionItem, AccordionItemContent, AccordionItemTrigger, AccordionRoot} from './components/chakra-ui/accordion.tsx';
 import {usePracticeMidi} from './lumatone/practice/usePracticeMidi.ts';
 import {transposeChord} from './lumatone/practice/transposition.ts';
 import {PracticeScoreContext, usePracticeScore} from './lumatone/practice/PracticeScoreContext.tsx';
-import {practiceScores} from './lumatone/practice/scores.ts';
+import {practiceScores, stellaScore, loadPracticeScore} from './lumatone/practice/scores.ts';
 import importReport from './lumatone/practice/openbook/catalog.report.json';
+import effendiReport from './lumatone/practice/effendi/catalog.report.json';
+import wikifoniaReport from './lumatone/practice/wikifonia/catalog.report.json';
 import {pitchLabel} from './lumatone/leadSheet/labels.ts';
-
 function PracticePiece() {
   const {score, START, END, exercise, harmonies} = usePracticeScore();
   const midiNotes = usePracticeMidi();
@@ -40,16 +42,16 @@ function PracticePiece() {
   const [metronome, setMetronome] = useState(false);
   const [followFlute, setFollowFlute] = useState(false);
   const [allowLowOctaveUp, setAllowLowOctaveUp] = useState(true);
+  const [showLyrics, setShowLyrics] = useState(true);
   const [showMelody, setShowMelody] = useState(true);
-  const [showHarmony, setShowHarmony] = useState(true);
-  const [showMelodyRoles, setShowMelodyRoles] = useState(true);
+  const [showHarmony, setShowHarmony] = useState(score.chords.length > 0);
+  const [showMelodyRoles, setShowMelodyRoles] = useState(score.chords.length > 0);
   const [showChordTransitions, setShowChordTransitions] = useState(true);
   const [lookahead, setLookahead] = useState(3);
   const [analysis, setAnalysis] = useState(defaultAnalysis);
   const [phraseStarts, setPhraseStarts] = useState(defaultPhraseStarts);
-  const [harmonySound, setHarmonySound] = useState(true);
+  const [harmonySound, setHarmonySound] = useState(score.chords.length > 0);
   const [harmonyVolume, setHarmonyVolume] = useState(35);
-
   const [loop, setLoop] = useState(true);
   const [loopStart, setLoopStart] = useState<number | null>(null);
   const [loopEnd, setLoopEnd] = useState<number | null>(null);
@@ -94,6 +96,12 @@ function PracticePiece() {
   });
   const {running, stop} = playback;
   const {finish: finishHistory} = history;
+  const suggestionSeek = useRef(playback.seek); suggestionSeek.current = playback.seek;
+  const applySuggestedLoop = useCallback((start: number,end: number) => {
+    stop(); finishHistory();
+    setLoopStart(start); setLoopEnd(end); setLoop(true);
+    suggestionSeek.current(start);
+  },[stop,finishHistory]);
   useEffect(() => {
     if (followFlute && running && microphone.status === 'off') stop();
   }, [followFlute, running, microphone.status, stop]);
@@ -126,7 +134,6 @@ function PracticePiece() {
   const goBack = () => playback.seek(adjacentLoopPoint(navigationBeat, -1, loopStart, loopEnd, score));
   usePracticeShortcuts({beat: navigationBeat, loopStart, loopEnd, onToggle: () => void togglePlayback(), onSeek: playback.seek,
     onPlayChord: () => {if (harmony) void playback.playChord(harmony.notes.map(note => note.note));}});
-
   return (
     <Stack p={3} gap={4} maxWidth="1200px" mx="auto" fontFamily="'JetBrains Mono', monospace">
       <Link asChild textDecoration="underline" alignSelf="start"><RouterLink to="/lumatone">Back to Lumatone</RouterLink></Link>
@@ -189,7 +196,7 @@ function PracticePiece() {
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}><input type="checkbox" checked={guide} onChange={event => setGuide(event.target.checked)}/>Guide sound</Flex>
         <Flex as="label" gap={2}><input type="checkbox" checked={metronome} disabled={followFlute} onChange={event => setMetronome(event.target.checked)}/>Metronome</Flex>
-        <Flex as="label" gap={2}><input type="checkbox" checked={harmonySound} onChange={event => setHarmonySound(event.target.checked)}/>Chord sound</Flex>
+        <Flex as="label" gap={2}><input type="checkbox" checked={harmonySound} disabled={!score.chords.length} onChange={event => setHarmonySound(event.target.checked)}/>Chord sound</Flex>
         <Flex as="label" gap={2} align="center" fontSize="sm">Chord volume
           <input aria-label="Chord volume" type="range" min={0} max={100} value={harmonyVolume} style={{width: 90}} onChange={event => setHarmonyVolume(Number(event.target.value))}/>
         </Flex>
@@ -199,12 +206,13 @@ function PracticePiece() {
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Display</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Button size="sm" variant="outline" onClick={() => setMode(value => value === 'dozenal' ? 'jazz' : 'dozenal')}>Labels: {mode === 'dozenal' ? 'Dozenal' : 'Jazz'}</Button>
-        <Flex as="label" gap={2}><input type="checkbox" checked={showHarmony} onChange={event => setShowHarmony(event.target.checked)}/>Show chords</Flex>
+        <Flex as="label" gap={2}><input type="checkbox" checked={showHarmony} disabled={!score.chords.length} onChange={event => setShowHarmony(event.target.checked)}/>Show chords</Flex>
         <Flex as="label" gap={2}><input type="checkbox" checked={showMelody} onChange={event => setShowMelody(event.target.checked)}/>Show melody</Flex>
-        <Flex as="label" gap={2}><input type="checkbox" disabled={!showMelody} checked={showMelodyRoles} onChange={event => setShowMelodyRoles(event.target.checked)}/>Melody roles</Flex>
+          {Boolean(score.lyrics?.length) && <Flex as="label" gap={2}><input type="checkbox" checked={showLyrics} onChange={event => setShowLyrics(event.target.checked)}/>Show lyrics</Flex>}
+        <Flex as="label" gap={2}><input type="checkbox" disabled={!showMelody || !score.chords.length} checked={showMelodyRoles} onChange={event => setShowMelodyRoles(event.target.checked)}/>Melody roles</Flex>
         <Flex as="label" gap={2}><input type="checkbox" checked={showChordTransitions} disabled={!showHarmony} onChange={event => setShowChordTransitions(event.target.checked)}/>Previous voicing &amp; root arrows</Flex>
         <Flex as="label" gap={2} align="center">Upcoming attacks
-          <select aria-label="Upcoming attacks" disabled={!showMelody} value={lookahead} onChange={event => setLookahead(Number(event.target.value))}>
+          <select aria-label="Upcoming attacks" disabled={!showMelody && !(showLyrics && score.lyrics?.length)} value={lookahead} onChange={event => setLookahead(Number(event.target.value))}>
             {Array.from({length: 9}, (_, count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </Flex>
@@ -223,6 +231,9 @@ function PracticePiece() {
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
       <PracticeHexMap midiNotes={midiNotes} target={showMelody ? target : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks : []} progress={progress} heard={pitch?.note ?? null} heardCents={pitch?.cents ?? null} transpose={transpose} mode={mode} harmony={showHarmony ? harmony : undefined} previewNote={playback.previewNote} practicing={playback.running} onPlayNote={note => void playback.playNote(note)} showGuideTones={analysis.guideTones}/>
+      {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
+        entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
+        cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}
       <PracticeTimeline beat={beat} entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} running={playback.running}
         onTogglePlayback={() => void togglePlayback()} onBack={goBack} transportDisabled={microphone.status === 'starting'}
         pendingBeat={playback.pendingBeat} target={target} harmony={harmony} mode={mode} transpose={transpose} keyTranspose={keyTranspose} pieceHarmonies={pieceHarmonies} showHarmony={showHarmony} showMelody={showMelody} showMelodyRoles={showMelody && showMelodyRoles} showChordTransitions={showChordTransitions} bpm={bpm}
@@ -230,34 +241,59 @@ function PracticePiece() {
         onMelody={note => {playback.seek(note.start); void playback.playNote(note.note + transpose);}}
         onHarmony={chord => {playback.seek(chord.start); void playback.playChord(chord.notes.map(note => note.note));}}
         attempts={attempts} listening={microphone.status === 'listening'} freeTime={followFlute} analysis={analysis} phraseStarts={phraseStarts}/>
+      <PracticeSuggestions data={history.data} running={playback.running} bpm={bpm} transpose={transpose}
+        keyTranspose={keyTranspose} freeTime={followFlute} allowLowOctaveUp={allowLowOctaveUp} onApply={applySuggestedLoop}/>
       <PracticeHistoryPanel data={history.data} error={history.error} recovery={history.recovery} activeId={history.activeId} running={playback.running} mode={mode} onExport={history.exportJSON} onImport={history.importJSON}/>
-      {score.source && <Box fontSize="xs" color="fg.muted"><Link href={score.source} target="_blank" rel="noreferrer" textDecoration="underline">OpenBook source</Link> · {score.credit}. Chord voicings generated from the source pitches. Melody uses the upper voice of written chords.{score.copyright && <Text>{score.copyright} {score.copyrightExtra}</Text>}{score.warnings?.map(warning => <Text key={warning} color="orange.500">{warning}</Text>)}</Box>}
+      {score.source && <Box fontSize="xs" color="fg.muted"><Link href={score.source} target="_blank" rel="noreferrer" textDecoration="underline">{score.collection ?? 'OpenBook'} source</Link> · {score.credit}. {score.chords.length ? 'Chord voicings are generated from the source harmony. ' : 'No chord symbols are supplied in this arrangement. '}Melody uses the upper voice of written chords.{score.copyright && <Text>{score.copyright} {score.copyrightExtra}</Text>}{score.warnings?.map(warning => <Text key={warning} color="orange.500">{warning}</Text>)}</Box>}
       <Text fontSize="sm" color="fg.muted">Click a hex to hear its guide tone. When stopped, click a harmony or melody strip cell to hear it. {followFlute ? 'In free time, strip clicks move the playhead immediately.' : 'While playing, a strip click queues a jump on the next beat.'} Set optional loop points while stopped. Dark outline in light mode, white in dark mode: play now. Green outline: correct pitch; timing is judged separately. Dashed hexagon: coming next. The small bar at the bottom of the active hex shortens over the note’s duration. Small monochrome indicator at the top: your detected note. Dot above center = sharp; below = flat; centered = in tune.{showHarmony ? ' Gold borders: chord tones; a double border marks the root. Harmony and melody share the same beat scale below the map.' : ''} Moving right adds 2 semitones; up-right adds 7.</Text>
       <Text fontSize="sm" color="fg.muted">Listening keeps your sound settings; headphones help keep playback out of the microphone. Audio is analyzed on this device and is not recorded or uploaded.</Text>
       <Text fontSize="sm" color="fg.muted">This first version detects entrances after a pitch change or a brief break in sound. Repeated tongued notes need that break to register; a held note never earns a second entrance automatically.</Text>
     </Stack>
   );
 }
-
-
 export default function LumatonePractice() {
   const [selected, setSelected] = useState(practiceScores[0].id);
+  const [score, setScore] = useState(stellaScore);
+  const [loadError, setLoadError] = useState('');
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    const entry = practiceScores.find(piece => piece.id === selected)!;
+    setLoadError('');
+    loadPracticeScore(entry, controller.signal).then(loaded => {
+      if (!controller.signal.aborted) setScore(loaded);
+    }).catch(error => {if (!controller.signal.aborted) setLoadError(String(error.message));});
+    return () => controller.abort();
+  }, [selected, retry]);
   const [search, setSearch] = useState('');
-  const score = practiceScores.find(piece => piece.id === selected) ?? practiceScores[0];
-  const matches = practiceScores.filter(piece => piece.id === selected || `${piece.title} ${piece.composer}`.toLowerCase().includes(search.toLowerCase()));
+  const [collection, setCollection] = useState('all');
+  const failures = [...importReport.failures.map(item => ({...item, collection: 'OpenBook'})), ...effendiReport.failures.map(item => ({...item, collection: 'Effendi'})), ...wikifoniaReport.failures.map(item => ({...item, collection: 'Wikifonia'}))];
+  const matches = practiceScores.filter(piece => piece.id === selected || ((collection === 'all' || piece.collection === collection || (collection === 'custom' && !piece.collection)) && `${piece.title} ${piece.composer} ${piece.edition ?? ''}`.toLowerCase().includes(search.toLowerCase())));
   return <>
     <Flex gap={3} wrap="wrap" align="center" p={3} maxWidth="1200px" mx="auto">
+      <Flex gap={2} align="center" fontSize="sm" width="100%">
+        <Text color="fg.muted">Collections:</Text>
+        <Link href="https://github.com/veltzer/book-openbook" target="_blank" rel="noopener noreferrer" textDecoration="underline">OpenBook</Link>
+        <Text color="fg.muted">·</Text>
+        <Link href="https://effendi.me/jazz/repo/" target="_blank" rel="noopener noreferrer" textDecoration="underline">Effendi / Modern Jazz Fake Book</Link>
+        <Text color="fg.muted">·</Text>
+        <Link href="https://github.com/smashub/choco/tree/main/partitions/wikifonia/raw" target="_blank" rel="noopener noreferrer" textDecoration="underline">Wikifonia / ChoCo</Link>
+      </Flex>
+      <label>Collection <select aria-label="Collection" value={collection} onChange={event => setCollection(event.target.value)}>
+        <option value="all">All collections</option><option value="custom">Your arrangements</option><option value="OpenBook">OpenBook</option><option value="Effendi">Effendi / Modern Jazz Fake Book</option><option value="Wikifonia">Wikifonia / ChoCo</option>
+      </select></label>
       <label>Find a tune <input aria-label="Find a tune" value={search} onChange={event => setSearch(event.target.value)} placeholder="Title or composer"/></label>
       <label>Tune <select aria-label="Tune" value={selected} onChange={event => setSelected(event.target.value)} style={{maxWidth: 'min(100%, 480px)'}}>
-        {matches.map(piece => <option key={piece.id} value={piece.id}>{piece.title}{piece.source ? ' · OpenBook' : ''}</option>)}
-        {importReport.failures.map(item => <option key={item.file} disabled>{item.file.replace('.ly.tera', '').replace(/_/g, ' ')} · needs source correction</option>)}
+        {[practiceScores.find(piece => piece.id === selected)!, ...matches.filter(piece => piece.id !== selected).slice(0, 199)].map(piece => <option key={piece.id} value={piece.id}>{piece.title}{piece.collection ? ` · ${piece.collection}` : ''}{piece.edition ? ` · ${piece.edition}` : ''}{piece.melodyOnly ? ' · melody only' : ''}{piece.hasLyrics ? ' · lyrics' : ''}</option>)}
+        {failures.filter(item => (collection === 'all' || item.collection === collection) && item.file.toLowerCase().includes(search.toLowerCase())).slice(0, 50).map(item => <option key={`${item.collection}-${item.file}`} disabled>{item.file.replace('.ly.tera', '').replace(/_/g, ' ')} · {item.collection} · needs review</option>)}
       </select></label>
-      <Text fontSize="xs" color="fg.muted">{practiceScores.length - 1} OpenBook tunes · {importReport.failures.length} need source correction</Text>
+      <Text fontSize="xs" color="fg.muted">{matches.length > 200 ? `Showing first 200 of ${matches.length} matches; narrow your search. · ` : ""}{importReport.imported} OpenBook tunes · {effendiReport.imported} Effendi arrangements ({effendiReport.melodyOnly} melody-only) · {wikifoniaReport.imported} Wikifonia tunes · {failures.length} need review</Text>
       <Box as="details" fontSize="xs" color="fg.muted"><summary>Import notes</summary>
-        <Text>Voicings are generated. Melody chords use their upper note. Marked D.S./D.C. jumps follow written order. Roman-numeral analysis is available for your Stella arrangement.</Text>
-        {importReport.failures.map(item => <Text key={item.file}>{item.file.replace('.ly.tera', '').replace(/_/g, ' ')}: {item.reason}</Text>)}
+        <Text>Voicings are generated. Melody chords use their upper note. Marked D.S./D.C. jumps follow written order. Roman-numeral analysis is available for your Stella arrangement. Up to 50 source issues are shown here; complete reports are available in the collection files.</Text>
+        {failures.slice(0, 50).map(item => <Text key={`${item.collection}-${item.file}`}>{item.collection} · {item.file.replace('.ly.tera', '').replace(/_/g, ' ')}: {item.reason}</Text>)}
       </Box>
     </Flex>
-    <PracticeScoreContext.Provider value={score}><PracticePiece key={score.id}/></PracticeScoreContext.Provider>
+    {score.id === selected ? <PracticeScoreContext.Provider value={score}><PracticePiece key={score.id}/></PracticeScoreContext.Provider>
+      : <Stack p={4} role="status"><Text>{loadError || 'Loading tune…'}</Text>{loadError && <Button onClick={() => setRetry(value => value + 1)}>Try again</Button>}</Stack>}
   </>;
 }

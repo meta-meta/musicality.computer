@@ -8,6 +8,7 @@ import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
 
 import type {PracticeChord} from './exercise.ts';
+import {upcomingCueStyle} from './lookahead.ts';
 import type {UpcomingAttack} from './lookahead.ts';
 
 import {transposePosition} from './transposition.ts';
@@ -159,6 +160,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
         const cell = cells.find(cell => atTarget(cell, note));
         if (!cell) return null;
         const ordinal = marker.step + 1;
+        const cueStyle = upcomingCueStyle(marker.step, isLight);
         const radius = RADIUS - 2 + Math.min(1, approaching?.beatsAway ?? 1) * 9;
         const delay = marker.step * 40;
         const transition = practicing ? `transform 320ms ease-in-out ${delay}ms, opacity 240ms ease-out ${delay}ms` : 'none';
@@ -167,8 +169,8 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
           data-traveller-id={marker.id} data-traveller-note={cell.note} data-traveller-step={marker.step} data-attack-id={marker.attackId}
           style={{transform: `translate(${cell.x}px, ${cell.y}px)`, transition}} pointerEvents="none">
           <polygon className="practice-upcoming-motion" data-upcoming-hex="true" points={points}
-            style={{transform: `scale(${radius / (RADIUS - 2)})`, transformOrigin: '0px 0px', opacity: marker.step === 0 ? 1 : 0.3 / marker.step, transition: practicing ? `opacity 240ms ease-out ${delay}ms` : 'none'}}
-            fill="none" stroke={marker.step === 0 ? targetColor : marker.step === 1 ? isLight ? '#2563eb' : '#93c5fd' : isLight ? '#dc2626' : '#fca5a5'} strokeWidth={1.5 * (RADIUS - 2) / radius}
+            style={{transform: `scale(${radius / (RADIUS - 2)})`, transformOrigin: '0px 0px', opacity: cueStyle.opacity, transition: practicing ? `opacity 240ms ease-out ${delay}ms` : 'none'}}
+            fill="none" stroke={cueStyle.color} strokeWidth={1.5 * (RADIUS - 2) / radius}
             strokeDasharray={`${upcomingDashPeriod * 3 / 7} ${upcomingDashPeriod * 4 / 7}`}/>
         </g>;
       })}
