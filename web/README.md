@@ -1,9 +1,14 @@
 # musicality.computer web
 
-## Private local arrangements
+## Public arrangements and private collections
 
-All arrangement data, lyrics, exercise PDFs, catalogs, and source reports live in
-`meta-meta/musicality-arrangements`, a separate private repository. From the app root:
+Your hand-made arrangements (S’Wonderful, Stella by Starlight, This Will Be Our
+Year, and the ukulele charts) are public app source. Stella's melody also powers
+the public practice and XR views. They work without any private checkout.
+
+Imported OpenBook, Effendi, and Wikifonia catalogs, their lyrics and reports, and
+Dustin Getz exercise transcriptions/PDFs remain in the private
+`meta-meta/musicality-arrangements` repository. To use them locally, from the app root:
 
 ```powershell
 git clone git@github.com:meta-meta/musicality-arrangements.git arrangements.local
@@ -12,17 +17,20 @@ npm run dev -- --port 5180 --strictPort
 ```
 
 Vite overlays modules and serves score JSON/PDFs from `arrangements.local/web/`
-only during development. Production builds always use empty public placeholders,
-even when the private checkout is installed. Public practice/XR pages show an empty
-state. Scores still load on demand, rather than downloading the entire collection.
+only during development. Production builds include your public arrangements and
+exclude the imported catalogs and exercises, even when the private checkout is
+installed. Private copies cannot override public arrangement modules. Imported
+scores still load on demand, rather than downloading the entire collection.
 
-All arrangement data paths described below are relative to the private checkout's
-`web/` directory. Import commands run from this frontend and use ignored caches;
+Imported catalog and exercise data paths below are relative to the private
+checkout's `web/` directory; hand-made arrangement paths refer to this frontend. Import commands run from this frontend and use ignored caches;
 `publish-practice.py` writes only into `../arrangements.local/web/`. Commit data
 changes from the private checkout and app changes from the public repository.
 Never copy private scores into this frontend's `public/` folder. Private storage
 does not grant reuse rights. Catalog integration tests require the private checkout;
-generic algorithm tests work without it.
+generic algorithm tests work without it. Run `node scripts/test-public-arrangements.cjs`
+to check that authored charts and Stella practice are available without the private
+checkout, while imported catalogs and exercises remain excluded.
 
 The Lumatone MIDI editor, transcriptions, and chord composer are available at
 `/lumatone`, linked from the home page. MIDI device configuration is available on

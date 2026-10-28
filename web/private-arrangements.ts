@@ -4,11 +4,16 @@ import {transformWithEsbuild} from 'vite';
 import type {Plugin} from 'vite';
 
 // Private scores are a development-only overlay. Production always uses the
-// empty public modules and never mounts the private static assets.
+// public arrangements and never mounts the private static assets.
 export function privateArrangements(): Plugin {
   const root = path.resolve(__dirname);
   const checkout = path.resolve(root, '../arrangements.local/web');
   const prefix = '\0private-arrangement:';
+  const privateModules = new Set([
+    'src/lumatone/exercises/scores.json',
+    'src/lumatone/practice/catalog.index.json',
+    ...['openbook', 'effendi', 'wikifonia'].map(name => `src/lumatone/practice/${name}/catalog.report.json`),
+  ].map(file => path.resolve(root, file)));
   const counterpart = (original: string) => path.join(checkout, path.relative(root, original));
   const contained = (base: string, target: string) => {
     const relative = path.relative(base, target);
@@ -26,7 +31,7 @@ export function privateArrangements(): Plugin {
       } else if (source.startsWith('/src/')) original = path.resolve(root, '.' + source);
       else if (path.isAbsolute(source)) original = source;
       else return;
-      if (contained(path.join(root, 'src'), original) && existsSync(counterpart(original))) {
+      if (privateModules.has(path.resolve(original)) && existsSync(counterpart(original))) {
         return prefix + original;
       }
       // Resolve relative helpers against their public logical location.
@@ -35,6 +40,7 @@ export function privateArrangements(): Plugin {
     async load(id) {
       if (!id.startsWith(prefix)) return;
       const original = id.slice(prefix.length);
+      if (!privateModules.has(path.resolve(original))) return null;
       const source = readFileSync(counterpart(original), 'utf8');
       this.addWatchFile(counterpart(original));
       return original.endsWith('.json') ? source : (await transformWithEsbuild(source, original)).code;
