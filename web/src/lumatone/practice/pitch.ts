@@ -1,20 +1,26 @@
-// Shared by live flute input and timing calibration.
+// Shared by live instrument input and timing calibration.
 export const PITCH_WINDOW = 2048;
 export const PITCH_POLL_MS = 30;
-export const capturedPitchTime = (now: number, sampleRate: number) => now - PITCH_WINDOW / sampleRate * 500;
+export const MIN_PITCH_FREQUENCY = 50;
+export const MAX_PITCH_FREQUENCY = 5000;
+// YIN compares two half-windows. Each half must cover the lowest period,
+// including at 96/192 kHz; retain the existing 2048 samples at 44.1/48 kHz.
+export const pitchWindow = (sampleRate: number) => Math.max(PITCH_WINDOW,
+  2 ** Math.ceil(Math.log2(2 * (Math.ceil(sampleRate / MIN_PITCH_FREQUENCY) + 2))));
+export const capturedPitchTime = (now: number, sampleRate: number, window = PITCH_WINDOW) => now - window / sampleRate * 500;
 
 export type Pitch = {frequency: number; note: number; cents: number; clarity: number; rms: number};
 
 // YIN's cumulative mean normalized difference, with a parabolic lag estimate.
 // de Cheveigné & Kawahara: https://iro.umontreal.ca/~pift6080/H09/documents/papers/yin_pitch_tracker.pdf
-// Restrict the search to a monophonic flute register, not arbitrary room sound.
+// Cover monophonic wind instruments, including low saxophone fundamentals.
 export function detectPitch(samples: Float32Array, sampleRate: number): Pitch | null {
   let energy = 0;
   for (const sample of samples) energy += sample * sample;
   const rms = Math.sqrt(energy / samples.length);
   if (rms < 0.006) return null;
-  const maxLag = Math.min(Math.floor(sampleRate / 180), Math.floor(samples.length / 2) - 1);
-  const minLag = Math.floor(sampleRate / 2400);
+  const maxLag = Math.min(Math.ceil(sampleRate / MIN_PITCH_FREQUENCY) + 1, Math.floor(samples.length / 2) - 1);
+  const minLag = Math.max(2, Math.floor(sampleRate / MAX_PITCH_FREQUENCY));
   const differences = new Float32Array(maxLag + 1);
   let sum = 0;
   for (let lag = 1; lag <= maxLag; lag++) {
@@ -33,7 +39,7 @@ export function detectPitch(samples: Float32Array, sampleRate: number): Pitch | 
     const denominator = left - 2 * middle + right;
     const refined = lag + (denominator ? (left - right) / (2 * denominator) : 0);
     const frequency = sampleRate / refined;
-    if (frequency < 180 || frequency > 2400) return null;
+    if (frequency < MIN_PITCH_FREQUENCY || frequency > MAX_PITCH_FREQUENCY) return null;
     const midi = 69 + 12 * Math.log2(frequency / 440);
     const note = Math.round(midi);
     return {frequency, note, cents: (midi - note) * 100, clarity: 1 - middle, rms};

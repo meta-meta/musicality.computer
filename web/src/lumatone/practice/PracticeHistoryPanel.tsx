@@ -1,12 +1,14 @@
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {Box, Button, chakra, Flex, Heading, Stack, Text} from '@chakra-ui/react';
 import {memo, useCallback, useMemo, useRef, useState} from 'react';
-import {noteName, pitchLabel} from '../leadSheet/labels.ts';
+import {noteName} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import {isPracticeHit, TIMING_TOLERANCE} from './exercise.ts';
 import {MAX_IMPORT_BYTES, summarisePracticeSession} from './practiceHistory.ts';
 import type {PracticeHistoryData, PracticeSession} from './practiceHistory.ts';
 import {PracticeHistoryGraph} from './PracticeHistoryGraph.tsx';
+import {InstrumentIcon} from './InstrumentIcon.tsx';
+import {historySessionContext} from './historyContext.ts';
 import {historyBarRanges} from './historyReview.ts';
 
 const summaries = new WeakMap<PracticeSession, ReturnType<typeof summarisePracticeSession>>();
@@ -78,13 +80,13 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
       {importError && <Text role="alert" color="red.500" fontSize="sm">{importError}</Text>}
       {notice && <Text role="status" fontSize="sm">{notice}</Text>}
       <label><input type="checkbox" checked={allTunes} onChange={event => {setAllTunes(event.target.checked); setSelected(null); setSelectedBar(null); setSelectedPass(null);}}/> Show history for all tunes</label>
-      {!rows.length ? <Text fontSize="sm" color="fg.muted">No saved judgements yet. Listen to your flute during practice to start a history.</Text> : <>
-        {expanded && <PracticeHistoryGraph sessions={data.sessions} selected={selected} selectedPass={selectedPass} onReview={reviewSession}/>}
+      {!rows.length ? <Text fontSize="sm" color="fg.muted">No saved judgements yet. Listen to your instrument during practice to start a history.</Text> : <>
+        {expanded && <PracticeHistoryGraph sessions={data.sessions} selected={selected} selectedPass={selectedPass} mode={mode} onReview={reviewSession}/>}
         {allTunes && <Text fontSize="xs" color="fg.muted">The graph stays on the selected tune; the table below includes all tunes.</Text>}
       {session && <Stack gap={2} borderTopWidth="1px" pt={3}>
         <Heading size="sm">Session · {dateLabel(session.startedAt)}{selectedPass!==null ? ` · Pass ${selectedPass}` : ''}{selectedBar!==null ? ` · ${barRanges[selectedBar].label}` : ''}</Heading>
         {(selectedBar!==null || selectedPass!==null) && <Button size="xs" variant="outline" alignSelf="start" onClick={()=>{setSelectedBar(null);setSelectedPass(null);setPage(0);}}>Review entire session</Button>}
-        <Text fontSize="xs" color="fg.muted">{session.title ?? session.piece} · {pitchLabel((session.tonic ?? 10) + (session.settings.keyTranspose ?? 0), mode)} · {session.settings.bpm} BPM · melody transposition {session.settings.transpose} semitones · {session.settings.loop ? `loop ${session.settings.loopStart ?? -1} to ${session.settings.loopEnd ?? 128} beats` : 'loop off'} · octave-up acceptance {session.settings.allowLowOctaveUp ? 'on' : 'off'} · input correction {session.settings.latencyMs} ms</Text>
+        <Text fontSize="xs" color="fg.muted">{session.title ?? session.piece} · {historySessionContext(session, mode).label} · {session.settings.bpm} BPM · melody transposition {session.settings.transpose} semitones · {session.settings.loop ? `loop ${session.settings.loopStart ?? -1} to ${session.settings.loopEnd ?? 128} beats` : 'loop off'} · octave-up acceptance {session.settings.allowLowOctaveUp ? 'on' : 'off'} · input correction {session.settings.latencyMs} ms</Text>
         <Flex as="label" gap={2} fontSize="sm">Show
           <select aria-label="History judgement filter" value={filter} onChange={event => {setFilter(event.target.value); setPage(0);}}>
             <option value="all">All judgements</option><option value="pitch">Pitch errors</option><option value="timing">Early / late</option><option value="hits">Full hits</option>
@@ -112,9 +114,14 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
       </Stack>}
         <Box overflowX="auto">
           <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left'}}>
-            <thead><tr>{['Session', 'Mode / tempo', 'Judged notes', 'First-try pitch', 'After corrections', 'On-time entrances', ''].map(label => <th key={label} style={{padding: 8, whiteSpace: 'nowrap'}}>{label}</th>)}</tr></thead>
+            <thead><tr>{['Session', 'Instrument / key', 'Mode / tempo', 'Judged notes', 'First-try pitch', 'After corrections', 'On-time entrances', ''].map(label => <th key={label} style={{padding: 8, whiteSpace: 'nowrap'}}>{label}</th>)}</tr></thead>
             <tbody>{rows.slice(0, limit).map(({session, metrics}) => <tr key={session.id} data-history-session={session.id}>
               <td style={{padding: 8, whiteSpace: 'nowrap'}}>{session.title ?? session.piece}<br/>{dateLabel(session.startedAt)}<br/><Text as="span" color="fg.muted">{activeId === session.id ? running ? 'Recording' : 'Paused' : session.endedAt ? 'Finished' : 'Saved'}</Text></td>
+              <td style={{padding: 8, whiteSpace: 'nowrap'}} data-history-context={session.id}>
+                <InstrumentIcon instrumentId={session.settings.instrumentId}/>{' '}{historySessionContext(session, mode).instrumentLabel}<br/>
+                Concert {historySessionContext(session, mode).concertKey}
+                {historySessionContext(session, mode).writtenKey && <><br/>Written {historySessionContext(session, mode).writtenKey}</>}
+              </td>
               <td style={{padding: 8, whiteSpace: 'nowrap'}}>{session.settings.freeTime ? 'Free time' : 'Timed'} · {session.settings.bpm} BPM</td>
               <td style={{padding: 8}}>{metrics.notes}</td><td style={{padding: 8}}>{percentage(metrics.pitch, metrics.notes)}</td>
               <td style={{padding: 8}}>{percentage(metrics.recovered, metrics.notes)}</td>
@@ -124,7 +131,7 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
           </table>
         </Box>
         {rows.length > limit && <Button size="sm" variant="ghost" alignSelf="start" onClick={() => setLimit(value => value + 20)}>Show more sessions</Button>}
-        <Text fontSize="xs" color="fg.muted">First-try pitch uses the first judgement for each note/pass. After corrections counts any correct-pitch judgement. On-time entrances uses ±{TIMING_TOLERANCE} ms independently of pitch; free-time sessions have no timing score. Compare sessions for the same tune with similar tempos and ranges.</Text>
+        <Text fontSize="xs" color="fg.muted">First-try pitch uses the first judgement for each note/pass. After corrections counts any correct-pitch judgement. On-time entrances uses ±{TIMING_TOLERANCE} ms independently of pitch; free-time sessions have no timing score. Compare sessions for the same tune, instrument, and key with similar tempos and registers.</Text>
       </>}
 
     </Stack>

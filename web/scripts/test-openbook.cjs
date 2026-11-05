@@ -7,7 +7,7 @@ const {privateDataPlugin, privateRoot} = require('./private-data-test.cjs');
     export * from './src/lumatone/practice/scores.ts';
     export * from './src/lumatone/practice/lyrics.ts';
     export * from './src/lumatone/practice/exercise.ts';
-    export * from './src/lumatone/practice/fluteFollower.ts';
+    export * from './src/lumatone/practice/monophoneFollower.ts';
     export * from './src/lumatone/practice/lookahead.ts';
     export * from './src/lumatone/practice/navigation.ts';
     export * from './src/lumatone/practice/transposition.ts';

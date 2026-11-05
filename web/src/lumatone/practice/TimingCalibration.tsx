@@ -35,7 +35,7 @@ export function TimingCalibration({disabled,setup,onPrepare,onBusy,onCorrection}
       <DialogContent maxWidth="640px">
       <DialogHeader><DialogTitle>Timing calibration</DialogTitle></DialogHeader>
       <DialogBody pb={5}><Stack gap={3} fontSize="sm">
-        <Text>Stay quiet while 10 short tones play (about 13 seconds). Let your mic hear your usual speakers, or hold one headphone earcup near it. Keep this tab visible. Use a comfortable volume; don’t play your flute during the test.</Text>
+        <Text>Stay quiet while 10 short tones play (about 13 seconds). Let your mic hear your usual speakers, or hold one headphone earcup near it. Keep this tab visible. Use a comfortable volume; don’t play your instrument during the test.</Text>
         <Text color="fg.muted">This measures playback, microphone, and pitch-detection delay together. No audio is saved or uploaded. Your correction changes only when you apply a result.</Text>
         <Flex as="label" gap={2} align="center">Test volume
           <input aria-label="Calibration test volume" type="range" min={1} max={30} value={volume} disabled={test.busy} onChange={event=>setVolume(Number(event.target.value))}/>{volume}%
@@ -49,7 +49,7 @@ export function TimingCalibration({disabled,setup,onPrepare,onBusy,onCorrection}
         {test.result&&<>
           <Text fontWeight="semibold">Suggested correction: {test.result.correction} ms</Text>
           <Text>{test.result.used}/{test.result.detected} detections used · timing spread {test.result.spread} ms · {test.result.used>=8&&test.result.spread<=40?'Good consistency':'Usable consistency'}</Text>
-          <Text color="fg.muted">Click Listen to flute again when you’re ready to practice.</Text>
+          <Text color="fg.muted">Click Listen to monophone again when you’re ready to practice.</Text>
           <Text color="fg.muted">{test.result.setup.input} · {test.result.setup.output}</Text>
           <Button size="xs" alignSelf="start" disabled={disabled} onClick={()=>{
             onCorrection(test.result!.correction);setSaved(test.result);restored.current=test.result!.setup.key;
@@ -64,6 +64,6 @@ export function TimingCalibration({disabled,setup,onPrepare,onBusy,onCorrection}
     </DialogRoot>
     {!open&&notice&&<Text role="status">{notice}</Text>}
     {saved&&<Text color="fg.muted">Saved calibration: {saved.correction} ms · {saved.setup.input} · {new Date(saved.at).toLocaleDateString()}</Text>}
-    <Text color="fg.muted">Saved calibration restores on reload and is checked against the audio setup when the microphone starts while practice is stopped. Recalibrate after changing audio devices or routing. Flute attacks may still need small manual adjustments.</Text>
+    <Text color="fg.muted">Saved calibration restores on reload and is checked against the audio setup when the microphone starts while practice is stopped. Recalibrate after changing audio devices or routing. Instrument attacks may still need small manual adjustments.</Text>
   </Stack>;
 }

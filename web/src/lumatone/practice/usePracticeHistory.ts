@@ -59,7 +59,7 @@ export function usePracticeHistory(settings: HistorySettings) {
   const begin = useCallback(() => {
     finish();
     const at = new Date().toISOString();
-    active.current = {id: crypto.randomUUID(), piece: score.id, title: score.title, tonic: score.tonic, startedAt: at, updatedAt: at, endedAt: null, settings: {...config.current}, judgements: []};
+    active.current = {id: crypto.randomUUID(), piece: score.id, title: score.title, tonic: score.tonic, quality: score.quality, startedAt: at, updatedAt: at, endedAt: null, settings: {...config.current}, judgements: []};
     dedup.current = '';
   }, [finish, score]);
 
@@ -67,7 +67,7 @@ export function usePracticeHistory(settings: HistorySettings) {
     if (!active.current) begin();
     const current = active.current!;
     const key = `${attempt.cycle}:${attempt.index}:${articulation ?? ''}:${attempt.note}:${attempt.correctPitch}`;
-    // Flute-follow receives continuous samples. Record a new articulation,
+    // Monophone-follow receives continuous samples. Record a new articulation,
     // stable pitch change, or correction, rather than thirty copies a second.
     if (attempt.freeTime && key === dedup.current) return;
     dedup.current = key;

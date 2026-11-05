@@ -16,6 +16,7 @@
     "@fontsource/bravura": "^5.2.5",
     "@fontsource/bravura-text": "^5.2.5",
     "@fontsource/jetbrains-mono": "^5.2.6",
+    "@markusstrasser/pitchplease": "3.1.0",
     "@react-three/fiber": "^8.18.0",
     "@react-three/xr": "^6.6.32",
     "@reduxjs/toolkit": "^2.5.0",

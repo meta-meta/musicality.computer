@@ -11,20 +11,20 @@ const point = (cents: number, radius: number) => {
 };
 const ticks = [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50];
 
-export function PracticeTuner({target, pitch, mode, allowLowOctaveUp, listening, countIn, location}: {
-  target?: number; pitch: Pitch | null; mode: LabelMode; allowLowOctaveUp: boolean;
+export function PracticeTuner({target, pitch, mode, allowLowOctaveUp, listening, countIn, location, notationOffset = 0}: {
+  notationOffset?: number; target?: number; pitch: Pitch | null; mode: LabelMode; allowLowOctaveUp: boolean;
   listening: boolean; countIn: number | null; location: string;
 }) {
   const green = useColorModeValue('#15803d', '#4ade80');
   const cyan = useColorModeValue('#0e7490', '#52e6ef');
   const amber = useColorModeValue('#b45309', '#f5b66a');
-  const measured = pitch ? 69 + 12 * Math.log2(pitch.frequency / 440) : null;
+  const measured = pitch ? 69 + 12 * Math.log2(pitch.frequency / 440) + notationOffset : null;
   const hasTarget = target !== undefined || countIn !== null;
-  let reference = target ?? pitch?.note;
-  if (reference !== undefined && target !== undefined && allowLowOctaveUp && target < 60 && measured !== null
+  let reference = target ?? (pitch ? pitch.note + notationOffset : undefined);
+  if (reference !== undefined && target !== undefined && allowLowOctaveUp && target - notationOffset < 60 && measured !== null
     && Math.abs(measured - target - 12) < Math.abs(measured - target)) reference += 12;
   const cents = measured !== null && reference !== undefined ? (measured - reference) * 100 : null;
-  const matches = pitch && target !== undefined && matchesPracticePitch(target, pitch.note, pitch.cents, allowLowOctaveUp);
+  const matches = pitch && target !== undefined && matchesPracticePitch(target - notationOffset, pitch.note, pitch.cents, allowLowOctaveUp);
   const centered = cents !== null && Math.abs(cents) <= 5;
   const color = centered ? green : matches || target === undefined ? cyan : amber;
   const needle = point(Math.max(-50, Math.min(50, cents ?? 0)), 112);
@@ -42,7 +42,7 @@ export function PracticeTuner({target, pitch, mode, allowLowOctaveUp, listening,
         </Box>}
         <Box flex={1} minWidth={0} textAlign={hasTarget ? 'right' : 'center'}>
           <Text color="fg.muted" fontSize="xs">{hasTarget ? 'You' : 'Your pitch'}</Text>
-          <Text fontSize="xl" lineHeight="1.5" minHeight="1.5em" whiteSpace="nowrap" color={pitch ? color : 'fg.muted'} data-testid="heard-note">{pitch ? noteName(pitch.note, mode) : '—'}</Text>
+          <Text fontSize="xl" lineHeight="1.5" minHeight="1.5em" whiteSpace="nowrap" color={pitch ? color : 'fg.muted'} data-testid="heard-note">{pitch ? noteName(pitch.note + notationOffset, mode) : '—'}</Text>
         </Box>
       </Flex>
       <svg role="img" aria-label={`Pitch tuner. ${status}${cents !== null ? `. ${Math.abs(Math.round(cents))} cents ${cents < 0 ? 'flat' : 'sharp'}${target !== undefined ? ' of target' : ''}` : ''}.`}

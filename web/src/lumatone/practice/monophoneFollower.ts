@@ -1,3 +1,4 @@
+import {COUNT_IN_BEATS} from './transport.ts';
 import {exercise, matchesPracticePitch} from './exercise.ts';
 
 export type FollowState = {
@@ -13,7 +14,7 @@ const nextIndex = (from: number, end: number, melody = exercise) => melody.findI
 
 // Time is in seconds. The pending attack is a gate: the clock cannot pass it
 // until a matching pitch opens it. One articulation can only open one gate.
-export function createFollower(from: number, end: number, pass: number, time: number, countIn = 4, melody = exercise): FollowState {
+export function createFollower(from: number, end: number, pass: number, time: number, countIn = COUNT_IN_BEATS, melody = exercise): FollowState {
   const index = nextIndex(from, end, melody);
   return {melody, beat: from - countIn, pass, entryBeat: from, endBeat: end, index,
     waiting: countIn === 0 && index >= 0 && melody[index].start <= from,

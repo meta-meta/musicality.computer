@@ -15,10 +15,10 @@ import {HarmonicDestinationLane, MelodicIntervalLane, PhraseAnalysisLanes} from 
 
 
 
-export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendingBeat, target, harmony, mode, transpose, keyTranspose = 0, pieceHarmonies, showHarmony, showMelody = true, showMelodyRoles, showChordTransitions, bpm,
+export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendingBeat, target, harmony, mode, transpose, keyTranspose = 0, notationOffset = 0, pieceHarmonies, showHarmony, showMelody = true, showMelodyRoles, showChordTransitions, bpm,
   loop, loopStart, loopEnd, onLoopChange, onLoopStart, onLoopEnd, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts, onTogglePlayback, onToggleListening, microphoneStarting, onBpmChange, onBack, transportDisabled}: {
   beat: number; entryBeat: number; endBeat: number; pass: number; running: boolean; pendingBeat: number | null;
-  target?: MelodyAttack; harmony?: PracticeChord; mode: LabelMode; transpose: number; keyTranspose?: number; pieceHarmonies: PracticeChord[]; showHarmony: boolean; showMelody?: boolean; showMelodyRoles: boolean; showChordTransitions: boolean; bpm: number;
+  target?: MelodyAttack; harmony?: PracticeChord; mode: LabelMode; transpose: number; keyTranspose?: number; notationOffset?: number; pieceHarmonies: PracticeChord[]; showHarmony: boolean; showMelody?: boolean; showMelodyRoles: boolean; showChordTransitions: boolean; bpm: number;
   loop: boolean; loopStart: number | null; loopEnd: number | null; onLoopChange: (enabled: boolean) => void;
   onLoopStart: (beat: number | null) => void; onLoopEnd: (beat: number | null) => void;
   onSeek: (beat: number) => void; onMelody: (note: MelodyAttack) => void; onHarmony: (chord: PracticeChord) => void;
@@ -76,7 +76,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
           disabled={running || transportDisabled} onClick={() => onLoopChange(!loop)}>↻</Button>
         <Flex as="label" gap={1} align="center"><PracticeTempoInput label="Playhead tempo" bpm={bpm} onChange={onBpmChange} disabled={running || transportDisabled}/> BPM</Flex>
         <Button size="sm" variant={listening ? 'solid' : 'outline'} aria-pressed={listening}
-          aria-label={listening ? 'Stop microphone at playhead' : 'Listen to flute at playhead'} disabled={transportDisabled} onClick={onToggleListening}>
+          aria-label={listening ? 'Stop microphone at playhead' : 'Listen to monophone at playhead'} disabled={transportDisabled} onClick={onToggleListening}>
           {microphoneStarting ? 'Opening…' : listening ? 'Listening' : 'Listen'}
         </Button>
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
@@ -105,7 +105,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
       <Box ref={scroll} overflowX="auto" role="group" aria-label="Passage harmony and melody">
         <Stack gap={1} minWidth={`${72 + LENGTH * 64}px`} position="relative">
           {showMelody && analysis.phrases && <PhraseAnalysisLanes starts={phraseStarts} mode={mode}/>}
-          {showMelody && analysis.melodicIntervals && <MelodicIntervalLane mode={mode} transpose={transpose}/>}
+          {showMelody && analysis.melodicIntervals && <MelodicIntervalLane mode={mode} transpose={transpose + notationOffset}/>}
           {showMelody && <Flex role="group" aria-label="Passage rhythm" align="center">
             <Text width="72px" flexShrink={0} position="sticky" left={0} bg="bg" zIndex={3} fontSize="xs" color="fg.muted">Melody</Text>
             <Box position="relative" flex={1} height={showMelodyRoles ? '168px' : '144px'}>
@@ -117,12 +117,12 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
               })}
             </Box>
           </Flex>}
-          {showHarmony && analysis.destinations && <HarmonicDestinationLane mode={mode} keyTranspose={keyTranspose}/>}
+          {showHarmony && analysis.destinations && <HarmonicDestinationLane mode={mode} keyTranspose={keyTranspose + notationOffset}/>}
           {showHarmony && <Flex role="group" aria-label="Chord changes" align="center">
             <Text width="72px" flexShrink={0} position="sticky" left={0} bg="bg" zIndex={3} fontSize="xs" color="fg.muted">Harmony</Text>
             <Box position="relative" flex={1} height={analysis.commonTones || analysis.voiceLeading ? '248px' : '224px'}>
               {START < 0 && <Box position="absolute" left={0} width={`${-START / LENGTH * 100}%`} p={1} fontSize="xs" color="fg.muted">Pickup</Box>}
-              {pieceHarmonies.map((chord, index) => <PracticeHarmonyCell key={chord.start} chord={chord} previous={pieceHarmonies[index - 1]} mode={mode} keyTranspose={keyTranspose} showTransitions={showChordTransitions}
+              {pieceHarmonies.map((chord, index) => <PracticeHarmonyCell key={chord.start} chord={chord} previous={pieceHarmonies[index - 1]} mode={mode} keyTranspose={keyTranspose} analysisTranspose={keyTranspose + notationOffset} showTransitions={showChordTransitions}
                 active={harmony === chord} running={running} onSeek={seek} onHarmony={playHarmony} connections={chordConnections[index]}
                 showCommon={analysis.commonTones} showVoiceLeading={analysis.voiceLeading} showGuides={analysis.guideTones}/>)}
             </Box>

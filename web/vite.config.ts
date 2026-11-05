@@ -6,4 +6,6 @@ import { visualizer } from "rollup-plugin-visualizer";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [privateArrangements(), react(), visualizer()],
+  // Keep package-relative worklet/model URLs intact in development.
+  optimizeDeps: {exclude: ['@markusstrasser/pitchplease']},
 })

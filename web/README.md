@@ -51,7 +51,7 @@ the drone and the moving thirds. Upper-structure triads retain their annotations
 
 Choose a collection, then its section. Dozenal/Jazz labels and previous-voicing
 overlays are independent controls. Click a card (or focus it and press Enter or
-Space) to hear its written voicing with the same chord sound as flute practice.
+Space) to hear its written voicing with the same chord sound as monophone practice.
 Click an individual note hex, or focus it and press Enter/Space, to hear only
 that note. Clicking its pitch or octave label has the same effect.
 This also works for the original song transcriptions. Previous-voicing overlays
@@ -65,11 +65,42 @@ the existing song transcription behavior.
 Run `node scripts/validate-exercise-scores.mjs` from `web/` to check measure
 coverage, open/closed voicing relationships, and twelve-key transpositions.
 
-### Flute practice
+### Monophone practice
+
+The **Instrument** selector under Monophone input displays melody, chords, tuner notes,
+and analysis in written pitch for flute, piccolo, alto/bass flute, B♭ or A clarinet,
+trumpet, saxophones, and F horn. It saves the choice locally. **Concert key** and
+Register control the sounding music; changing instrument preserves guide/chord
+sound, microphone judging/following, and saved history in concert pitch. Clicking
+written note/chord cells auditions their concert equivalents. MIDI feedback maps
+concert MIDI notes into the same written layout. The reference label follows
+Jazz/Dozenal mode: for B♭ instruments, **D = concert C** (written C sounds B♭).
+Octave-transposing instruments also show their octave displacement.
+The **Concert key** and **Register** choices show green `✓ fits` or amber
+`⚠ too low/high`. Each key is checked with the current register, and each register
+with the current key. A warning beside Concert key gives the full melody's written
+bounds and the instrument's typical written range. Chord accompaniment and the
+optional octave-up acceptance do not change this full-melody range check.
+Ranges are defaults, not a player's comfortable limits: C-foot flutes; piccolo
+D4–C7; clarinets E3–C7; trumpet F♯3–C6; saxophones B♭3–F♯6 (baritone A3–F♯6);
+and F horn F♯2–C6. Saxophone altissimo and brass extended techniques are excluded.
+B♭ clarinet, trumpet, and soprano sax have separate instrument choices.
+References: [Yamaha saxophone fingering chart](https://www.yamaha.com/en/musical_instrument_guide/saxophone/play/play002.html),
+[VSL flute](https://www.vsl.co.at/academy/woodwinds/concert-flute),
+[VSL piccolo](https://www.vsl.co.at/academy/woodwinds/piccolo),
+[VSL clarinet](https://preview.vsl.co.at/academy/woodwinds/clarinet),
+and [VSL horn](https://www.vsl.co.at/academy/brass/horn-f).
+
+Run `node scripts/test-instruments.cjs` to check notation and concert-pitch judging.
+Microphone tracking covers 50–5000 Hz so low saxophone fundamentals are accepted.
+The YIN analysis window scales with sample rate (2048 samples at 44.1/48 kHz,
+4096 at 96 kHz), with matching capture timestamps and calibration windows.
+Run `node scripts/test-pitch-range.cjs` to check low-register and harmonic-rich tones.
+
 
 Play/pause and back controls sit beside the playhead. Pausing suspends the
 playback audio clock and preserves the current pass and count-in; resuming
-continues from there. In flute-follow mode, the follower's clock pauses too.
+continues from there. In monophone-follow mode, the follower's clock pauses too.
 Space toggles play/pause; `[` / `]` move through the configured loop points and
 the beginning/end of the track; Left/Right move to adjacent bar boundaries.
 Down Arrow auditions the current chord without moving the playhead; holding
@@ -81,7 +112,7 @@ keyboard behavior. Focused buttons and note hexes retain native Space actions.
 
 The practice page's **Key** selector transposes Stella's melody and harmony
 together into any of the 12 keys (B♭ major by default). Playback, audition,
-flute targets, hex positions, chord labels, and analysis follow the chosen key.
+monophone targets, hex positions, chord labels, and analysis follow the chosen key.
 **Register** independently shifts the melody by octaves. Key names follow the
 Dozenal/Jazz label setting; pause playback before changing key or register.
 Saved practice sessions include their key, and older history imports retain
@@ -92,7 +123,7 @@ The practice page also has a collapsible **MIDI configuration** section. Select
 **Lumatone In** to show held MIDI notes and chords on the hex board with a
 contrasting border and played-note fill. Highlights clear on release, MIDI
 all-notes-off/all-sound-off, device changes, or disconnection. MIDI highlights
-are independent of microphone input and do not create flute judgements or
+are independent of microphone input and do not create monophone judgements or
 trigger guide audio.
 
 **Tune** and **Find a tune** select from the original Stella arrangement and
@@ -111,7 +142,7 @@ Cheek to Cheek and Waltz for Debby are listed as needing source correction;
 their upstream melody/harmony data is incomplete or inconsistent. Imported
 chord voicings are generated; the manual Roman-numeral/phrase analysis remains
 specific to the original Stella arrangement. Imported tunes still have melodic
-roles, key changes, MIDI highlights, flute judging/following, and practice history.
+roles, key changes, MIDI highlights, monophone judging/following, and practice history.
 History defaults to the selected tune, with an option to review all tunes.
 
 To regenerate the OpenBook conversion, download the OpenBook source and portable LilyPond
@@ -135,7 +166,7 @@ build-time tools only; users need neither to practice with the generated data.
 `musicality.practice-history.v1`. Sessions begin with a fresh practice run;
 pausing/resuming keeps the same session. Judgements are batched to localStorage
 every 750 ms and flushed when leaving. Runs without judgements are not saved.
-No microphone audio is recorded. Continuous flute-follow samples are deduplicated
+No microphone audio is recorded. Continuous monophone-follow samples are deduplicated
 by note, pass, articulation, stable pitch, and pitch-result changes.
 
 Session summaries separate first-try pitch, pitch after corrections, and timing
@@ -241,16 +272,16 @@ pitch checkmark. Early/late timing is judged separately. Feedback is matched
 to the current attack and pass, so it does not carry into another note or loop.
 Within that attack, a pitch correction can upgrade an earlier miss; later
 readings do not clear a confirmed green outline.
-Playback has a four-beat count-in, tempo, register, looping, guide sound, and
+Playback has a three-beat count-in, tempo, register, looping, guide sound, and
 metronome controls. Click any hex (or focus it
 and press Enter or Space) to audition its guide tone, including when playback is
 stopped or guide sound is disabled. The microphone can also
 run alone as a live note and tuning display. It starts only after pressing
-**Listen to flute**, or starting practice with **Follow flute** enabled, and
+**Listen to monophone**, or starting practice with **Follow monophone** enabled, and
 requires localhost or HTTPS plus browser permission.
 
-**Follow flute (free time)** gates each melody entrance on a stable matching
-flute note (including register, within ±35 cents). It continuously checks held
+**Follow monophone (free time)** gates each melody entrance on a stable matching
+instrument note (including register, within ±35 cents). It continuously checks held
 notes, so a note begun during count-in or corrected into tune can advance
 without another attack. Each articulation can advance only one melody note,
 including across loop boundaries. After the count-in, the
@@ -261,7 +292,7 @@ with a detectable break. Pitch results remain visible without early/late
 grades. Chords follow the score position, with sound lengths based on tempo;
 pads fade naturally rather than sustaining indefinitely while waiting.
 Loop points still apply, and strip/ruler seeks are immediate in free time.
-Starting this mode opens the mic if needed. Both this and **Listen to flute**
+Starting this mode opens the mic if needed. Both this and **Listen to monophone**
 preserve guide sound, chord sound, and metronome settings. Headphones help keep
 playback out of the microphone.
 
@@ -307,7 +338,7 @@ Optional loop start/end selectors default to the pickup and end of the piece.
 While stopped, choose bar boundaries or use **Set start/end here** at the current
 playhead (rounded to a sixth of a beat, accommodating triplets). **Clear points**
 restores whole-piece bounds. **Loop playback** enables repeating those bounds;
-with it off, playback continues to the end of the tune. Each start has a four-beat
+with it off, playback continues to the end of the tune. Each start has a three-beat
 count-in. Seeking and looping cut the previous voices at the boundary and resume
 any held melody/chord for the remainder of its duration. Entrance scoring uses
 the same transport segments and gives each new pass its own results.
@@ -318,7 +349,7 @@ pitch; its dot moves above center when sharp and below when flat, over a ±50-ce
 timing (120 ms) tolerances, with adjustable input timing correction. Sustained
 notes do not automatically satisfy repeated attacks: this first version needs
 a pitch change or a brief break in sound to detect another entrance. Repeated
-flute tonguing and room noise still need real-instrument validation. Listening
+instrument articulation and room noise still need real-instrument validation. Listening
 preserves guide sound, chord sound, and metronome settings; headphones help isolate playback.
 Leaving the page releases the microphone, audio contexts, and playback timers.
 
@@ -439,7 +470,7 @@ Imported voicings are generated from chord symbols, not original piano arrangeme
 MusicXML imports preserve note-aligned lyric syllables, verse numbers, source line
 breaks, ties, melismas, and expanded bar repeats. Tunes with timed lyrics show a
 `lyrics` marker in the selector and a **Show lyrics** display setting. The lyric
-panel follows the playhead (including seeks, loops and free-time flute following),
+panel follows the playhead (including seeks, loops and free-time monophone following),
 underlines the active syllable, and keeps two equal-sized lyric rows. The rows
 alternate karaoke-style: the upcoming line stays in place as it becomes current,
 and the finished row refreshes with the following phrase. Upcoming syllables use
@@ -511,12 +542,12 @@ Expansion changes only the view, not saved sessions or the suggestion algorithm.
 
 ### Automatic input timing calibration
 
-In **Flute input**, open **Auto-calibrate**, then choose **Start calibration**.
+In **Monophone input**, open **Auto-calibrate**, then choose **Start calibration**.
 Use the same output setup as practice. Let the microphone hear the speakers, or
 hold a headphone earcup near it, stay quiet, and keep the tab visible. Ten short
-sine tones play over roughly 13 seconds. The regular flute listener and paused
+sine tones play over roughly 13 seconds. The regular monophone listener and paused
 transport stop before the test; calibration never records practice judgements.
-Click **Listen to flute** afterward to resume normal input.
+Click **Listen to monophone** afterward to resume normal input.
 
 The test uses the same 2048-sample pitch window, 30 ms polling, YIN detector,
 stabilizer, entrance tracker, and center-of-window timestamps as live input.
@@ -548,7 +579,7 @@ speaker/headphone routing and permission prompts require a real-device test.
 
 ### Transport preferences and coverage filtering
 
-The playhead controls include loop, tempo (40–180 BPM), and flute listening next
+The playhead controls include loop, tempo (40–180 BPM), and monophone listening next
 to play/pause. Both tempo controls and both loop toggles share the same state.
 Tempo and loop-enabled preferences persist across reloads/tunes in localStorage
 under `musicality.practice-settings.v1`; loop boundaries remain tune-specific and
@@ -564,3 +595,175 @@ allows turning the filter off when no columns qualify.
 
 Validate with `node scripts/test-practice-settings.cjs` and
 `node scripts/test-history-review.cjs` from `web/`.
+
+### Instrument and key in practice history
+
+New sessions save the selected instrument, the source key quality, and the key
+transposition. History rows and review details show instrument, concert key, and
+written key; both key spellings follow Jazz/Dozenal mode. Saved notes/judgements
+remain in concert pitch. Changing instruments during a pause ends that session;
+the next practice run starts a session with the newly selected instrument.
+
+The history graph includes aligned **Instrument** and **Concert key** lanes between
+the line graph and bar map, including in individual-pass view. Hover or focus a
+column for the full instrument name and written key. Key cells use pitch colors.
+Older sessions remain intact and show **Instrument not recorded** (`?` in the lane)
+because their instrument cannot be inferred. Older imported-tune key quality is
+left unspecified when it was not recorded. Export/import preserves new metadata. An import can fill a previously unrecorded
+instrument on the same session ID; older exports cannot erase it, and conflicting
+known instruments are rejected.
+Run `node scripts/test-history-context.cjs` to check compatibility and graph labels.
+
+Instrument labels use inline monochrome SVG drawings for flute, saxophone,
+clarinet, trumpet, and horn; variants retain their names, and unknown instruments
+use a question-mark icon. They do not depend on emoji or system font support.
+Consecutive visible graph columns with the same instrument and concert key share
+one span in both metadata lanes (×N counts columns in the current view). Changes
+in instrument, tonic, or key quality start a new span; non-adjacent matches remain
+separate. Only metadata is grouped: sessions, raw passes, points, bar cells, hover
+information, and review interactions retain their original columns.
+
+Grouped instrument and key labels center over the part of their span intersecting
+the graph viewport. They track horizontal scrolling and resizing, stay inside
+span boundaries, and hide when their entire span is offscreen. Scroll updates
+move only label transforms without re-rendering the bar map.
+
+### Reusable viewport-centered SVG labels
+
+`src/components/ViewportCenteredLabel.tsx` exports `ViewportCenteredLabels` and
+`ViewportCenteredLabel`. Wrap the scroll container and SVG in the plural component,
+passing refs to both. Inside the SVG, give each label `start`, `end`, and
+`labelWidth` in that SVG's horizontal coordinate system. Draw children centered
+around x=0; their y coordinates stay unchanged. The component controls the group's
+horizontal translation and visibility. Use unrotated SVGs and label ancestors
+without additional transforms. SVG viewBox scaling and nonzero origins are supported.
+
+The wrapper shares scroll/resize listeners across all its labels. Scroll events
+update labels immediately to avoid an extra frame of lag, skipping unchanged
+positions; resize, viewBox, and label-registration work use one shared animation
+frame scheduler; each label registers directly, without chart-specific selectors.
+It observes viewBox changes, removes observers/listeners on unmount, and doesn't
+update React state during scrolling. The history graph uses it for both lanes.
+
+`ViewportCenteredLabel` accepts optional `smoothingMs` (default 0). History uses
+200 ms linear CSS transform transitions to soften uneven scroll events without a
+React animation loop. Mounting and offscreen re-entry snap into place; reduced
+motion disables transitions. Target positions still update immediately on scroll.
+
+The tune picker constrains its label and select widths, and collection controls
+wrap on narrow screens. Wide timelines/history plots scroll in their own panels
+rather than widening the page.
+
+### Restoring the last monophone practice session
+
+On page load, Concert key, Register, Tempo, and Instrument default to the session
+with the latest recorded activity (`updatedAt`, then `startedAt`). Empty sessions
+are ignored. The concert key is restored as an absolute pitch class, and Register
+is recovered by subtracting key transposition from total melody transposition.
+These controls are owned by the page, so switching tunes keeps their current
+values. Looping remains a separate saved preference.
+
+Saved preferences are the fallback when there is no usable history, or an older
+session lacks an instrument or has an unsupported register. A recorded session
+takes priority over control edits that were never practiced. History is only read,
+never changed by restoration. Generic practice UI, microphone input, and follower
+code now use **monophone** naming; actual flute profiles/IDs remain unchanged.
+
+The hex board shows a flowing arrow from the current note toward the next attack
+during its final beat of approach. Repeated notes and count-in use a pointer from
+above the destination. Reduced-motion preferences keep the arrow static. Count-in
+clicks are three beats before the entry, spaced relative to pickups even when
+they begin between beats; normal metronome clicks remain on the bar beat grid.
+
+The next-note arrow backing uses the pitch palette for the directed interval
+from current to next melody note, modulo 12, using the richer octave-3 palette (C color = unison/octave, C♯ = up
+one semitone, B = down one semitone). This stays consistent across keys, registers,
+and transposing instruments. During count-in, with no current note, it is neutral.
+
+### Seven-string guitar practice
+
+Select **Guitar (7 string)** for a standard B–E–A–D–G–B–E guitar with 24 frets.
+The range check covers concert B1–E6 (written B2–E7); guitar notation sounds
+one octave below written pitch. The hex board adds two lower rows so the low B
+is accessible while retaining the existing isomorphic axes and pitch colors.
+The guitar choice is saved with sessions and appears with its own SVG history icon.
+The microphone listener continues to judge individual melody notes.
+Range assumption: [Ibanez RGMS7 tuning and 24-fret specification](https://www.ibanez.com/usa/products/detail/rgms7_1p_04.html).
+
+### Pitch colors in low registers
+
+Pitch-class hues follow the circle of fifths. Higher notes become less saturated
+and slightly lighter. Below C3, saturation stays rich and lightness now approaches
+an OKHSL floor of 0.08 exponentially, instead of falling linearly through black.
+The curve joins the existing C3 color and slope smoothly; C3 and higher colors
+are preserved. This shared mapping applies to the board, chord cards, MIDI mapping,
+and other pitch-colored views. Octave labels still identify the precise register.
+
+Detected microphone pitches start at the fully visible matching hex nearest the
+board's center. Subsequent pitches choose the closest equivalent on the isomorphic
+lattice to preserve spatial continuity, including across silence between notes.
+If that continuation would leave a hex clipped by the board edge, the indicator
+returns to the centermost visible match. Resizing follows the same rule.
+
+### Experimental built-in polyphonic guitar input
+
+Under **Instrument input → Audio detection**, choose **Guitar / polyphonic
+(experimental)**, then **Listen to guitar** (or **Listen** by the playhead).
+Choose the Guitar instrument profile separately for written octave/range display.
+The single-note detector remains available for precise tuning and wind instruments.
+
+This mode uses `@markusstrasser/pitchplease` 3.1.0's `piano` streaming model,
+selected for its guitar accuracy/latency tradeoff. Its published benchmark is the
+author's result, not an app guarantee: https://github.com/markusstrasser/pitchplease.
+This is a streaming Basic-Pitch-style model rather than Spotify's windowed
+`@spotify/basic-pitch` implementation. Detection runs in an AudioWorklet, with
+WASM when supported and a JavaScript fallback. The package is dynamically imported
+on first listen; model/worklet assets are served locally by Vite
+in development and emitted as separate files in the production build. Audio is never uploaded.
+No desktop MIDI converter or external service is required.
+
+Detected notes highlight together on the hex board. Melody judging considers
+newly active pitches as a set so other chord tones do not mask a matching melody
+note. Free-time mode accepts a matching held pitch. Full chord voicings are not
+currently graded. The model reports discrete MIDI pitches, not reliable cents,
+so polyphonic mode shows a detected-note list instead of a tuning needle.
+Rearticulations of the same pitch require the detector to release it first.
+Use a clean direct guitar input or a quiet microphone, and headphones when guide
+or harmony sound is enabled to prevent the app hearing itself.
+
+The displayed detector delay is the model's capture-to-output interval, not an
+end-to-end measured latency guarantee. Judgement timestamps use the model capture
+clock; manual input timing correction still applies. Automatic sine-tone timing
+calibration is offered only with the precise single-note detector.
+
+Run `node scripts/test-polyphonic-input.cjs` from `web/` for note lifecycle checks
+and a real-model synthetic pluck/silence smoke test. Synthetic audio does not
+establish accuracy on a particular guitar, interface, microphone or room.
+
+Polyphonic microphone highlights follow the same placement principle as the
+single-note indicator. A voicing begins near the board center; common tones stay
+on their hexes and new tones appear near the preceding voicing's center. If a
+continuation would clip any note, the entire detected voicing recenters together.
+Silence preserves the last voicing's anchor. Detected audio notes are positioned
+separately from MIDI input and the score's authored harmony diagrams.
+
+### Experimental polyphonic tuning
+
+Polyphonic listening now shares one unprocessed microphone stream between the
+note detector and a Web Audio spectrum analyser. Roughly every 100 ms, it estimates
+cents from isolated fundamental/harmonic peaks near each detected MIDI note,
+rejects partials shared with other detected notes, and requires agreement across
+partials and two readings. The analyser uses about 0.3–0.7 seconds of audio,
+depending on sample rate; this feedback settles later than note detection.
+
+Confident estimates appear beside the detected note names and as small top-of-hex
+markers: above center is sharp, below is flat. A dash/no marker means insufficient
+evidence. Shared octave harmonics, string inharmonicity, attacks, and microphone
+noise can make estimates unavailable or inaccurate. These are experimental visual
+tuning estimates; the existing polyphonic melody judgements still use note identity.
+The extra analyser is disconnected and its stream/context released on stop, error,
+cancellation, or page unmount. No audio is uploaded or saved.
+
+Frequency data follows the [Web Audio spectrum/windowing specification](https://webaudio.github.io/web-audio-api/#fft-windowing-and-smoothing-over-time).
+Validate with `node scripts/test-polyphonic-tuning.cjs`; the fixtures use synthesized
+detuned strings and chords, not recordings or a real-guitar accuracy benchmark.

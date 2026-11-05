@@ -38,8 +38,8 @@ storage.setItem(api.CALIBRATION_KEY,'broken');assert.equal(api.savedCalibration(
 assert.throws(()=>api.saveCalibration(profile,storage));assert.equal(storage.getItem(api.CALIBRATION_KEY),'broken');
 // Feed synthetic acoustic loopback through the actual live detector, stabilizer,
 // onset tracker and timestamp convention; do not substitute ideal onset events.
-for(const delay of [0,120,240]) {
-  const plan=api.calibrationPulses(1000),samples=new Float32Array(api.PITCH_WINDOW),rate=48000;
+for(const rate of [48000,96000]) for(const delay of [0,120,240]) {
+  const plan=api.calibrationPulses(1000),samples=new Float32Array(api.pitchWindow(rate));
   const stabilizer=new api.PitchStabilizer(),tracker=new api.EntranceTracker(1);let last=-Infinity;
   for(let now=0;now<plan.at(-1).time+1000;now+=1000/60) {
     if(now-last<api.PITCH_POLL_MS)continue;last=now;
@@ -51,7 +51,7 @@ for(const delay of [0,120,240]) {
       const envelope=Math.min(1,elapsed/.008,(.22-elapsed)/.03);
       samples[i]=Math.sin(2*Math.PI*440*2**((pulse.note-69)/12)*elapsed)*.12*envelope;
     }
-    const time=api.capturedPitchTime(now,rate),stable=stabilizer.update(api.detectPitch(samples,rate),time);
+    const time=api.capturedPitchTime(now,rate,samples.length),stable=stabilizer.update(api.detectPitch(samples,rate),time);
     const onset=tracker.update(stable?.pitch??null,stable?.time??time);
     if(onset)api.captureCalibrationPulse(plan,onset);
   }
@@ -59,4 +59,4 @@ for(const delay of [0,120,240]) {
   assert.ok(Math.abs(calibration.correction-delay)<=40,`Expected roughly ${delay} ms; measured ${calibration.correction}`);
   assert.equal(calibration.used,10);
 }
-console.log('Passed timing calibration: real detector loopback at 0/120/240 ms, pulse matching, jitter/outlier rejection, bounds, and device-specific storage.');
+console.log('Passed timing calibration: real detector loopback at 48/96 kHz and 0/120/240 ms, pulse matching, jitter/outlier rejection, bounds, and device-specific storage.');

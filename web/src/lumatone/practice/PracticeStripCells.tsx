@@ -37,8 +37,8 @@ export const PracticeMelodyCell = memo(function PracticeMelodyCell({note, attemp
   </Box>;
 });
 
-export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, previous, mode, keyTranspose = 0, showTransitions, active, running, onSeek, onHarmony, connections, showCommon, showVoiceLeading, showGuides}: {
-  chord: PracticeChord; previous?: PracticeChord; mode: LabelMode; keyTranspose?: number; showTransitions: boolean; active: boolean; running: boolean;
+export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, previous, mode, keyTranspose = 0, analysisTranspose = keyTranspose, showTransitions, active, running, onSeek, onHarmony, connections, showCommon, showVoiceLeading, showGuides}: {
+  chord: PracticeChord; previous?: PracticeChord; mode: LabelMode; keyTranspose?: number; analysisTranspose?: number; showTransitions: boolean; active: boolean; running: boolean;
   onSeek: (beat: number) => void; onHarmony: (chord: PracticeChord) => void;
   connections: ChordConnections; showCommon: boolean; showVoiceLeading: boolean; showGuides: boolean;
 }) {
@@ -58,7 +58,7 @@ export const PracticeHarmonyCell = memo(function PracticeHarmonyCell({chord, pre
         <HarmonyStripGraphic chord={chord} previous={showTransitions ? previous : undefined} mode={mode} commonNotes={showCommon ? connections.common : undefined} guideNotes={showGuides ? connections.guides : undefined}/>
       </Box>
     </chakra.button>
-    {chord.function && <ChordFunctionPopover keyTranspose={keyTranspose} analysis={chord.function} name={name} mode={mode}/>}
+    {chord.function && <ChordFunctionPopover keyTranspose={analysisTranspose} analysis={chord.function} name={name} mode={mode}/>}
     {(showCommon || showVoiceLeading) && <ChordConnectionsPopover chord={chord} previous={previous} connections={connections} mode={mode} voiceLeading={showVoiceLeading}/>}
   </Box>;
 });

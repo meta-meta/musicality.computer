@@ -55,7 +55,7 @@ export const PracticeSuggestions = memo(function PracticeSuggestions({data,runni
         {!matchSettings && <Text fontSize="xs" color="orange.500">Results combine different keys, registers, tempos, and practice modes.</Text>}
         <Text fontSize="xs" color="fg.muted">{result.sessions} matching sessions · {result.samples} judged note/pass attempts. First judgement per note/pass; latest 12 attempts per note. Unjudged notes are unknown, not mistakes. Timing is ignored for free-time attempts.{running ? ' Suggestions refresh when you pause.' : ''}</Text>
         {!result.suggestions.length && <Text fontSize="sm" color="fg.muted" data-testid="no-loop-suggestions">
-          {!result.samples ? focus==='timing' ? 'No comparable timed judgements. Free-time practice has no timing score; use timed practice or choose Pitch.' : 'No comparable judgements yet. Practice with flute listening enabled, or broaden the settings filter.'
+          {!result.samples ? focus==='timing' ? 'No comparable timed judgements. Free-time practice has no timing score; use timed practice or choose Pitch.' : 'No comparable judgements yet. Practice with monophone listening enabled, or broaden the settings filter.'
             : goal==='challenge' ? 'No recurring trouble spots meet this threshold yet. Look for three separate passes with errors, or try another goal.'
               : goal==='polish' ? 'No near-miss passages meet this threshold yet. Try Balanced mix, or gather a few more passes.'
                 : goal==='confidence' ? 'No familiar passages meet this threshold yet. Try a shorter loop, Pitch focus, or Balanced mix.'

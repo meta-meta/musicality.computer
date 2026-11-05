@@ -1,3 +1,4 @@
+import {pitchWindow} from './pitch.ts';
 import type {Entrance} from './pitch.ts';
 
 export const CALIBRATION_KEY='musicality.timing-calibration.v1';
@@ -11,7 +12,7 @@ export async function audioSetup(context:AudioContext,stream:MediaStream):Promis
   const output=devices.find(device=>device.kind==='audiooutput'&&device.deviceId==='default');
   const sink=(context as AudioContext&{sinkId?:string}).sinkId??'default';
   const outputLabel=output?.label||'System default output';
-  return {key:JSON.stringify(['yin2048-poll30-v1',settings.deviceId??'',settings.groupId??'',track.label,context.sampleRate,sink,output?.groupId??'',outputLabel]),
+  return {key:JSON.stringify([`yin${pitchWindow(context.sampleRate)}-poll30-v1`,settings.deviceId??'',settings.groupId??'',track.label,context.sampleRate,sink,output?.groupId??'',outputLabel]),
     input:track.label||'Microphone',output:outputLabel,sampleRate:context.sampleRate};
 }
 

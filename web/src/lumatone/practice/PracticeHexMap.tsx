@@ -1,5 +1,5 @@
 import {usePracticeScore} from './PracticeScoreContext.tsx';
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useId, useMemo, useRef, useState} from 'react';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
 import {getNoteColorHsl} from '../colors.ts';
 import {pointyHexAxialToPixel} from '../hexUtils.ts';
@@ -11,6 +11,8 @@ import type {PracticeChord} from './exercise.ts';
 import {upcomingCueStyle} from './lookahead.ts';
 import type {UpcomingAttack} from './lookahead.ts';
 
+import type {PolyphonicTuning} from './polyphonicTuning.ts';
+import {detectedChordCells, detectedPitchCell} from './detectedPitchCell.ts';
 import {transposePosition} from './transposition.ts';
 
 const RADIUS = 27;
@@ -22,14 +24,17 @@ const referenceCells = Array.from({length: 10}, (_, row) => Array.from({length: 
 const left = Math.min(...referenceCells.map(cell => cell.x)) - RADIUS - 9;
 const top = Math.min(...referenceCells.map(cell => cell.y)) - RADIUS - 9;
 const width = Math.max(...referenceCells.map(cell => cell.x)) - left + RADIUS + 9;
-const height = Math.max(...referenceCells.map(cell => cell.y)) - top + RADIUS + 9;
+const baseHeight = Math.max(...referenceCells.map(cell => cell.y)) - top + RADIUS + 9;
 const points = Array.from({length: 6}, (_, index) => {
   const angle = Math.PI / 2 + index * Math.PI / 3;
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = []}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], extendedLowRange = false}: {
   midiNotes?: number[];
+  detectedNotes?: number[];
+  detectedTunings?: PolyphonicTuning[];
+  extendedLowRange?: boolean;
   target?: MelodyAttack; futureAttacks: UpcomingAttack[]; progress: number;
   targetHit?: boolean;
   heard: number | null; transpose: number; mode: LabelMode;
@@ -40,7 +45,10 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   practicing: boolean;
   showGuideTones?: boolean;
 }) {
+  // Two extra low rows expose the seven-string low B in written pitch.
+  const height = baseHeight + (extendedLowRange ? 3 * RADIUS : 0);
   const {exercise} = usePracticeScore();
+  const arrowId = useId().replace(/:/g, "");
   const {colorMode} = useColorMode();
   const isLight = colorMode === 'light';
   const targetColor = isLight ? '#111' : '#fff';
@@ -76,7 +84,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
       }
     }
     return result;
-  }, [viewLeft, viewWidth]);
+  }, [viewLeft, viewWidth, height]);
   const colors = useMemo(() => cells.map(cell => {
     const color = getNoteColorHsl(cell.note);
     const base = isLight ? color.range('white')(0.3) : color;
@@ -85,6 +93,17 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const melodyOffset = transposePosition({q: 0, r: 0}, transpose);
   const atTarget = (cell: typeof cells[number], note?: MelodyAttack) => note && cell.q === note.at.q + melodyOffset.q && cell.r === note.at.r + melodyOffset.r;
   const targetCell = cells.find(cell => atTarget(cell, target));
+  const nextAttack = futureAttacks[0];
+  const moveInterval = target && nextAttack ? ((nextAttack.note.note - target.note) % 12 + 12) % 12 : null;
+  const arrowBackground = useMemo(() => moveInterval === null ? isLight ? '#fff' : '#111'
+    : getNoteColorHsl(48 + moveInterval).range(isLight ? 'white' : 'black')(isLight ? 0.5 : 0).toString({format: 'hex'}), [moveInterval, isLight]);
+  const nextCell = nextAttack && cells.find(cell => atTarget(cell, nextAttack.note));
+  const showArrow = practicing && nextAttack && nextAttack.beatsAway <= 1 && nextCell;
+  const arrowFrom = targetCell && targetCell !== nextCell ? targetCell : nextCell ? {x: nextCell.x, y: nextCell.y - RADIUS * 3} : undefined;
+  const arrowDistance = arrowFrom && nextCell ? Math.hypot(nextCell.x - arrowFrom.x, nextCell.y - arrowFrom.y) : 0;
+  const arrowUnit = arrowFrom && nextCell && arrowDistance ? {x: (nextCell.x - arrowFrom.x) / arrowDistance, y: (nextCell.y - arrowFrom.y) / arrowDistance} : {x: 0, y: 1};
+  const arrowPadding = Math.min(RADIUS + 5, arrowDistance * 0.25);
+  const arrowPath = arrowFrom && nextCell ? `M ${arrowFrom.x + arrowUnit.x * arrowPadding} ${arrowFrom.y + arrowUnit.y * arrowPadding} L ${nextCell.x - arrowUnit.x * arrowPadding} ${nextCell.y - arrowUnit.y * arrowPadding}` : '';
   const midiCells = new Set(midiNotes.map(note => {
     const matches = cells.filter(cell => cell.note === note);
     const melody = exercise.find(attack => attack.note + transpose === note);
@@ -92,15 +111,28 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
       ?? matches.find(cell => atTarget(cell, melody))
       ?? matches.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
   }));
+  const previousDetectedChord = useRef<typeof cells>([]);
+  const detectedCells = detectedChordCells(cells, detectedNotes, previousDetectedChord.current,
+    {left: viewLeft, top, width: viewWidth, height}, RADIUS);
+  useEffect(() => {
+    if (detectedCells.length) previousDetectedChord.current = detectedCells;
+  }, [detectedCells]);
+  const detectedSet = new Set(detectedCells);
   const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
-  const heardCells = cells.filter(cell => cell.note === heard);
-  const heardCell = heardCells.find(cell => atTarget(cell, target))
-    ?? heardCells.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
+  const previousHeardCell = useRef<{x: number; y: number} | null>(null);
+  const heardCell = detectedPitchCell(cells, heard, previousHeardCell.current,
+    {left: viewLeft, top, width: viewWidth, height}, RADIUS);
+  useEffect(() => {
+    // Keep the anchor through silence between articulations; update only after
+    // a committed render, without adding state updates to the audio frame loop.
+    if (heardCell) previousHeardCell.current = {x: heardCell.x, y: heardCell.y};
+  }, [heardCell]);
   const previewCells = cells.filter(cell => cell.note === previewNote);
   const previewCell = previewCells.find(cell => atTarget(cell, target))
     ?? previewCells.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
   return (
-    <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected flute note; dot above center means sharp, below means flat." viewBox={`${viewLeft} ${top} ${viewWidth} ${height}`} style={{width: '100%', height: 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
+    <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected instrument note; dot above center means sharp, below means flat." viewBox={`${viewLeft} ${top} ${viewWidth} ${height}`} style={{width: '100%', height: 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
+      <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke={targetColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></marker></defs>
       <style>{`
         .practice-hex:focus { outline: none; }
         .practice-hex:focus-visible > polygon:first-child,
@@ -110,19 +142,24 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
           stroke-opacity: 1;
           opacity: 1;
         }
+        @keyframes practice-next-arrow-flow { to { stroke-dashoffset: -20; } }
+        .practice-next-arrow { animation: practice-next-arrow-flow 600ms linear infinite; }
         @media (prefers-reduced-motion: reduce) {
           .practice-upcoming-motion { transition: none !important; }
+          .practice-next-arrow { animation: none; }
         }
       `}</style>
       {cells.map((cell, index) => {
         const active = atTarget(cell, target);
         const live = cell === heardCell;
-        const midi = midiCells.has(cell);
+        const detected = detectedSet.has(cell);
+        const tuning = detected ? detectedTunings.find(reading => reading.note === cell.note) : undefined;
+        const midi = midiCells.has(cell) || detected;
         const chordTone = harmony?.notes.find(note => note.at.q === cell.q && note.at.r === cell.r);
         const root = harmony?.notes.find(note => note.root);
         const guideTone = showGuideTones && chordTone && root && [3, 4, 10, 11].includes(((chordTone.note - root.note) % 12 + 12) % 12);
         return (
-          <g key={`${cell.q},${cell.r}`} transform={`translate(${cell.x},${cell.y})`} data-note={cell.note} data-target={active ? 'true' : undefined} data-preview={cell === previewCell ? 'true' : undefined} data-heard={live ? 'true' : undefined} data-harmony={chordTone ? 'true' : undefined} data-chord-root={chordTone?.root ? 'true' : undefined}
+          <g key={`${cell.q},${cell.r}`} transform={`translate(${cell.x},${cell.y})`} data-note={cell.note} data-target={active ? 'true' : undefined} data-preview={cell === previewCell ? 'true' : undefined} data-detected-chord={detected ? 'true' : undefined} data-heard={live ? 'true' : undefined} data-harmony={chordTone ? 'true' : undefined} data-chord-root={chordTone?.root ? 'true' : undefined}
              className="practice-hex" role="button" tabIndex={0} aria-label={`Play ${pitchLabel(cell.note, mode)} octave ${Math.floor(cell.note / 12) - 1}`} style={{cursor: 'pointer'}}
              onClick={event => {
                if (event.detail > 0) event.currentTarget.blur();
@@ -134,7 +171,14 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
              }}>
             <polygon points={points} fill={active || live || midi || cell === previewCell || chordTone ? colors[index].played : colors[index].normal} opacity={active || live || midi || !showGuideTones || !chordTone || guideTone ? 1 : chordTone.root ? 0.65 : 0.35}/>
             {midi && <polygon data-midi-note={cell.note} points={points} fill="none" stroke={targetColor} strokeWidth={1.6} pointerEvents="none"/>}
-            {live && <g data-flute-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
+            {detected && tuning?.cents !== null && tuning?.cents !== undefined && <g data-polyphonic-tuning={cell.note} data-cents={tuning.cents}
+              transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
+              <title>{`${Math.abs(tuning.cents).toFixed(0)} cents ${Math.abs(tuning.cents) < 3 ? 'in tune' : tuning.cents > 0 ? 'sharp' : 'flat'} (experimental)`}</title>
+              <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
+              <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
+              <circle cy={-Math.max(-50, Math.min(50, tuning.cents)) / 50 * 4} r={1.8} fill={targetColor}/>
+            </g>}
+            {live && <g data-monophone-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
               <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
               <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
               <circle cy={tuningOffset} r={1.8} fill={targetColor}/>
@@ -174,6 +218,10 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
             strokeDasharray={`${upcomingDashPeriod * 3 / 7} ${upcomingDashPeriod * 4 / 7}`}/>
         </g>;
       })}
+      {showArrow && arrowDistance > 1 && <g data-next-note-arrow="true" role="img" aria-label={`Next note: ${pitchLabel(nextCell.note, mode)}`} pointerEvents="none" opacity={0.4 + 0.6 * (1 - nextAttack.beatsAway)}>
+        <path data-arrow-interval={moveInterval ?? undefined} d={arrowPath} fill="none" stroke={arrowBackground} strokeWidth={5} strokeOpacity={0.9} strokeLinecap="round"/>
+        <path className="practice-next-arrow" d={arrowPath} fill="none" stroke={targetColor} strokeWidth={2} strokeDasharray="6 4" markerEnd={`url(#${arrowId})`}/>
+      </g>}
       {targetCell && <polygon data-target-hit={targetHit ? 'true' : 'false'} data-note={targetCell.note} points={points}
         transform={`translate(${targetCell.x},${targetCell.y})`} fill="none" stroke={targetHit ? isLight ? '#15803d' : '#4ade80' : targetColor}
         strokeWidth={1.25} pointerEvents="none"/>}

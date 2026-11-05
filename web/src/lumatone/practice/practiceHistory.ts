@@ -5,14 +5,14 @@ export const HISTORY_KEY = 'musicality.practice-history.v1';
 export const HISTORY_FORMAT = 'musicality.practice-history';
 export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 export type HistorySettings = {
-  bpm: number; transpose: number; keyTranspose?: number; freeTime: boolean; allowLowOctaveUp: boolean;
+  bpm: number; transpose: number; keyTranspose?: number; instrumentId?: string; freeTime: boolean; allowLowOctaveUp: boolean;
   loop: boolean; loopStart: number | null; loopEnd: number | null; latencyMs: number;
 };
 export type HistoryJudgement = Attempt & {
   id: string; at: string; expectedNote: number; location: string; start: number; duration: number; latencyMs: number;
 };
 export type PracticeSession = {
-  id: string; piece: string; title?: string; tonic?: number; startedAt: string; updatedAt: string; endedAt: string | null;
+  id: string; piece: string; title?: string; tonic?: number; quality?: string; startedAt: string; updatedAt: string; endedAt: string | null;
   settings: HistorySettings; judgements: HistoryJudgement[];
 };
 export type PracticeHistoryData = {format: typeof HISTORY_FORMAT; version: 1; sessions: PracticeSession[]};
@@ -65,6 +65,11 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
       freeTime: bool(config.freeTime), allowLowOctaveUp: bool(config.allowLowOctaveUp), loop: bool(config.loop),
       loopStart: boundary(config.loopStart), loopEnd: boundary(config.loopEnd), latencyMs: number(config.latencyMs, -300, 500),
     };
+    if (config.instrumentId !== undefined) {
+      const id = text(config.instrumentId, 60);
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new Error('Invalid history instrument.');
+      settings.instrumentId = id;
+    }
     if (settings.loopStart !== null && settings.loopEnd !== null && settings.loopStart >= settings.loopEnd) throw new Error('Invalid loop range.');
     const eventIds = new Set<string>();
     const judgements: HistoryJudgement[] = s.judgements.map(value => {
@@ -79,6 +84,7 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
       };
     }).sort((a, b) => a.at.localeCompare(b.at));
     const session: PracticeSession = {id, piece: s.piece as string, title: s.title === undefined ? (s.piece === 'stella-by-starlight' ? 'Stella by Starlight' : s.piece as string) : text(s.title), tonic: s.tonic === undefined ? 10 : number(s.tonic, 0, 11, true), startedAt: date(s.startedAt), updatedAt: date(s.updatedAt), endedAt: s.endedAt === null ? null : date(s.endedAt), settings, judgements};
+    if (s.quality !== undefined) session.quality = text(s.quality, 32);
     if (session.updatedAt < session.startedAt || (session.endedAt && session.endedAt < session.startedAt) || judgements.some(a => a.at < session.startedAt || a.at > session.updatedAt)) throw new Error('Inconsistent session dates.');
     return session;
   });
@@ -90,14 +96,22 @@ export function mergePracticeHistories(local: PracticeHistoryData, incoming: Pra
   for (const session of incoming.sessions) {
     const old = sessions.get(session.id);
     if (!old) {sessions.set(session.id, session); continue;}
-    if (old.piece !== session.piece || old.startedAt !== session.startedAt || !sameFields({...old.settings, keyTranspose: old.settings.keyTranspose ?? 0}, {...session.settings, keyTranspose: session.settings.keyTranspose ?? 0})) throw new Error('A session ID conflicts with different saved settings. Nothing was imported.');
+    const instrumentId = old.settings.instrumentId ?? session.settings.instrumentId;
+    const instrumentConflict = old.settings.instrumentId !== undefined && session.settings.instrumentId !== undefined
+      && old.settings.instrumentId !== session.settings.instrumentId;
+    // Backups can fill an unrecorded instrument without changing musical
+    // settings or replacing a previously identified instrument.
+    if (old.piece !== session.piece || old.startedAt !== session.startedAt || instrumentConflict
+      || !sameFields({...old.settings, keyTranspose: old.settings.keyTranspose ?? 0, instrumentId: undefined},
+        {...session.settings, keyTranspose: session.settings.keyTranspose ?? 0, instrumentId: undefined}))
+      throw new Error('A session ID conflicts with different saved settings. Nothing was imported.');
     const events = new Map(old.judgements.map(event => [event.id, event]));
     for (const event of session.judgements) {
       const existing = events.get(event.id);
       if (existing && !sameFields(existing, event)) throw new Error('A judgement ID conflicts with different saved data. Nothing was imported.');
       events.set(event.id, event);
     }
-    sessions.set(session.id, {...old, updatedAt: old.updatedAt > session.updatedAt ? old.updatedAt : session.updatedAt,
+    sessions.set(session.id, {...old, settings: {...old.settings, ...(instrumentId ? {instrumentId} : {})}, updatedAt: old.updatedAt > session.updatedAt ? old.updatedAt : session.updatedAt,
       endedAt: old.endedAt && session.endedAt ? old.endedAt > session.endedAt ? old.endedAt : session.endedAt : old.endedAt ?? session.endedAt,
       judgements: [...events.values()].sort((a, b) => a.at.localeCompare(b.at))});
   }

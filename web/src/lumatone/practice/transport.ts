@@ -1,3 +1,6 @@
+export const COUNT_IN_BEATS = 3;
+export const countInClicks = (entryBeat: number) => Array.from({length: COUNT_IN_BEATS}, (_, index) => entryBeat - COUNT_IN_BEATS + index);
+
 export type Segment = {id: number; time: number; beat: number; entryBeat: number; endBeat: number; endTime: number; pass: number};
 
 export function positionAtTime(segments: Segment[], time: number, secondsPerBeat: number) {

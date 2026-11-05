@@ -1,12 +1,12 @@
 import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
-import {capturedPitchTime, detectPitch, EntranceTracker, PITCH_POLL_MS, PITCH_WINDOW, PitchStabilizer} from './pitch.ts';
+import {capturedPitchTime, detectPitch, EntranceTracker, PITCH_POLL_MS, pitchWindow, PitchStabilizer} from './pitch.ts';
 import type {Entrance, Pitch} from './pitch.ts';
 import {audioSetup} from './timingCalibration.ts';
 import type {AudioSetup} from './timingCalibration.ts';
 
 type Input = {context: AudioContext; stream: MediaStream; source: MediaStreamAudioSourceNode; analyser: AnalyserNode; mute: GainNode; frame: number};
 
-export function useFluteInput(onEntrance: (entrance: Entrance) => void,
+export function useMonophoneInput(onEntrance: (entrance: Entrance) => void,
   onReading?: (reading: Entrance | null, articulation: number) => void) {
   const [pitch, setPitch] = useState<Pitch | null>(null);
   const [status, setStatus] = useState<'off' | 'starting' | 'listening'>('off');
@@ -53,7 +53,7 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
       context = new AudioContext();
       const source = context.createMediaStreamSource(stream);
       const analyser = context.createAnalyser();
-      analyser.fftSize = PITCH_WINDOW;
+      analyser.fftSize = pitchWindow(context.sampleRate);
       const mute = context.createGain();
       mute.gain.value = 0;
       source.connect(analyser);
@@ -79,7 +79,7 @@ export function useFluteInput(onEntrance: (entrance: Entrance) => void,
           analyser.getFloatTimeDomainData(samples);
           const detected = detectPitch(samples, current.context.sampleRate);
           // Timestamp the center of the captured waveform rather than the UI update.
-          const time = capturedPitchTime(now,current.context.sampleRate);
+          const time = capturedPitchTime(now,current.context.sampleRate,samples.length);
           const stable = stabilizer.update(detected, time);
           startTransition(() => setPitch(stable?.pitch ?? null));
           const entrance = tracker.update(stable?.pitch ?? null, stable?.time ?? time);

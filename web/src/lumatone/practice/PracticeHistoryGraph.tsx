@@ -1,11 +1,17 @@
 import {Box, Flex, Text} from '@chakra-ui/react';
-import {memo, useMemo, useState} from 'react';
+import {memo, useMemo, useRef, useState} from 'react';
+import {ViewportCenteredLabel, ViewportCenteredLabels} from '../../components/ViewportCenteredLabel.tsx';
+import {InstrumentIcon} from './InstrumentIcon.tsx';
+import {consecutiveHistoryContexts, historySessionContext} from './historyContext.ts';
+import type {LabelMode} from '../leadSheet/labels.ts';
+import {getNoteColorHsl} from '../colors.ts';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import type {PracticeSession} from './practiceHistory.ts';
 import {historyCoverage,historyMetricCounts, historyRate, reviewHistoryPasses, reviewHistorySession} from './historyReview.ts';
 import type {HistoryMetric, SessionReview} from './historyReview.ts';
 import type {PracticeScore} from './scores.ts';
 
+const keyColors = Array.from({length:12},(_,note)=>getNoteColorHsl(60+note).range('white')(.35).toString({format:'hex'}));
 const cached = new WeakMap<PracticeSession,{score:PracticeScore;review:SessionReview;passes?:ReturnType<typeof reviewHistoryPasses>}>();
 function review(score:PracticeScore,session:PracticeSession) {
   const hit=cached.get(session);
@@ -23,8 +29,8 @@ const color=(rate:number|null)=>rate===null?'var(--chakra-colors-bg-muted)':rate
 const metricLabel={pitch:'First-try pitch',timing:'On-time entrances',both:'Full hits'};
 const rateLabel=(rate:number|null)=>rate===null?'No judged attempts':`${Math.round(rate*100)}%`;
 
-export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,selected,selectedPass,onReview}: {
-  sessions:PracticeSession[];selected:string|null;selectedPass:number|null;onReview:(id:string,bar:number|null,cycle?:number|null)=>void;
+export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,selected,selectedPass,mode = 'dozenal',onReview}: {
+  mode?:LabelMode; sessions:PracticeSession[];selected:string|null;selectedPass:number|null;onReview:(id:string,bar:number|null,cycle?:number|null)=>void;
 }) {
   const {score}=usePracticeScore();
   const [hideIncomplete,setHideIncomplete]=useState(false);
@@ -33,14 +39,18 @@ export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,s
   const [hover,setHover]=useState<{column:number;bar:number|null}|null>(null);
   const orderedSessions=useMemo(()=>sessions.filter(session=>session.piece===score.id)
     .sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt)),[sessions,score.id]);
+  const contexts=useMemo(()=>new Map(orderedSessions.map(session=>[session.id,historySessionContext(session,mode)])),[orderedSessions,mode]);
   const allColumns=useMemo(()=>orderedSessions.flatMap((session,i)=>expandPasses
     ? passReviews(score,session).slice().reverse().map(pass=>({session,sessionNumber:orderedSessions.length-i,id:`${session.id}:pass:${pass.cycle}`,cycle:pass.cycle as number|null,startedAt:pass.startedAt,review:pass.review}))
     : [{session,sessionNumber:orderedSessions.length-i,id:session.id,cycle:null as number|null,startedAt:session.startedAt,review:review(score,session)}]),[orderedSessions,score,expandPasses]);
   const columns=useMemo(()=>hideIncomplete?allColumns.filter(column=>historyCoverage(column.review)>=.5):allColumns,[allColumns,hideIncomplete]);
+  const contextGroups=useMemo(()=>consecutiveHistoryContexts(columns),[columns]);
+  const width=Math.max(640,columns.length*44+94);
+  const viewportRef=useRef<HTMLDivElement>(null),svgRef=useRef<SVGSVGElement>(null);
   if (!orderedSessions.length) return null;
   const bars=columns[0]?.review.bars??review(score,orderedSessions[0]).bars;
-  const width=Math.max(640,columns.length*44+94),left=72,step=(width-left-20)/Math.max(1,columns.length);
-  const mapTop=160,mapHeight=Math.min(600,Math.max(240,bars.length*11)),bottom=mapTop+mapHeight;
+  const left=72,step=(width-left-20)/Math.max(1,columns.length);
+  const mapTop=224,mapHeight=Math.min(600,Math.max(240,bars.length*11)),bottom=mapTop+mapHeight;
   const x=(index:number)=>left+(index+.5)*step;
   const y=(beat:number)=>mapTop+(beat-score.start)/(score.end-score.start)*mapHeight;
   const paths:string[]=[];let path='';
@@ -61,16 +71,19 @@ export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,s
       <label><input type="checkbox" checked={expandPasses} onChange={event=>{setExpandPasses(event.target.checked);setHover(null);}}/> Show individual passes</label>
       <label><input aria-label="Hide history below 50% judged" type="checkbox" checked={hideIncomplete} onChange={event=>{setHideIncomplete(event.target.checked);setHover(null);}}/> Hide sessions/passes with &lt;50% judged</label>
     </Flex>
-    <Text fontSize="xs" color="fg.muted">{expandPasses ? 'Each column is one recorded pass, grouped by session, aligned with its point above. First judgements are shown without averaging passes together; passes with no judgements are not recorded.' : 'Each column is one session, aligned with its point above.'} Each row is a bar of the whole piece. Scroll horizontally through the full history. Click a point for the session review, or a cell to review that bar.</Text>
+    <Text fontSize="xs" color="fg.muted">{expandPasses ? 'Each column is one recorded pass, grouped by session, aligned with its point above. First judgements are shown without averaging passes together; passes with no judgements are not recorded.' : 'Each column is one session, aligned with its point above.'} Consecutive columns with the same instrument and concert key share one label span in both lanes; session/pass columns stay separate; hover or focus for the written key. ? means the instrument was not recorded. Each map row is a bar of the whole piece. Scroll horizontally through the full history. Click a point for the session review, or a cell to review that bar.</Text>
     {hideIncomplete&&<Text fontSize="xs" color="fg.muted">Coverage counts distinct melody attacks judged across the whole piece, regardless of success. Repeating a small loop doesn’t increase coverage. This filters chart columns; the history table remains available.</Text>}
     {!columns.length&&<Text fontSize="sm" mt={3}>No {expandPasses?'passes':'sessions'} have at least 50% of this piece judged. Turn off the coverage filter to see partial practice.</Text>}
-    <Box overflowX="auto" mt={2} display={columns.length?'block':'none'}>
-      <svg role="group" aria-label="Session progress and whole-piece judgement map" viewBox={`0 0 ${width} ${bottom+46}`}
+    <ViewportCenteredLabels viewportRef={viewportRef} svgRef={svgRef}>
+    <Box ref={viewportRef} data-testid="history-graph-viewport" overflowX="auto" mt={2} display={columns.length?'block':'none'}>
+      <svg ref={svgRef} role="group" aria-label="Session progress and whole-piece judgement map" viewBox={`0 0 ${width} ${bottom+46}`}
         style={{width:'100%',minWidth:width,display:'block',fontFamily:'inherit'}}>
         <style>{'.history-session:focus {outline: none} .history-session:focus-visible .history-column-frame {stroke: currentColor; stroke-width:2}'}</style>
         <text x={8} y={24} style={{fontSize:11}} fill="currentColor">100%</text><text x={22} y={114} style={{fontSize:11}} fill="currentColor">0%</text>
         {[20,65,110].map(at=><path key={at} d={`M ${left} ${at} H ${width-20}`} stroke="currentColor" opacity={.12}/>)}
         {paths.map((d,i)=><path key={i} d={d} fill="none" stroke="var(--chakra-colors-cyan-600)" strokeWidth={2}/>)}
+        <text x={6} y={169} style={{fontSize:9}} fill="currentColor">Instrument</text>
+        <text x={6} y={193} style={{fontSize:9}} fill="currentColor">Concert key</text>
         <text x={6} y={mapTop-12} style={{fontSize:11}} fill="currentColor">Bar</text>
         {bars.map((bar,i)=><g key={bar.start}>
           <path d={`M ${left} ${y(bar.start)} H ${width-20}`} stroke="currentColor" opacity={.1}/>
@@ -78,7 +91,8 @@ export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,s
         </g>)}
         {columns.map((column,i)=>{
           const rate=historyRate(column.review.total,metric);
-          const label=`Session ${column.sessionNumber}${column.cycle===null?'':`, Pass ${column.cycle}`}, ${dateLabel(column.startedAt)}, ${column.session.settings.bpm} BPM, ${column.session.settings.freeTime?'free time':'timed'}, ${metricLabel[metric]} ${rateLabel(rate)}`;
+          const context=contexts.get(column.session.id)!;
+          const label=`${context.label}, Session ${column.sessionNumber}${column.cycle===null?'':`, Pass ${column.cycle}`}, ${dateLabel(column.startedAt)}, ${column.session.settings.bpm} BPM, ${column.session.settings.freeTime?'free time':'timed'}, ${metricLabel[metric]} ${rateLabel(rate)}`;
           const activeColumn=(column.session.id===selected && (!expandPasses || selectedPass===null || selectedPass===column.cycle)) || hover?.column===i;
           return <g key={column.id} role="button" tabIndex={0} className="history-session"
             aria-label={`Review ${label}`} data-history-column={column.id} data-history-pass={column.cycle??undefined} data-history-session-id={column.session.id}
@@ -115,13 +129,41 @@ export const PracticeHistoryGraph=memo(function PracticeHistoryGraph({sessions,s
             <text x={x(i)} y={bottom+33} textAnchor="middle" style={{fontSize:9}} fill="currentColor">{new Date(column.startedAt).toLocaleDateString(undefined,{month:'numeric',day:'numeric'})}</text>
           </g>;
         })}
+        <g pointerEvents="none" aria-hidden="true">
+          {contextGroups.map(group=>{
+            const context=contexts.get(group.session.id)!;
+            const start=x(group.start)-step/2+3, span=(group.end-group.start)*step-6;
+            const count=group.end-group.start;
+            const name=context.shortInstrument==='?'?'Not recorded':context.shortInstrument;
+            const label=count>1?`${name} ×${count}`:name;
+            const showText=span>=label.length*5+28;
+            const contentWidth=showText?label.length*5+20:16;
+            const id=columns[group.start].id;
+            return <g key={id} data-history-context-group={id} data-group-start={group.start} data-group-end={group.end}>
+              <g data-history-instrument={id}>
+                <rect x={start} y={153} width={span} height={22} rx={2} fill="var(--chakra-colors-bg-muted)"/>
+                <ViewportCenteredLabel smoothingMs={200} data-history-centered-label="instrument" start={start} end={start+span} labelWidth={contentWidth}>
+                  <InstrumentIcon instrumentId={group.session.settings.instrumentId} size={16} x={-contentWidth/2} y={156}/>
+                  {showText&&<text x={-contentWidth/2+20} y={168} style={{fontSize:9}} fill="currentColor">{label}</text>}
+                </ViewportCenteredLabel>
+              </g>
+              <g data-history-key={id}>
+                <rect x={start} y={179} width={span} height={22} rx={2} fill={keyColors[context.concertTonic]} fillOpacity={.25}/>
+                <ViewportCenteredLabel smoothingMs={200} data-history-centered-label="key" start={start} end={start+span} labelWidth={context.shortKey.length*5.5}>
+                  <text x={0} y={194} textAnchor="middle" style={{fontSize:9}} fill="currentColor">{context.shortKey}</text>
+                </ViewportCenteredLabel>
+              </g>
+            </g>;
+          })}
+        </g>
       </svg>
     </Box>
+    </ViewportCenteredLabels>
     <Flex gap={3} wrap="wrap" fontSize="xs" mt={2}>
       {[[.9,'85–100%'],[.75,'65–84%'],[.3,'Below 65%'],[null,'No judgements / timing not scored']].map(([value,label])=><Flex key={String(label)} gap={1} align="center"><Box width="10px" height="10px" bg={color(value as number|null)} borderWidth="1px"/>{label}</Flex>)}
     </Flex>
     <Text fontSize="xs" minHeight="3em" mt={2} data-testid="history-map-detail">
-      {active && activeCounts && hover ? `${dateLabel(active.startedAt)} · ${active.session.settings.bpm} BPM · ${active.session.settings.freeTime?'Free time':'Timed'} ${active.cycle===null?'':`· Pass ${active.cycle} `}· ${hover.bar===null?(expandPasses?'Whole pass':'Whole session'):active.review.bars[hover.bar].label} · ${historyMetricCounts(activeCounts,metric).join('/')} ${metricLabel[metric].toLowerCase()} (${rateLabel(historyRate(activeCounts,metric))})`
+      {active && activeCounts && hover ? `${dateLabel(active.startedAt)} · ${contexts.get(active.session.id)!.label} · ${active.session.settings.bpm} BPM · ${active.session.settings.freeTime?'Free time':'Timed'} ${active.cycle===null?'':`· Pass ${active.cycle} `}· ${hover.bar===null?(expandPasses?'Whole pass':'Whole session'):active.review.bars[hover.bar].label} · ${historyMetricCounts(activeCounts,metric).join('/')} ${metricLabel[metric].toLowerCase()} (${rateLabel(historyRate(activeCounts,metric))})`
         : 'Hover for details. Tab to a session; ↑/↓ chooses a bar, Enter opens its review. Grey is unjudged, never a failed attempt. Cells summarize first judgements per note/pass, not held-note duration.'}
     </Text>
     {columns.some(column=>column.review.stale>0) && <Text fontSize="xs" color="fg.muted">Judgements that no longer match the current score are omitted from this graph.</Text>}

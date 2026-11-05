@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {capturedPitchTime,detectPitch,EntranceTracker,PITCH_POLL_MS,PITCH_WINDOW,PitchStabilizer} from './pitch.ts';
+import {capturedPitchTime,detectPitch,EntranceTracker,PITCH_POLL_MS,pitchWindow,PitchStabilizer} from './pitch.ts';
 import {analyseCalibration,audioSetup,calibrationPulses,captureCalibrationPulse} from './timingCalibration.ts';
 import type {CalibrationProfile} from './timingCalibration.ts';
 import {sound} from './sound.ts';
@@ -58,9 +58,9 @@ export function useTimingCalibration() {
       if(token!==generation.current)return;
       if(document.hidden)throw new Error('Keep this tab visible during calibration.');
       const source=context.createMediaStreamSource(stream),analyser=context.createAnalyser(),mute=context.createGain();
-      analyser.fftSize=PITCH_WINDOW;mute.gain.value=0;
+      analyser.fftSize=pitchWindow(context.sampleRate);mute.gain.value=0;
       source.connect(analyser);analyser.connect(mute);mute.connect(context.destination);
-      const samples=new Float32Array(PITCH_WINDOW),stabilizer=new PitchStabilizer(),tracker=new EntranceTracker(1);
+      const samples=new Float32Array(analyser.fftSize),stabilizer=new PitchStabilizer(),tracker=new EntranceTracker(1);
       // Use the transport's schedule-clock convention, so the resulting value
       // corrects the same output + capture + pitch-detector path used in practice.
       const origin=performance.now()+800,audioOrigin=context.currentTime+.8;
@@ -73,7 +73,7 @@ export function useTimingCalibration() {
         if(now-lastFrame>=PITCH_POLL_MS) {
           lastFrame=now;
           analyser.getFloatTimeDomainData(samples);
-          const time=capturedPitchTime(now,current.context.sampleRate);
+          const time=capturedPitchTime(now,current.context.sampleRate,samples.length);
           const stable=stabilizer.update(detectPitch(samples,current.context.sampleRate),time);
           const entrance=tracker.update(stable?.pitch??null,stable?.time??time);
           if(entrance&&captureCalibrationPulse(pulses,entrance))setDetected(pulses.filter(pulse=>pulse.offset!==undefined).length);

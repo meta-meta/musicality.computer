@@ -1,15 +1,15 @@
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
 
-import {nextBeatTime, positionAtTime} from './transport.ts';
+import {COUNT_IN_BEATS, countInClicks, nextBeatTime, positionAtTime} from './transport.ts';
 import type {Segment} from './transport.ts';
-import {createFollower, followEntrance, tickFollower} from './fluteFollower.ts';
-import type {FollowState} from './fluteFollower.ts';
+import {createFollower, followEntrance, tickFollower} from './monophoneFollower.ts';
+import type {FollowState} from './monophoneFollower.ts';
 import {sound} from './sound.ts';
 import type {Voice} from './sound.ts';
 import {useNoteAudition} from './useNoteAudition.ts';
 
-type Options = {bpm: number; transpose: number; harmonyTranspose?: number; guide: boolean; metronome: boolean; loop: boolean; loopStart: number | null; loopEnd: number | null; harmonySound: boolean; harmonyVolume: number; followFlute: boolean; allowLowOctaveUp: boolean};
+type Options = {bpm: number; transpose: number; harmonyTranspose?: number; guide: boolean; metronome: boolean; loop: boolean; loopStart: number | null; loopEnd: number | null; harmonySound: boolean; harmonyVolume: number; followMonophone: boolean; allowLowOctaveUp: boolean};
 type Position = {beat: number; pass: number; entryBeat: number; endBeat: number};
 type Transport = {context: AudioContext; harmonyGain: GainNode; segments: Segment[]; voices: Voice[]; frame: number; timer: number; nextId: number; scheduled: Set<string>; schedule: () => void; pending: {time: number; beat: number} | null};
 type Follower = {context: AudioContext; harmonyGain: GainNode; state: FollowState; voices: Voice[]; frame: number; chord: number; guide: number; guideVoice?: Voice; tick: number};
@@ -69,7 +69,7 @@ export function useMelodyPlayback(options: Options) {
     if (saved.beat < saved.entryBeat) publish({...saved, beat: saved.entryBeat});
   }, [release, publish]);
   useEffect(() => release, [release]);
-  useEffect(() => {stop();}, [options.bpm, options.transpose, options.harmonyTranspose, options.loop, options.loopStart, options.loopEnd, options.followFlute, stop]);
+  useEffect(() => {stop();}, [options.bpm, options.transpose, options.harmonyTranspose, options.loop, options.loopStart, options.loopEnd, options.followMonophone, stop]);
   useEffect(() => {
     const hidden = () => {if (document.hidden) stop();};
     document.addEventListener('visibilitychange', hidden);
@@ -181,10 +181,10 @@ export function useMelodyPlayback(options: Options) {
       const seconds = 60 / config.bpm;
       const origin = context.currentTime + 0.1;
       const endBeat = config.loop ? rangeEnd : END;
-      if (config.followFlute) {
+      if (config.followMonophone) {
         transport.current = undefined;
         const following: Follower = {context, harmonyGain,
-          state: createFollower(from, endBeat, savedPosition.current.pass + 1, performance.now() / 1000 + 0.1, 4, exercise),
+          state: createFollower(from, endBeat, savedPosition.current.pass + 1, performance.now() / 1000 + 0.1, COUNT_IN_BEATS, exercise),
           voices: [], frame: 0, chord: -1, guide: -1, tick: -Infinity};
         follower.current = following;
         publish(following.state);
@@ -224,10 +224,10 @@ export function useMelodyPlayback(options: Options) {
               following.voices.push(following.guideVoice);
             }
           }
-          const tick = Math.floor(state.beat);
-          if (state.countIn && tick !== following.tick) {
+          const tick = Math.floor(state.beat - state.entryBeat + 1e-7);
+          if (state.countIn && performance.now() / 1000 >= state.anchorTime && tick !== following.tick) {
             following.tick = tick;
-            following.voices.push(sound(context, score.bars.some(start => Math.abs(start - tick) < 1e-6) ? 1200 : 850, now, 0.045, 0.045));
+            following.voices.push(sound(context, tick === -COUNT_IN_BEATS ? 1200 : 850, now, 0.045, 0.045));
           }
           if (state.finished) {stop(); return;}
           following.frame = requestAnimationFrame(animateFollow);
@@ -235,8 +235,8 @@ export function useMelodyPlayback(options: Options) {
         following.frame = requestAnimationFrame(animateFollow);
         return;
       }
-      current.segments.push({id: 0, time: origin, beat: from - 4, entryBeat: from, endBeat, endTime: origin + (endBeat - from + 4) * seconds, pass: savedPosition.current.pass + 1});
-      publish({beat: from - 4, pass: savedPosition.current.pass + 1, entryBeat: from, endBeat});
+      current.segments.push({id: 0, time: origin, beat: from - COUNT_IN_BEATS, entryBeat: from, endBeat, endTime: origin + (endBeat - from + COUNT_IN_BEATS) * seconds, pass: savedPosition.current.pass + 1});
+      publish({beat: from - COUNT_IN_BEATS, pass: savedPosition.current.pass + 1, entryBeat: from, endBeat});
       setRunning(true);
       current.schedule = () => {
         if (pausedAt.current !== null) return;
@@ -280,8 +280,12 @@ export function useMelodyPlayback(options: Options) {
             add('chord-' + index, onset, (at, duration) => chord.notes.map(note =>
               sound(context, 440 * 2 ** ((note.note + (settings.harmonyTranspose ?? 0) - 69) / 12), at, duration, 0.08 / Math.sqrt(chord.notes.length), harmonyGain, 0.07, 0.18)), end);
           });
+          for (const [index, tick] of countInClicks(segment.entryBeat).entries()) {
+            if (tick < segment.beat - 1e-7) continue;
+            add('count-in-' + index, tick, at => [sound(context, index === 0 ? 1200 : 850, at, 0.045, 0.045)], tick + 0.1);
+          }
           const localNow = segment.beat + (now - segment.time) / seconds;
-          for (let tick = Math.max(Math.ceil(segment.beat), Math.floor(localNow)); tick < Math.min(segment.endBeat, localNow + 1); tick++) {
+          for (let tick = Math.max(Math.ceil(segment.entryBeat), Math.floor(localNow)); tick < Math.min(segment.endBeat, localNow + 1); tick++) {
             if (!settings.metronome && tick >= segment.entryBeat) continue;
             add('tick-' + tick, tick, at => [sound(context, score.bars.some(start => Math.abs(start - tick) < 1e-6) ? 1200 : 850, at, 0.045, 0.045)], Math.min(tick + 0.1, segment.endBeat));
           }
