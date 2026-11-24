@@ -137,7 +137,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   }));
   const previousDetectedChord = useRef<typeof cells>([]);
   const detectedCells = detectedChordCells(cells, detectedNotes, previousDetectedChord.current,
-    {left: viewLeft, top, width: viewWidth, height}, RADIUS);
+    {left: viewLeft, top, width: viewWidth, height}, RADIUS, targetCell ?? null);
   useEffect(() => {
     if (detectedCells.length) previousDetectedChord.current = detectedCells;
   }, [detectedCells]);
@@ -145,7 +145,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
   const previousHeardCell = useRef<{x: number; y: number} | null>(null);
   const heardCell = detectedPitchCell(cells, heard, previousHeardCell.current,
-    {left: viewLeft, top, width: viewWidth, height}, RADIUS);
+    {left: viewLeft, top, width: viewWidth, height}, RADIUS, targetCell ?? null);
   useEffect(() => {
     // Keep the anchor through silence between articulations; update only after
     // a committed render, without adding state updates to the audio frame loop.

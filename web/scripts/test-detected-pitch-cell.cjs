@@ -18,7 +18,13 @@ const kept=choose(cells,66,at(5,0),viewport,radius);
 assert.equal(choose(cells,66,kept,viewport,radius),kept,'Repeated detections remain stable');
 const shuffled=[...cells].reverse();
 assert.deepEqual(choose(shuffled,66,at(5,0),viewport,radius),kept,'Cell enumeration order cannot change the route');
-console.log('Detected-pitch placement passes: central start, local movement, offscreen reset, resize, silence, repeated pitches and enumeration stability.');
+// A prompted cell outranks the previous cell and the screen center.
+assert.equal(choose(cells,66,at(0,0),viewport,radius,at(8,-2)),at(8,-2),'A correct note lands on the prompted copy, not the one near the last note');
+assert.equal(choose(cells,64,at(0,0),viewport,radius,at(8,-2)),at(7,-2),'A wrong note is shown beside the prompt');
+assert.equal(choose(cells,64,at(8,-2),viewport,radius,at(0,0)),at(0,0),'The prompt wins over continuity');
+assert.equal(choose(cells,66,at(0,0),viewport,radius,at(20,0)),at(1,0),'An offscreen prompt is ignored');
+assert.equal(choose(shuffled,64,at(0,0),viewport,radius,at(8,-2)),at(7,-2),'Prompted placement is independent of enumeration order');
+console.log('Detected-pitch placement passes: central start, local movement, offscreen reset, resize, silence, repeated pitches, enumeration stability and prompt priority.');
 
 const chord=mod.exports.detectedChordCells;
 const initial=chord(cells,[64,68,71],[],viewport,radius);
@@ -35,4 +41,13 @@ assert.deepEqual(wrap,chord(cells,[66,68],[],viewport,radius),'An offscreen chor
 assert.notEqual(wrap.find(cell=>cell.note===66),offcenter[1],'Common tones move with the recentered voicing');
 assert.deepEqual(chord(cells,[],initial,viewport,radius),[],'Silence clears visible chord notes');
 assert.deepEqual(chord(cells,[64,68,71],initial,{left:-200,top:-250,width:400,height:500},radius),chord(cells,[64,68,71],[],{left:-200,top:-250,width:400,height:500},radius));
-console.log('Detected chords pass: central placement, local continuity, common tones, whole-voicing recentering, resize, silence and detector ordering.');
+// A prompted cell outranks the previous voicing.
+const prompted=chord(cells,[66,70,73],initial,viewport,radius,at(1,0));
+assert.equal(prompted.find(cell=>cell.note===66),at(1,0),'The prompted chord tone lands on the prompt');
+assert.deepEqual(prompted.map(cell=>cell.note),[66,70,73]);
+assert.ok(prompted.every(cell=>Math.hypot(cell.x-at(1,0).x,cell.y-at(1,0).y)<=4*Math.sqrt(3)*radius),'The voicing gathers around the prompt');
+assert.deepEqual(chord(shuffled,[73,66,70],[],viewport,radius,at(1,0)),prompted,'Prompted voicings ignore the previous voicing, detector order and enumeration');
+const wide=chord(cells,[52,64,76],[],viewport,radius,at(0,0));
+assert.equal(wide.find(cell=>cell.note===64),at(0,0));
+assert.deepEqual(chord(cells,[64,68,71],initial,viewport,radius,at(20,0)),initial,'An offscreen prompt keeps the usual placement');
+console.log('Detected chords pass: central placement, local continuity, common tones, whole-voicing recentering, resize, silence, detector ordering and prompt priority.');
