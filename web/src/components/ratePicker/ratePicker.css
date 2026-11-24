@@ -1,0 +1,47 @@
+/* Radial rate picker, ported from the MusicalityVR interface lab. The lab's theme
+   variables are mapped onto Chakra tokens so the picker follows the color mode. */
+.rate-picker-scope{--rp-ink:var(--chakra-colors-fg);--rp-muted:var(--chakra-colors-fg-muted);--rp-surface:var(--chakra-colors-bg);--rp-canvas:var(--chakra-colors-bg-muted);--rp-edge:var(--chakra-colors-border);--rp-accent:var(--chakra-colors-cyan-400);--rp-error:var(--chakra-colors-red-500);font-size:14px}
+.rate-picker-scope .frequency-picker{margin:0}
+.rate-picker-scope .frequency-picker-heading{display:flex;align-items:center;justify-content:space-between;color:var(--rp-muted);font-size:14px}
+.rate-picker-scope .frequency-scale{font-size:13px;color:var(--rp-ink);background:var(--rp-canvas);padding:2px 7px;border-radius:4px}
+.rate-picker-scope .rate-unit-switch{display:flex;gap:2px;padding:2px;border:1px solid var(--rp-edge);border-radius:5px;background:var(--rp-canvas)}
+.rate-picker-scope .rate-unit-switch button{border:0;background:transparent;color:var(--rp-muted);border-radius:3px;font-size:12px;padding:3px 7px;min-height:29px;cursor:pointer}
+.rate-picker-scope .rate-unit-switch button[aria-pressed=true]{background:var(--rp-surface);color:var(--rp-ink);box-shadow:inset 0 0 0 1px var(--rp-accent)}
+.rate-picker-scope .frequency-dial-container{position:relative;width:100%;max-width:260px;aspect-ratio:1;margin:5px auto 0}
+.rate-picker-scope .frequency-dial{display:block;height:100%;width:100%;touch-action:none;cursor:grab;border-radius:50%}
+.rate-picker-scope .frequency-dial.dragging{cursor:grabbing}
+.rate-picker-scope .frequency-dial:focus-visible{outline:2px solid var(--rp-accent);outline-offset:2px}
+.rate-picker-scope .frequency-ring-back{fill:none;stroke:var(--rp-canvas);stroke-width:14}
+.rate-picker-scope .frequency-ring{fill:none;stroke:var(--rp-muted);stroke-width:1.5}
+.rate-picker-scope .frequency-tick{stroke:var(--rp-muted);stroke-opacity:.5;stroke-width:1}
+.rate-picker-scope .frequency-tick-major{stroke:var(--rp-ink);stroke-width:1.4}
+.rate-picker-scope .frequency-handle{fill:var(--rp-surface);stroke:var(--rp-accent);stroke-width:2}
+.rate-picker-scope .frequency-handle-center{fill:var(--rp-accent)}
+.rate-picker-scope .frequency-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;width:62%;gap:5px}
+.rate-picker-scope .frequency-center-label{font-size:10px;letter-spacing:1.5px;color:var(--rp-muted)}
+.rate-picker-scope .frequency-readout{font-size:30px;font-weight:500;letter-spacing:-1.5px;color:var(--rp-ink);border:0;border-radius:5px;background:transparent;padding:0;line-height:1.5;font-variant-numeric:tabular-nums;cursor:pointer}
+.rate-picker-scope .frequency-readout:hover:not(:disabled){background:var(--rp-canvas)}
+.rate-picker-scope .frequency-entry{width:100%;font-size:23px;letter-spacing:-1px;text-align:center;border:1px solid var(--rp-edge);background:var(--rp-surface);border-radius:5px;padding:3px;outline:none;color:var(--rp-ink)}
+.rate-picker-scope .frequency-octaves{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rate-picker-scope .frequency-octaves>span{font-size:11px;color:var(--rp-muted);text-align:center}
+.rate-picker-scope .frequency-octaves button{background:var(--rp-canvas);border:1px solid var(--rp-edge);color:var(--rp-ink);border-radius:5px;min-width:44px;min-height:36px;font-size:14px;cursor:pointer}
+.rate-picker-scope .frequency-octaves button:disabled{opacity:.4;cursor:default}
+.rate-picker-scope .frequency-help{font-size:11px;line-height:1.7;color:var(--rp-muted);margin:12px 0 0}
+.rate-picker-scope .frequency-error{font-size:12px;color:var(--rp-error);line-height:1.7;margin-top:10px}
+.rate-picker-scope .rate-clock-label{font-size:11px;color:var(--rp-muted);text-align:center;line-height:1.8;margin:8px 0 0}
+.rate-picker-scope .rate-clock-notch{fill:var(--rp-ink)}
+.rate-picker-scope .rate-precision-status{font-size:12px;line-height:1.6;text-align:center;color:var(--rp-ink);background:var(--rp-canvas);border:1px solid var(--rp-edge);border-radius:5px;padding:7px;margin:0 0 12px}
+.rate-picker-scope .picker-configuration{margin-top:14px;border-top:1px solid var(--rp-edge);padding-top:10px;color:var(--rp-muted)}
+.rate-picker-scope .picker-configuration summary{font-size:12px;cursor:pointer;line-height:1.8;padding:6px 0;list-style-position:inside}
+.rate-picker-scope .picker-configuration-fields{display:flex;flex-direction:column;gap:12px;margin-top:12px;padding-bottom:8px}
+.rate-picker-scope .field-label{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.8}
+.rate-picker-scope .text-input{font-size:12px;border:1px solid var(--rp-edge);border-radius:5px;background:var(--rp-surface);color:var(--rp-ink);padding:4px 8px;height:auto;min-height:30px}
+.rate-picker-scope .picker-setting-hint{font-size:11px;line-height:1.7;color:var(--rp-muted);margin:0}
+.rate-picker-scope .frequency-picker-disabled .frequency-dial-container{opacity:.45}
+/* The drag preview is portalled to the page body, outside the scope above. */
+.rate-drag-overlay{position:fixed;inset:0;pointer-events:none;z-index:10000}
+.rate-drag-overlay>svg{width:100%;height:100%;overflow:visible}
+.rate-drag-overlay line{stroke:var(--chakra-colors-cyan-400);stroke-width:1.5;stroke-dasharray:4 4}
+.rate-drag-overlay circle{stroke:var(--chakra-colors-cyan-400);stroke-width:2;fill:var(--chakra-colors-bg)}
+.rate-drag-caption{position:absolute;display:flex;flex-direction:column;gap:5px;max-width:205px;border:1px solid var(--chakra-colors-border);background:var(--chakra-colors-bg);border-radius:6px;padding:10px 12px;color:var(--chakra-colors-fg);font-size:12px;line-height:1.6}
+.rate-drag-caption strong{font-weight:500}.rate-drag-caption span{color:var(--chakra-colors-fg-muted);font-size:11px}

@@ -823,3 +823,20 @@ releasing a note while an earlier one is still held returns to that note.
 
 Run `node scripts/test-ewi.cjs` for note, legato, breath and bend handling and the
 hex-board marker. The fixtures are synthetic MIDI messages, not a real controller.
+
+### Radial tempo dial
+
+Both tempo controls (Playback and beside the playhead) are a button showing the
+current BPM that opens the radial rate picker from the MusicalityVR interface lab
+(`musicality.meta/web`). One turn of the dial doubles the tempo (log₂), 12 o'clock
+is 60 BPM by default, and the range stays 40–180 BPM. Dragging on the track snaps to
+whole BPM; pulling outward gives finer steps, so tempos can now be fractional. Arrow
+keys step, Page Up/Down and the ÷ 2 / × 2 buttons halve or double within the range,
+clicking the value allows direct entry, and scrolling over a digit adjusts its place.
+The BPM/Hz unit and the dial's mapping and landmark settings are saved in
+`musicality.tempo-picker.v1`. The dial is unavailable while practice is running.
+
+The picker lives in `src/components/ratePicker/` as a copy of the lab's `RatePicker`,
+`PickerConfiguration`, `landmarks` and `frequency` modules, with the lab's theme
+variables mapped to Chakra tokens in `ratePicker.css`. Behaviour changes should be
+made in both places.

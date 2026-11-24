@@ -237,7 +237,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Playback</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2} align="center">Tempo
-          <PracticeTempoInput bpm={bpm} onChange={setBpm} disabled={playback.running || calibrating}/> BPMM
+          <PracticeTempoInput bpm={bpm} onChange={setBpm} disabled={playback.running || calibrating}/> BPM
         </Flex>
         <Flex as="label" gap={2} align="center" wrap="wrap" width="100%">Concert key
           {range && !range.fits && <Text as="span" color={outsideColor} aria-label="Melody outside instrument range">⚠</Text>}
