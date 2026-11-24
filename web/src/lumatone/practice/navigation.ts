@@ -6,6 +6,11 @@ export function adjacentLoopPoint(beat: number, direction: -1 | 1, start: number
   return direction < 0 ? [...points].reverse().find(point => point < beat - 1e-6) ?? START : points.find(point => point > beat + 1e-6) ?? END;
 }
 
+export function adjacentNote(beat: number, direction: -1 | 1, score: {start: number; end: number; melody: {start: number}[]}) {
+  const points = score.melody.map(note => note.start);
+  return direction < 0 ? points.slice().reverse().find(point => point < beat - 1e-6) ?? score.start : points.find(point => point > beat + 1e-6) ?? score.end;
+}
+
 export function adjacentBar(beat: number, direction: -1 | 1, score = {start: START, end: END, bars: Array.from({length: 32}, (_, i) => i * 4)}) {
   const points = [score.start, ...score.bars, score.end];
   return direction < 0 ? points.slice().reverse().find(point => point < beat - 1e-6) ?? score.start : points.find(point => point > beat + 1e-6) ?? score.end;

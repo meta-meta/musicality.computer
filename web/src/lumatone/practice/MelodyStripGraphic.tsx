@@ -18,10 +18,13 @@ export function MelodyStripGraphic({note, start, duration, mode, attempt, missed
   const color = useMemo(() => getNoteColorHsl(note).toString({format: 'hex'}), [note]);
   const width = duration * 64;
   const center = Math.min(22, width / 2);
-  const radius = Math.min(17, width / 2 - 3);
+  // Short notes keep the full hex height and narrow only horizontally.
+  const radius = 17;
+  const halfWidth = Math.max(2, Math.min(radius * Math.sqrt(3) / 2, width / 2 - 1.5));
+  const narrow = halfWidth < 12;
   const points = Array.from({length: 6}, (_, index) => {
     const angle = Math.PI / 2 + index * Math.PI / 3;
-    return `${center + Math.cos(angle) * radius},${25 + Math.sin(angle) * radius}`;
+    return `${center + Math.cos(angle) * halfWidth / (Math.sqrt(3) / 2)},${25 + Math.sin(angle) * radius}`;
   }).join(' ');
   const resultColor = attempt ? attempt.correctPitch ? green : amber : missed ? amber : 'currentColor';
   const timingX = (ms: number) => width / 2 + Math.max(-400, Math.min(400, ms)) / 800 * (width - 12);
@@ -29,8 +32,8 @@ export function MelodyStripGraphic({note, start, duration, mode, attempt, missed
   return (
     <svg aria-hidden="true" viewBox={`0 0 ${width} ${roles ? 168 : 144}`} preserveAspectRatio="none" style={{display: 'block', width: '100%', height: '100%'}}>
       <polygon points={points} fill={color} fillOpacity={active ? 0.55 : 0.35} stroke={active ? cyan : color} strokeWidth={active ? 2 : 1}/>
-      <text x={center - 2} y={25} textAnchor="middle" dominantBaseline="central" fill="currentColor" style={{fontSize: pitchLabel(note, mode).length > 1 ? 11 : 15}}>{pitchLabel(note, mode)}</text>
-      <text x={center + radius * 0.45} y={31} textAnchor="middle" fill="currentColor" opacity={0.7} style={{fontSize: 6}}>{Math.floor(note / 12) - 1}</text>
+      <text x={narrow ? center : center - 2} y={narrow ? 22 : 25} textAnchor="middle" dominantBaseline="central" fill="currentColor" style={{fontSize: pitchLabel(note, mode).length > 1 ? 11 : 15}}>{pitchLabel(note, mode)}</text>
+      <text x={narrow ? center : center + radius * 0.45} y={narrow ? 36 : 31} textAnchor="middle" fill="currentColor" opacity={0.7} style={{fontSize: 6}}>{Math.floor(note / 12) - 1}</text>
       <g data-rhythm-values={rhythm.map(value => value.triplet ? 'quarter-triplet' : value.beats).join('+')}>
         {rhythm.map((value, index) => {
           const dotted = [3, 1.5, 0.75].includes(value.beats);

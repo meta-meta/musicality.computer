@@ -101,7 +101,8 @@ Run `node scripts/test-pitch-range.cjs` to check low-register and harmonic-rich 
 Play/pause and back controls sit beside the playhead. Pausing suspends the
 playback audio clock and preserves the current pass and count-in; resuming
 continues from there. In monophone-follow mode, the follower's clock pauses too.
-Space toggles play/pause; `[` / `]` move through the configured loop points and
+Space toggles play/pause; `[` / `]` move to the previous/next melody note;
+`Shift+[` / `Shift+]` (`{` / `}`) move through the configured loop points and
 the beginning/end of the track; Left/Right move to adjacent bar boundaries.
 Down Arrow auditions the current chord without moving the playhead; holding
 the key does not repeatedly retrigger it.

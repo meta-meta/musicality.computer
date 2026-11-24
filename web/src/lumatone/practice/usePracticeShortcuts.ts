@@ -1,6 +1,6 @@
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useEffect, useRef} from 'react';
-import {adjacentBar, adjacentLoopPoint} from './navigation.ts';
+import {adjacentBar, adjacentLoopPoint, adjacentNote} from './navigation.ts';
 
 export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void}) {
   const {score} = usePracticeScore();
@@ -21,7 +21,10 @@ export function usePracticeShortcuts(actions: {beat: number; loopStart: number |
         if (!event.repeat) current.onPlayChord();
       } else if (event.key === '[' || event.key === ']') {
         event.preventDefault();
-        current.onSeek(adjacentLoopPoint(current.beat, event.key === '[' ? -1 : 1, current.loopStart, current.loopEnd, current.score));
+        current.onSeek(adjacentNote(current.beat, event.key === '[' ? -1 : 1, current.score));
+      } else if (event.key === '{' || event.key === '}') {
+        event.preventDefault();
+        current.onSeek(adjacentLoopPoint(current.beat, event.key === '{' ? -1 : 1, current.loopStart, current.loopEnd, current.score));
       } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
         current.onSeek(adjacentBar(current.beat, event.key === 'ArrowLeft' ? -1 : 1, current.score));

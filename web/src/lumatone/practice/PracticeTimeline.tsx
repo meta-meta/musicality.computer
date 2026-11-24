@@ -69,7 +69,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         {pendingBeat !== null && <Box pointerEvents="none" position="absolute" left={`${percent(pendingBeat)}%`} top={0} bottom={0} width="2px" bg="orange.400"/>}
       </Box>
       <Flex gap={2} align="center" wrap="wrap" fontSize="sm">
-        <Button size="sm" variant="outline" aria-label="Previous loop point or beginning" title="Previous loop point or beginning ([)" onClick={onBack}>⏮</Button>
+        <Button size="sm" variant="outline" aria-label="Previous loop point or beginning" title="Previous loop point or beginning (Shift+[)" onClick={onBack}>⏮</Button>
         <Button size="sm" aria-label={running ? 'Pause playback' : 'Play playback'} title="Play / pause (Space)" disabled={transportDisabled} onClick={onTogglePlayback}>{running ? '⏸' : '▶'}</Button>
         <Button size="sm" variant={loop ? 'solid' : 'outline'} colorPalette={loop ? 'cyan' : undefined}
           aria-label="Loop playback" aria-pressed={loop} title={running ? 'Pause to change looping' : loop ? 'Looping on' : 'Looping off'}
@@ -82,7 +82,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
         <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: '1 1 160px', minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
-      <Text fontSize="xs" color="fg.muted">Space: play/pause · [ / ]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. Shortcuts leave text fields and sliders alone.</Text>
+      <Text fontSize="xs" color="fg.muted">Space: play/pause · [ / ]: previous/next note · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. Shortcuts leave text fields and sliders alone.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}>Loop start
           <select aria-label="Loop start" disabled={running} value={loopStart ?? ''} onChange={event => onLoopStart(event.target.value === '' ? null : Number(event.target.value))}>
