@@ -14,6 +14,7 @@ export enum MidiStatus {
 // Define a type for the slice state
 interface State {
   beatClockIn: string | null;
+  ewiIn: string | null;
   inputs: { label: string, value: string, group: string }[];
   lumatoneIn: string | null;
   lumatoneOut: string | null;
@@ -22,6 +23,7 @@ interface State {
 }
 
 type PersistedMidiSelections = {
+  ewiIn?: string | null;
   lumatoneIn?: string | null;
   lumatoneOut?: string | null;
 };
@@ -33,6 +35,7 @@ function loadPersistedMidiSelections(): PersistedMidiSelections {
   try {
     const parsed = JSON.parse(raw) as PersistedMidiSelections;
     return {
+      ewiIn: parsed.ewiIn ?? null,
       lumatoneIn: parsed.lumatoneIn ?? null,
       lumatoneOut: parsed.lumatoneOut ?? null,
     };
@@ -46,6 +49,7 @@ const persistedSelections = loadPersistedMidiSelections();
 // Define the initial state using that type
 const initialState: State = {
   beatClockIn: null,
+  ewiIn: persistedSelections.ewiIn ?? null,
   inputs: [],
   lumatoneIn: persistedSelections.lumatoneIn ?? null,
   lumatoneOut: persistedSelections.lumatoneOut ?? null,
@@ -67,6 +71,9 @@ export const midiSlice = createSlice({
     beatClockInSet: (state, action: PayloadAction<string>) => {
       state.beatClockIn = action.payload;
     },
+    ewiInSet: (state, action: PayloadAction<string>) => {
+      state.ewiIn = action.payload;
+    },
     lumatoneInSet: (state, action: PayloadAction<string>) => {
       state.lumatoneIn = action.payload;
     },
@@ -81,6 +88,7 @@ export const midiSlice = createSlice({
 
 export const {
   beatClockInSet,
+  ewiInSet,
   inputsSet,
   lumatoneInSet,
   lumatoneOutSet,

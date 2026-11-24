@@ -31,6 +31,10 @@ import {PracticeHistoryPanel} from './lumatone/practice/PracticeHistoryPanel.tsx
 import MidiConfig from './MidiConfig.tsx';
 import {AccordionItem, AccordionItemContent, AccordionItemTrigger, AccordionRoot} from './components/chakra-ui/accordion.tsx';
 import {usePracticeMidi} from './lumatone/practice/usePracticeMidi.ts';
+import {useEwiInput} from './lumatone/practice/useEwiInput.ts';
+import {DEFAULT_EWI_BEND_RANGE, EWI_BEND_RANGES} from './lumatone/practice/ewi.ts';
+import type {Entrance} from './lumatone/practice/pitch.ts';
+import {useAppSelector} from './redux/hooks.ts';
 import {useColorModeValue} from './components/chakra-ui/color-mode.tsx';
 import {instrumentRangeFit, melodyPitchBounds, practiceKeyTranspose, instrumentPitchLabel, practiceInstrument, transposingInstruments, writtenPracticeScore} from './lumatone/practice/instruments.ts';
 import {transposeChord} from './lumatone/practice/transposition.ts';
@@ -95,16 +99,22 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
     try {return latestSavedCalibration(window.localStorage)?.correction??0;} catch {return 0;}
   });
   const [calibrating,setCalibrating] = useState(false);
-  const [inputMode, setInputMode] = useState<'monophonic' | 'polyphonic'>('monophonic');
+  const [inputMode, setInputMode] = useState<'monophonic' | 'polyphonic' | 'ewi'>('monophonic');
+  const ewiSelected = useAppSelector(s => Boolean(s.midi.ewiIn));
+  const [ewiBendRange, setEwiBendRange] = useState(() => {
+    try {const saved = Number(window.localStorage.getItem('musicality.ewi-bend-range.v1')); return EWI_BEND_RANGES.includes(saved) ? saved : DEFAULT_EWI_BEND_RANGE;} catch {return DEFAULT_EWI_BEND_RANGE;}
+  });
+  useEffect(() => {try {window.localStorage.setItem('musicality.ewi-bend-range.v1', String(ewiBendRange));} catch { /* The range still applies for this visit. */ }}, [ewiBendRange]);
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
   const [lastAttempt, setLastAttempt] = useState<Attempt | null>(null);
   const [betweenTargets, setBetweenTargets] = useState(false);
   const playback = useMelodyPlayback({bpm, transpose, harmonyTranspose: keyTranspose, guide, metronome, loop, loopStart, loopEnd, harmonySound, harmonyVolume, followMonophone, allowLowOctaveUp});
   const history = usePracticeHistory({bpm, transpose, keyTranspose, instrumentId, freeTime: followMonophone, allowLowOctaveUp, loop, loopStart, loopEnd, latencyMs: latency});
   useEffect(() => {setAttempts({}); setLastAttempt(null); setBetweenTargets(false);}, [bpm, transpose, loopStart, loopEnd, followMonophone, allowLowOctaveUp]);
-  const monophone = useMonophoneInput(entrance => {
+  // Shared by the microphone and the EWI; MIDI needs no latency correction.
+  const judgeMonophone = (entrance: Entrance, latencyMs: number) => {
     if (followMonophone || calibrating) return;
-    const position = playback.positionAt(entrance.time - latency);
+    const position = playback.positionAt(entrance.time - latencyMs);
     if (!position || position.beat < position.entryBeat - 0.5) return;
     const attempt = judgeEntrance(position.beat, entrance.pitch.note, entrance.pitch.cents, bpm, transpose,
       {melody: exercise, pass: position.pass, entryBeat: position.entryBeat, loop, loopStart: loopStart ?? START, loopEnd: position.endBeat, next: position.next, allowLowOctaveUp});
@@ -114,7 +124,8 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
       setAttempts(current => recordPracticeAttempt(current, attempt));
       history.record(attempt);
     }
-  }, (reading, articulation) => {
+  };
+  const followReading = (reading: Entrance | null, articulation: number) => {
     if (!followMonophone || !reading || calibrating) return;
     const attempt = playback.followPitch(reading.pitch.note, reading.pitch.cents, reading.time, articulation);
     if (!attempt) return;
@@ -122,7 +133,9 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
     setBetweenTargets(false);
     setAttempts(current => recordPracticeAttempt(current, attempt));
     history.record(attempt, articulation);
-  });
+  };
+  const monophone = useMonophoneInput(entrance => judgeMonophone(entrance, latency), followReading);
+  const ewi = useEwiInput(entrance => judgeMonophone(entrance, 0), followReading, ewiBendRange, inputMode === 'ewi');
   const polyphone = usePolyphonicInput(reading => {
     if (calibrating) return;
     if (followMonophone) {
@@ -147,7 +160,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
     setLastAttempt(attempt); setBetweenTargets(false);
     setAttempts(current => recordPracticeAttempt(current, attempt)); history.record(attempt);
   });
-  const microphone = inputMode === 'polyphonic' ? polyphone : monophone;
+  const microphone = inputMode === 'polyphonic' ? polyphone : inputMode === 'ewi' ? ewi : monophone;
   const {running, stop} = playback;
   const {finish: finishHistory} = history;
   // A paused run must not acquire judgements from a different instrument.
@@ -216,7 +229,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
       </AccordionRoot>
       <Flex gap={3} align="center" wrap="wrap">
         <Button disabled={microphone.status === 'starting' || calibrating} onClick={() => void togglePlayback()}>{playback.running ? 'Pause practice' : playback.paused ? 'Resume practice' : 'Start practice'}</Button>
-        <Button variant="outline" disabled={microphone.status === 'starting' || calibrating} onClick={toggleListening}>{microphone.status === 'starting' ? 'Opening microphone…' : microphone.status === 'listening' ? 'Stop microphone' : inputMode === 'polyphonic' ? 'Listen to guitar' : 'Listen to monophone'}</Button>
+        <Button variant="outline" disabled={microphone.status === 'starting' || calibrating} onClick={toggleListening}>{microphone.status === 'starting' ? 'Opening microphone…' : microphone.status === 'listening' ? inputMode === 'ewi' ? 'Stop EWI input' : 'Stop microphone' : inputMode === 'polyphonic' ? 'Listen to guitar' : inputMode === 'ewi' ? 'Listen to EWI' : 'Listen to monophone'}</Button>
       </Flex>
       {settingsError && <Text role="status" color="orange.500" fontSize="xs">{settingsError}</Text>}
       <Flex gap={3} wrap="wrap" align="stretch">
@@ -250,12 +263,21 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         <Flex as="label" gap={1} direction="column" width="100%" minWidth={0}>Audio detection
           <select aria-label="Audio detection" value={inputMode} disabled={playback.running || calibrating || microphone.status === 'starting'} onChange={event => {
             monophone.stop(); polyphone.stop(); playback.stop(); history.finish();
-            setInputMode(event.target.value as 'monophonic' | 'polyphonic');
+            setInputMode(event.target.value as 'monophonic' | 'polyphonic' | 'ewi');
           }}>
             <option value="monophonic">Single note / precise tuner</option>
             <option value="polyphonic">Guitar / polyphonic (experimental)</option>
+            <option value="ewi">EWI / MIDI wind controller</option>
           </select>
         </Flex>
+        {inputMode === 'ewi' && <Flex gap={2} wrap="wrap" align="center" width="100%">
+          <Flex as="label" gap={2} align="center">Bend range
+            <select aria-label="EWI bend range" value={ewiBendRange} onChange={event => setEwiBendRange(Number(event.target.value))}>
+              {EWI_BEND_RANGES.map(range => <option key={range} value={range}>±{range} semitone{range === 1 ? '' : 's'}</option>)}
+            </select>
+          </Flex>
+          <Text fontSize="xs" color={ewi.status === 'listening' ? 'fg.muted' : 'orange.500'} data-testid="ewi-status">{ewi.status === 'listening' ? 'EWI In connected. Notes, breath and bend come from MIDI; no microphone is used.' : ewiSelected ? 'EWI In is selected but not connected or paused.' : 'Select your controller as EWI In under MIDI configuration.'}</Text>
+        </Flex>}
         <Flex as="label" gap={1} direction="column" width="100%" minWidth={0}><Box as="span">Instrument <InstrumentIcon instrumentId={instrumentId}/></Box>
           <select aria-label="Transposing instrument" style={{width: '100%', minWidth: 0}} value={instrumentId} disabled={playback.running || calibrating}
             onChange={event => setInstrumentId(practiceInstrument(event.target.value).id)}>
@@ -323,7 +345,8 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         {playback.running && <PracticeJudgement attempt={lastAttempt ? {...lastAttempt, note: lastAttempt.note + writtenOffset} : null} freeTime={followMonophone} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap group={showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={pitch ? pitch.note + writtenOffset : null} heardCents={pitch?.cents ?? null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
+      <PracticeHexMap group={showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={inputMode === 'ewi' ? ewi.reading ? ewi.reading.note + writtenOffset : null : pitch ? pitch.note + writtenOffset : null} heardCents={inputMode === 'ewi' ? null : pitch?.cents ?? null}
+        heardBreath={inputMode === 'ewi' && ewi.reading ? ewi.reading.breath : null} heardBend={inputMode === 'ewi' && ewi.reading ? ewi.reading.bend : null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
         cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}

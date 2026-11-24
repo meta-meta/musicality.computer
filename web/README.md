@@ -795,3 +795,31 @@ Both are display heuristics, not phrase analysis. They can disagree usefully: wh
 three-note figures run against four-note beams, beams show the metre and contour
 shows the figure. Run `node scripts/test-note-groups.cjs` to check both groupings,
 the beat fallback, and the hex-board group layer.
+
+### EWI / MIDI wind controller input
+
+**MIDI configuration → EWI In** selects a wind controller, saved with the other
+MIDI selections. Under **Instrument input → Audio detection**, choose **EWI / MIDI
+wind controller** to use it in place of the microphone: note-ons are judged as
+entrances, held notes drive monophone-follow mode, and the tuner, judgements and
+history work as they do for microphone input. No microphone is opened, and the
+microphone timing correction is not applied to MIDI timestamps.
+
+On the hex board the fingered note is highlighted, with a round marker on its cell:
+
+- **Breath** sets the marker's size and strength. It is read from breath (CC 2),
+  volume (CC 7), expression (CC 11) or channel pressure, whichever arrived last;
+  before any of those arrives, the attack velocity stands in.
+- **Pitch bend** slides the marker sideways, with a line back to the cell centre.
+  One cell to the right is two semitones in this layout, so the slide is to scale:
+  a two-semitone bend reaches the neighbouring cell.
+
+The controller does not transmit its bend range, so **Bend range** (±1, ±2 or ±12
+semitones, saved in `musicality.ewi-bend-range.v1`) must match the instrument;
+±2 is the default. Judging and the tuner use the sounding pitch (fingered note plus
+bend, twelve-tone equal temperament at A4 = 440 Hz), so a bent note can read as out
+of tune or as its neighbour. MIDI channels are merged. A slurred note is an entrance;
+releasing a note while an earlier one is still held returns to that note.
+
+Run `node scripts/test-ewi.cjs` for note, legato, breath and bend handling and the
+hex-board marker. The fixtures are synthetic MIDI messages, not a real controller.

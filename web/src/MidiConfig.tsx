@@ -3,6 +3,7 @@ import {SiMidi} from 'react-icons/si';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {
   beatClockInSet,
+  ewiInSet,
   lumatoneInSet,
   lumatoneOutSet,
   MidiStatus,
@@ -82,6 +83,17 @@ function MidiConfig() {
             selectionType={SelectionType.Output}
             onSelect={val => dispatch(lumatoneOutSet(val))}
             value={useAppSelector(s => s.midi.lumatoneOut)}
+          />
+        </Field>
+
+        <Field
+          label="EWI In"
+          helperText="A MIDI wind controller for monophone practice: choose EWI under Instrument input → Audio detection."
+        >
+          <MidiDeviceSelect
+            selectionType={SelectionType.Input}
+            onSelect={val => dispatch(ewiInSet(val))}
+            value={useAppSelector(s => s.midi.ewiIn)}
           />
         </Field>
 

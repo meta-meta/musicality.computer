@@ -30,7 +30,10 @@ const points = Array.from({length: 6}, (_, index) => {
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], extendedLowRange = false, group}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], extendedLowRange = false, group, heardBreath = null, heardBend = null}: {
+  // Wind-controller input: breath 0–1 sizes a marker on the fingered note's cell,
+  // and bend (semitones) slides it along the whole-tone axis of the layout.
+  heardBreath?: number | null; heardBend?: number | null;
   // Every note of the current melodic group, in order; `current` indexes the target.
   group?: {notes: MelodyAttack[]; current: number};
   midiNotes?: number[];
@@ -196,7 +199,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
               <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
               <circle cy={-Math.max(-50, Math.min(50, tuning.cents)) / 50 * 4} r={1.8} fill={targetColor}/>
             </g>}
-            {live && <g data-monophone-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
+            {live && heardBreath === null && <g data-monophone-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
               <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
               <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
               <circle cy={tuningOffset} r={1.8} fill={targetColor}/>
@@ -215,6 +218,17 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
           </g>
         );
       })}
+      {heardCell && heardBreath !== null && (() => {
+        const breath = Math.max(0, Math.min(1, heardBreath));
+        // One cell to the right is two semitones higher, so a bend is drawn to scale.
+        const slide = (heardBend ?? 0) / 2 * Math.sqrt(3) * RADIUS;
+        return <g data-wind-indicator="true" data-breath={breath} data-bend={heardBend ?? 0} role="img" pointerEvents="none"
+          aria-label={`Wind controller: breath ${Math.round(breath * 100)}%, bend ${(heardBend ?? 0).toFixed(2)} semitones`} transform={`translate(${heardCell.x},${heardCell.y})`}>
+          {Math.abs(slide) > 0.5 && <line x2={slide} stroke={targetColor} strokeWidth={1.5} strokeOpacity={0.7}/>}
+          <circle cx={slide} r={RADIUS * (0.18 + 0.6 * breath)} fill={targetColor} fillOpacity={0.12 + 0.4 * breath} stroke={targetColor} strokeWidth={1.5}/>
+          <circle cx={slide} r={2} fill={targetColor}/>
+        </g>;
+      })()}
       {[...markers].sort((a, b) => b.step - a.step).map(marker => {
         const approaching = futureAttacks[marker.step];
         if (!approaching || approaching.id !== marker.attackId) return null;

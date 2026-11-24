@@ -28,8 +28,8 @@ store.subscribe(() => {
     lastPersistedEditorLayers = serializedEditorLayers;
   }
 
-  const {lumatoneIn, lumatoneOut} = store.getState().midi;
-  const serializedMidiSelections = JSON.stringify({lumatoneIn, lumatoneOut});
+  const {ewiIn, lumatoneIn, lumatoneOut} = store.getState().midi;
+  const serializedMidiSelections = JSON.stringify({ewiIn, lumatoneIn, lumatoneOut});
   if (serializedMidiSelections !== lastPersistedMidiSelections) {
     window.localStorage.setItem(MIDI_SELECTIONS_STORAGE_KEY, serializedMidiSelections);
     lastPersistedMidiSelections = serializedMidiSelections;
