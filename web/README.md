@@ -769,6 +769,25 @@ Frequency data follows the [Web Audio spectrum/windowing specification](https://
 Validate with `node scripts/test-polyphonic-tuning.cjs`; the fixtures use synthesized
 detuned strings and chords, not recordings or a real-guitar accuracy benchmark.
 
+### Input note-off trails
+
+Under **Display → Input note trails**, live MIDI and microphone highlights share
+a configurable two-stage release: by default, 120 ms down to 70% highlight strength,
+then a 10-second fade to zero. The fill overlay and outline fade together, leaving
+a temporary spatial landmark; labels and score overlays retain their own state.
+Replaying the same tile cancels its old fade and restores full input highlighting.
+Overlapping MIDI/audio input keeps a tile held until both sources release it.
+
+Enable/disable, release level, both durations, and independent easing curves are
+saved in `musicality.note-trails.v1` in localStorage. Zero durations are supported.
+Animations run through the Web Animations API without a React frame loop and are
+cancelled when a tile unmounts. Changing controls during a fade uses its current
+opacity and remaining duration. Existing MIDI, audio tuning, score and judgement
+lifecycles do not depend on a trail's animation.
+
+Validate with `node scripts/test-note-trails.cjs` for envelopes, persistence,
+retriggering, mid-fade edits, disabling, and zero-duration behavior.
+
 ### Melodic note groups
 
 **Display → Note groups** shows every note of the group around the current target

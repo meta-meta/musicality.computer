@@ -4,6 +4,8 @@ import {Link as RouterLink} from 'react-router-dom';
 import type {LabelMode} from './lumatone/leadSheet/labels.ts';
 import {judgeEntrance, recordPracticeAttempt} from './lumatone/practice/exercise.ts';
 import type {Attempt} from './lumatone/practice/exercise.ts';
+import {NoteTrailControls} from './lumatone/practice/NoteTrailControls.tsx';
+import {useNoteTrailSettings} from './lumatone/practice/useNoteTrailSettings.ts';
 import {PracticeHexMap} from './lumatone/practice/PracticeHexMap.tsx';
 import {PracticeTuner} from './lumatone/practice/PracticeTuner.tsx';
 import {PracticeJudgement} from './lumatone/practice/PracticeJudgement.tsx';
@@ -48,6 +50,7 @@ const registerOptions = [{value: -12, label: 'Octave below'}, {value: 0, label: 
 function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettings>}) {
   const {score, START, END, exercise, harmonies} = usePracticeScore();
   const midiNotes = usePracticeMidi();
+  const noteTrails = useNoteTrailSettings();
   const {bpm,setBpm,loop,setLoop,instrumentId,setInstrumentId,concertKey,setConcertKey,register,setRegister,settingsError} = settings;
   const instrument = practiceInstrument(instrumentId);
   const writtenOffset = -instrument.soundingOffset;
@@ -327,6 +330,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
           </select>
         </Flex>
         </Flex>
+        <NoteTrailControls {...noteTrails}/>
         <Text fontSize="xs" color="fg.muted" mt={2}>The brightest outline marks the actual next attack; later outlines are fainter. Repeated notes and loop passes remain separate attacks. Set 0 to hide.</Text>
       </Box>
       </Flex>
@@ -345,7 +349,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         {playback.running && <PracticeJudgement attempt={lastAttempt ? {...lastAttempt, note: lastAttempt.note + writtenOffset} : null} freeTime={followMonophone} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap group={showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={inputMode === 'ewi' ? ewi.reading ? ewi.reading.note + writtenOffset : null : pitch ? pitch.note + writtenOffset : null} heardCents={inputMode === 'ewi' ? null : pitch?.cents ?? null}
+      <PracticeHexMap group={showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={inputMode === 'ewi' ? ewi.reading ? ewi.reading.note + writtenOffset : null : pitch ? pitch.note + writtenOffset : null} heardCents={inputMode === 'ewi' ? null : pitch?.cents ?? null}
         heardBreath={inputMode === 'ewi' && ewi.reading ? ewi.reading.breath : null} heardBend={inputMode === 'ewi' && ewi.reading ? ewi.reading.bend : null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}

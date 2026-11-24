@@ -1,0 +1,34 @@
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const build=entry=>esbuild.buildSync({entryPoints:[entry],bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',external:['react','react/jsx-runtime']}).outputFiles[0].text;
+const mod={exports:{}};new Function('module','exports',build('src/lumatone/practice/noteTrail.ts'))(mod,mod.exports);
+const {defaultNoteTrail:defaults,noteTrailPlan:plan,readNoteTrail:read}=mod.exports;
+let p=plan(defaults,0);assert.equal(p.duration,10120);assert.equal(p.frames[0].opacity,1);assert.equal(p.frames[1].opacity,.7);assert.equal(p.frames.at(-1).opacity,0);
+assert.equal(p.frames[1].offset,120/10120);assert.equal(p.frames[0].easing,'ease-out');
+assert.equal(plan(defaults,10120),null);assert.equal(plan({...defaults,enabled:false},0),null);
+assert.equal(plan({...defaults,dropMs:0},0).frames[0].opacity,.7,'Zero quick-drop duration immediately starts at release level');
+assert.equal(plan({...defaults,dropMs:0,fadeMs:0},0),null);
+assert.equal(plan({...defaults,fadeMs:0},0).duration,120);
+assert.equal(plan(defaults,5120,.25).frames[0].opacity,.25,'Changing settings resumes from current visual strength');
+const stored={...defaults,dropMs:250,level:.45,fadeMs:25000,dropCurve:'linear',fadeCurve:'ease-in-out'};
+assert.deepEqual(read({getItem:()=>JSON.stringify(stored)}),stored);
+assert.deepEqual(read({getItem:()=>'{'}),defaults);
+assert.deepEqual(read({getItem:()=>{throw Error('Unavailable');}}),defaults);
+assert.equal(read({getItem:()=>JSON.stringify({level:5,fadeMs:-1,dropCurve:'bogus'})}).level,1);
+assert.equal(read({getItem:()=>JSON.stringify({fadeMs:-1})}).fadeMs,0);
+// Exercise the component's release/retrigger lifecycle without a real microphone.
+const component={exports:{}};let cursor=0,now=0,paintedOpacity=1;const refs=[],effects=[],pending=[];const animations=[];
+const react={useRef:value=>{const index=cursor++;return refs[index]??(refs[index]={current:value});},useEffect:(fn,deps)=>{const index=cursor++;const old=effects[index];if(!old||deps.some((v,i)=>v!==old.deps[i]))pending.push(()=>{old?.cleanup?.();effects[index]={deps,cleanup:fn()};});}};
+new Function('module','exports','require',build('src/lumatone/practice/InputNoteHighlight.tsx'))(component,component.exports,id=>id==='react'?react:require(id));
+Object.defineProperty(globalThis,'performance',{configurable:true,value:{now:()=>now}});
+globalThis.getComputedStyle=()=>({opacity:String(paintedOpacity)});
+const node={animate:(frames,options)=>{const animation={frames,options,cancelled:false,cancel(){this.cancelled=true;}};animations.push(animation);return animation;}};
+function render(active,settings=defaults){cursor=0;component.exports.InputNoteHighlight({active,note:60,points:'',fill:'#fff',stroke:'#fff',settings});refs[0].current=node;while(pending.length)pending.shift()();}
+render(false);assert.equal(animations.length,0,'Untouched hexes never leave ghosts');
+render(true);now=100;render(false);assert.equal(animations.length,1);assert.equal(animations[0].options.duration,10120);
+now=200;render(false);assert.equal(animations.length,1,'Unrelated renders do not restart tails');
+render(true);assert.equal(animations[0].cancelled,true,'Replay cancels old fade');
+now=250;render(false);assert.equal(animations[1].frames[0].opacity,1,'Replay restarts from full brightness');
+now=1250;paintedOpacity=.6;render(false,{...defaults,fadeMs:20000});assert.equal(animations[2].frames[0].opacity,.6);assert.equal(animations[2].options.duration,19120);
+render(false,{...defaults,enabled:false});assert.equal(animations.at(-1).cancelled,true);
+console.log('Note-off trails pass: two-stage envelope, saved controls, zero durations, untouched tiles, replay, stable rerenders, mid-fade changes and disabling.');

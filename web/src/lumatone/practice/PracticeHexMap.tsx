@@ -1,3 +1,6 @@
+import {InputNoteHighlight} from './InputNoteHighlight.tsx';
+import {defaultNoteTrail} from './noteTrail.ts';
+import type {NoteTrailSettings} from './noteTrail.ts';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useEffect, useId, useMemo, useRef, useState} from 'react';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
@@ -30,13 +33,14 @@ const points = Array.from({length: 6}, (_, index) => {
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], extendedLowRange = false, group, heardBreath = null, heardBend = null}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, heardBreath = null, heardBend = null}: {
   // Wind-controller input: breath 0–1 sizes a marker on the fingered note's cell,
   // and bend (semitones) slides it along the whole-tone axis of the layout.
   heardBreath?: number | null; heardBend?: number | null;
   // Every note of the current melodic group, in order; `current` indexes the target.
   group?: {notes: MelodyAttack[]; current: number};
   midiNotes?: number[];
+  noteTrail?: NoteTrailSettings;
   detectedNotes?: number[];
   detectedTunings?: PolyphonicTuning[];
   extendedLowRange?: boolean;
@@ -190,8 +194,8 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
                event.preventDefault();
                if (!event.repeat) onPlayNote(cell.note);
              }}>
-            <polygon points={points} fill={active || live || midi || cell === previewCell || chordTone ? colors[index].played : colors[index].normal} opacity={active || live || midi || !showGuideTones || !chordTone || guideTone ? 1 : chordTone.root ? 0.65 : 0.35}/>
-            {midi && <polygon data-midi-note={cell.note} points={points} fill="none" stroke={targetColor} strokeWidth={1.6} pointerEvents="none"/>}
+            <polygon points={points} fill={active || cell === previewCell || chordTone ? colors[index].played : colors[index].normal} opacity={active || live || midi || !showGuideTones || !chordTone || guideTone ? 1 : chordTone.root ? 0.65 : 0.35}/>
+            <InputNoteHighlight active={midi || live} note={cell.note} points={points} fill={colors[index].played} stroke={targetColor} settings={noteTrail}/>
             {detected && tuning?.cents !== null && tuning?.cents !== undefined && <g data-polyphonic-tuning={cell.note} data-cents={tuning.cents}
               transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
               <title>{`${Math.abs(tuning.cents).toFixed(0)} cents ${Math.abs(tuning.cents) < 3 ? 'in tune' : tuning.cents > 0 ? 'sharp' : 'flat'} (experimental)`}</title>
