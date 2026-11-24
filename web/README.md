@@ -768,3 +768,30 @@ cancellation, or page unmount. No audio is uploaded or saved.
 Frequency data follows the [Web Audio spectrum/windowing specification](https://webaudio.github.io/web-audio-api/#fft-windowing-and-smoothing-over-time).
 Validate with `node scripts/test-polyphonic-tuning.cjs`; the fixtures use synthesized
 detuned strings and chords, not recordings or a real-guitar accuracy benchmark.
+
+### Melodic note groups
+
+**Display → Note groups** shows every note of the group around the current target
+on the hex board: a thin outline on each cell and one arrow per move, so the shape
+of the gesture is visible before it is played. Moves already passed are dimmed, a
+repeated pitch adds no arrow, and a move that is retraced in the opposite direction
+is drawn beside its counterpart. Brackets above the melody strip mark the same
+groups. The option is off by default and is not saved; single-note groups draw nothing.
+With a grouping on, `,` and `.` move to the previous/next group start (single-note
+groups included); `,` inside a group first returns to that group's start.
+
+- **Beams (as written)** uses the source notation's primary beams. `import-effendi.py`
+  keeps each melody note's beam state (`beam: begin | continue | end`); a tied note
+  that leads into a beam joins that beam group. Scores imported before this field
+  existed, and LilyPond-derived scores, have no beam data: the option then reads
+  **Beats (no beam data)** and joins notes shorter than a beat that start in the same
+  beat of the same bar. Re-import a MusicXML score to get its written beams.
+- **Contour (direction)** groups one sweep in a single melodic direction. A group
+  ends at a rest, after a note that is at least a beat long and twice its successor,
+  or where the direction reverses; the turning note stays with the sweep that reached
+  it, and repeated pitches keep the direction.
+
+Both are display heuristics, not phrase analysis. They can disagree usefully: where
+three-note figures run against four-note beams, beams show the metre and contour
+shows the figure. Run `node scripts/test-note-groups.cjs` to check both groupings,
+the beat fallback, and the hex-board group layer.

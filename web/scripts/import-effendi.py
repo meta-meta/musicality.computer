@@ -208,7 +208,8 @@ def parse_part(part):
                     note = (integer(pitch, 'octave')+1)*12 + NATURALS[value(pitch, 'step')] + integer(pitch, 'alter') + transposition
                     if not 0 <= note <= 127: raise ValueError('Pitch outside MIDI range')
                     ties = {tie.get('type') for tie in [*element.findall('tie'), *element.findall('notations/tied')]}
-                    events.append({'at': onset, 'duration':duration, 'note':note, 'voice':(staff,voice), 'tieStart':'start' in ties, 'tieStop':'stop' in ties, 'lyrics':note_lyrics(element)})
+                    events.append({'at': onset, 'duration':duration, 'note':note, 'voice':(staff,voice), 'tieStart':'start' in ties, 'tieStop':'stop' in ties, 'lyrics':note_lyrics(element),
+                        'beam':next((beam.text for beam in element.findall('beam') if beam.get('number','1') == '1' and beam.text in ('begin','continue','end')),None)})
             elif element.tag == 'harmony':
                 # Wikifonia uses a completely blank C-major symbol as a spacer.
                 root_step, kind_node = element.find('root/root-step'), element.find('kind')
@@ -334,10 +335,13 @@ def import_score(path, entry):
                     if item['lineBreak'] and verse in last_lyrics: last_lyrics[verse]['lineBreak'] = True
             if previous_tied and event['tieStop'] and melody and melody[-1]['note'] == event['note'] and abs(melody[-1]['start']+melody[-1]['duration']-float(at)) < 1e-6:
                 melody[-1]['duration'] = round(melody[-1]['duration']+float(duration),9)
+                # A tied note that leads into a beam belongs to that beam group.
+                if event.get('beam') in ('begin','continue'): melody[-1]['beam'] = 'continue' if melody[-1].get('beam') else 'begin'
             else:
                 previous = position(event['note'], previous)
                 melody.append({'note':event['note'],'at':previous,'start':round(float(at),9),'duration':round(float(duration),9),
                     'location':'Pickup' if at < 0 else f'Bar {len(bars)} · beat {float(onset)+1:g}'})
+                if event.get('beam'): melody[-1]['beam'] = event['beam']
             previous_tied = event['tieStart']
         changes = {}
         for event in harmony_part['frames'][source_index]['chords']:

@@ -7,6 +7,8 @@ export type MelodyAttack = {
   start: number;
   duration: number;
   location: string;
+  // Primary beam state from the source notation, when the importer has it.
+  beam?: 'begin' | 'continue' | 'end';
 };
 
 // Full 32-bar melody, with tied segments joined into single attacks.

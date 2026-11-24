@@ -1,8 +1,8 @@
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useEffect, useRef} from 'react';
-import {adjacentBar, adjacentLoopPoint, adjacentNote} from './navigation.ts';
+import {adjacentBar, adjacentGroup, adjacentLoopPoint, adjacentNote} from './navigation.ts';
 
-export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void}) {
+export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void}) {
   const {score} = usePracticeScore();
   const latest = useRef({...actions, score});
   useEffect(() => {latest.current = {...actions, score};}, [actions, score]);
@@ -22,6 +22,10 @@ export function usePracticeShortcuts(actions: {beat: number; loopStart: number |
       } else if (event.key === '[' || event.key === ']') {
         event.preventDefault();
         current.onSeek(adjacentNote(current.beat, event.key === '[' ? -1 : 1, current.score));
+      } else if (event.key === ',' || event.key === '.') {
+        if (!current.noteGroups.length) return;
+        event.preventDefault();
+        current.onSeek(adjacentGroup(current.beat, event.key === ',' ? -1 : 1, current.noteGroups, current.score));
       } else if (event.key === '{' || event.key === '}') {
         event.preventDefault();
         current.onSeek(adjacentLoopPoint(current.beat, event.key === '{' ? -1 : 1, current.loopStart, current.loopEnd, current.score));

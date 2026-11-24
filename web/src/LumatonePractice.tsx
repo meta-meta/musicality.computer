@@ -22,6 +22,8 @@ import {defaultAnalysis, defaultPhraseStarts} from './lumatone/practice/analysis
 import {usePracticeShortcuts} from './lumatone/practice/usePracticeShortcuts.ts';
 import {adjacentLoopPoint} from './lumatone/practice/navigation.ts';
 import {upcomingAttacks} from './lumatone/practice/lookahead.ts';
+import {groupAt, hasWrittenBeams, melodyGroups} from './lumatone/practice/noteGroups.ts';
+import type {NoteGroupMode} from './lumatone/practice/noteGroups.ts';
 import {usePracticeHistory} from './lumatone/practice/usePracticeHistory.ts';
 import {PracticeSuggestions} from './lumatone/practice/PracticeSuggestions.tsx';
 import {InstrumentIcon} from './lumatone/practice/InstrumentIcon.tsx';
@@ -70,6 +72,8 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const [showMelodyRoles, setShowMelodyRoles] = useState(score.chords.length > 0);
   const [showChordTransitions, setShowChordTransitions] = useState(true);
   const [lookahead, setLookahead] = useState(3);
+  const [noteGroupMode, setNoteGroupMode] = useState<NoteGroupMode>('off');
+  const noteGroups = useMemo(() => melodyGroups(exercise, noteGroupMode, score.bars), [exercise, noteGroupMode, score.bars]);
   const [analysis, setAnalysis] = useState(defaultAnalysis);
   const [phraseStarts, setPhraseStarts] = useState(defaultPhraseStarts);
   const [harmonySound, setHarmonySound] = useState(score.chords.length > 0);
@@ -165,6 +169,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
     ?? (!playback.running && beat < 0 ? pieceHarmonies[0] : undefined) : undefined;
   const target = !countIn ? exercise.find(note => beat >= note.start - 1e-7 && beat < note.start + note.duration - 1e-7) : undefined;
   const targetIndex = target ? exercise.indexOf(target) : -1;
+  const targetGroup = groupAt(noteGroups, targetIndex);
   const targetAttempt = attempts[`${playback.pass}-${targetIndex}`];
   const targetHit = playback.running && Boolean(targetAttempt?.correctPitch);
   const futureAttacks = playback.running || playback.paused ? upcomingAttacks(beat, playback.entryBeat, playback.endBeat, lookahead,
@@ -193,7 +198,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   };
   const navigationBeat = playback.pendingBeat ?? Math.max(beat, playback.entryBeat);
   const goBack = () => playback.seek(adjacentLoopPoint(navigationBeat, -1, loopStart, loopEnd, score));
-  usePracticeShortcuts({beat: navigationBeat, loopStart, loopEnd, onToggle: () => void togglePlayback(), onSeek: playback.seek,
+  usePracticeShortcuts({beat: navigationBeat, loopStart, loopEnd, noteGroups, onToggle: () => void togglePlayback(), onSeek: playback.seek,
     onPlayChord: () => {if (!calibrating && harmony) void playback.playChord(harmony.notes.map(note => note.note));}});
   return (
     <Stack p={3} gap={4} maxWidth="1200px" mx="auto" fontFamily="'JetBrains Mono', monospace">
@@ -294,6 +299,11 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
             {Array.from({length: 9}, (_, count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </Flex>
+        <Flex as="label" gap={2} align="center">Note groups
+          <select aria-label="Note groups" disabled={!showMelody} value={noteGroupMode} onChange={event => setNoteGroupMode(event.target.value as NoteGroupMode)}>
+            <option value="off">Off</option><option value="beams">{hasWrittenBeams(exercise) ? 'Beams (as written)' : 'Beats (no beam data)'}</option><option value="contour">Contour (direction)</option>
+          </select>
+        </Flex>
         </Flex>
         <Text fontSize="xs" color="fg.muted" mt={2}>The brightest outline marks the actual next attack; later outlines are fainter. Repeated notes and loop passes remain separate attacks. Set 0 to hide.</Text>
       </Box>
@@ -313,7 +323,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         {playback.running && <PracticeJudgement attempt={lastAttempt ? {...lastAttempt, note: lastAttempt.note + writtenOffset} : null} freeTime={followMonophone} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={pitch ? pitch.note + writtenOffset : null} heardCents={pitch?.cents ?? null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
+      <PracticeHexMap group={showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={pitch ? pitch.note + writtenOffset : null} heardCents={pitch?.cents ?? null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
         cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}
@@ -323,7 +333,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         loop={loop} loopStart={loopStart} loopEnd={loopEnd} onLoopChange={setLoop} onLoopStart={changeLoopStart} onLoopEnd={changeLoopEnd} onSeek={playback.seek}
         onMelody={note => {if(calibrating)return;playback.seek(note.start); void playback.playNote(note.note + transpose - writtenOffset);}}
         onHarmony={chord => {if(calibrating)return;playback.seek(chord.start); void playback.playChord(chord.notes.map(note => note.note - writtenOffset));}}
-        attempts={writtenAttempts} listening={microphone.status === 'listening'} freeTime={followMonophone} analysis={analysis} phraseStarts={phraseStarts}/>
+        attempts={writtenAttempts} listening={microphone.status === 'listening'} freeTime={followMonophone} analysis={analysis} phraseStarts={phraseStarts} noteGroups={showMelody ? noteGroups : []}/>
       </PracticeScoreContext.Provider>
       <PracticeSuggestions data={history.data} running={playback.running} bpm={bpm} transpose={transpose}
         keyTranspose={keyTranspose} freeTime={followMonophone} allowLowOctaveUp={allowLowOctaveUp} onApply={applySuggestedLoop}/>
