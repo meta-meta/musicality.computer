@@ -11,7 +11,7 @@ export function readPracticeSettings(storage:Pick<Storage,'getItem'>):PracticeSe
   let value:Partial<PracticeSettings>|null=null;
   try {value=JSON.parse(storage.getItem(PRACTICE_SETTINGS_KEY)??'null');} catch { /* Try history even if preferences cannot be read. */ }
   const settings:PracticeSettings={
-    bpm:typeof value?.bpm==='number'&&Number.isFinite(value.bpm)&&value.bpm>=40&&value.bpm<=180?value.bpm:80,
+    bpm:typeof value?.bpm==='number'&&Number.isFinite(value.bpm)&&value.bpm>=10&&value.bpm<=420?value.bpm:80,
     loop:typeof value?.loop==='boolean'?value.loop:true,
     instrumentId:practiceInstrument(value?.instrumentId).id,
     concertKey:typeof value?.concertKey==='number'&&Number.isInteger(value.concertKey)&&value.concertKey>=0&&value.concertKey<12?value.concertKey:null,
@@ -48,7 +48,7 @@ export function usePracticeSettings() {
   },[settings]);
   const setBpm=useCallback((bpm:number)=>{
     if(!Number.isFinite(bpm))return;
-    const value=Math.max(40,Math.min(180,bpm));
+    const value=Math.max(10,Math.min(420,bpm));
     setSettings(current=>current.bpm===value?current:{...current,bpm:value});
   },[]);
   const setLoop=useCallback((loop:boolean)=>setSettings(current=>current.loop===loop?current:{...current,loop}),[]);

@@ -60,7 +60,7 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
     if (ids.has(id)) throw new Error('Duplicate session ID in the file.');
     ids.add(id);
     const settings: HistorySettings = {
-      bpm: number(config.bpm, 40, 180), transpose: number(config.transpose, -48, 48, true),
+      bpm: number(config.bpm, 10, 420), transpose: number(config.transpose, -48, 48, true),
       keyTranspose: config.keyTranspose === undefined ? 0 : number(config.keyTranspose, -6, 5, true),
       freeTime: bool(config.freeTime), allowLowOctaveUp: bool(config.allowLowOctaveUp), loop: bool(config.loop),
       loopStart: boundary(config.loopStart), loopEnd: boundary(config.loopEnd), latencyMs: number(config.latencyMs, -300, 500),

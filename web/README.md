@@ -580,7 +580,7 @@ speaker/headphone routing and permission prompts require a real-device test.
 
 ### Transport preferences and coverage filtering
 
-The playhead controls include loop, tempo (40–180 BPM), and monophone listening next
+The playhead controls include loop, tempo (10–420 BPM), and monophone listening next
 to play/pause. Both tempo controls and both loop toggles share the same state.
 Tempo and loop-enabled preferences persist across reloads/tunes in localStorage
 under `musicality.practice-settings.v1`; loop boundaries remain tune-specific and
@@ -848,7 +848,7 @@ hex-board marker. The fixtures are synthetic MIDI messages, not a real controlle
 Both tempo controls (Playback and beside the playhead) are a button showing the
 current BPM that opens the radial rate picker from the MusicalityVR interface lab
 (`musicality.meta/web`). One turn of the dial doubles the tempo (log₂), 12 o'clock
-is 60 BPM by default, and the range stays 40–180 BPM. Dragging on the track snaps to
+is 60 BPM by default, and the range is 10–420 BPM. Dragging on the track snaps to
 whole BPM; pulling outward gives finer steps, so tempos can now be fractional. Arrow
 keys step, Page Up/Down and the ÷ 2 / × 2 buttons halve or double within the range,
 clicking the value allows direct entry, and scrolling over a digit adjusts its place.

@@ -9,7 +9,7 @@ assert.deepEqual(read(storage),defaults);
 const preferences={bpm:95,loop:false,instrumentId:'flute',concertKey:3,register:-12};
 backing.set(key,JSON.stringify(preferences));assert.deepEqual(read(storage),preferences);
 backing.set(key,JSON.stringify({bpm:500,loop:'false',instrumentId:'invalid',concertKey:12,register:7}));assert.deepEqual(read(storage),defaults);
-for(const bpm of [40,180]) {backing.set(key,JSON.stringify({bpm}));assert.equal(read(storage).bpm,bpm);}
+for(const bpm of [10,40,180,420]) {backing.set(key,JSON.stringify({bpm}));assert.equal(read(storage).bpm,bpm);}
 for(const raw of ['null','{']) {backing.set(key,raw);assert.deepEqual(read(storage),defaults);}
 assert.deepEqual(read({getItem:()=>{throw new Error('Unavailable');}}),defaults);
 function session(id,date,settings={},extra={}) {

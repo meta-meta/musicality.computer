@@ -8,7 +8,7 @@ import type {RateUnit} from '../../components/ratePicker/frequency.ts';
 import '../../components/ratePicker/ratePicker.css';
 
 export const TEMPO_PICKER_KEY = 'musicality.tempo-picker.v1';
-const MIN_BPM = 40, MAX_BPM = 180;
+const MIN_BPM = 10, MAX_BPM = 420;
 type Saved = {settings: PickerSettings; unit: RateUnit};
 
 export function readTempoPicker(storage: Pick<Storage, 'getItem'>): Saved {
