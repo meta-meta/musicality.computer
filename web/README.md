@@ -878,7 +878,9 @@ shortcuts still work, and remain the keyboard route: the lane itself is pointer-
 **Save loop as section** keeps the current loop as a named section of the tune. Saved
 sections appear as a row of cards, each a small drawing of the section on the
 isomorphic layout: one hexagon per distinct cell, one arrow per move, and a dot on
-the first note. Choosing a card:
+the first note. Arrows, here and in note groups on the board, are colored in
+order: the hue wheel (OKHSL, light and mid-saturated) is divided into as many steps
+as there are arrows, so the first arrow is pink-red and the colors run once around. Choosing a card:
 
 - loads that section as the loop and moves the playhead to its start;
 - draws every note of the section on the hex board with arrows, like a note group,

@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const esbuild=require('esbuild');
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
-const built=esbuild.buildSync({stdin:{contents:`export * from './src/lumatone/practice/practiceSections.ts'; export * from './src/lumatone/practice/useSavedState.ts'; export * from './src/lumatone/practice/PracticeHexMap.tsx'; export {SectionPathGraphic} from './src/lumatone/practice/PracticeSections.tsx'; export {looksLikeWindController} from './src/lumatone/practice/ewi.ts'; export {practiceInstrument} from './src/lumatone/practice/instruments.ts';`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',define:{'import.meta.env.BASE_URL':JSON.stringify('/')},external:['react','react/jsx-runtime','@chakra-ui/react','next-themes','react-icons/lu']});
+const built=esbuild.buildSync({stdin:{contents:`export * from './src/lumatone/practice/practiceSections.ts'; export * from './src/lumatone/practice/useSavedState.ts'; export * from './src/lumatone/practice/PracticeHexMap.tsx'; export {SectionPathGraphic} from './src/lumatone/practice/PracticeSections.tsx'; export {looksLikeWindController} from './src/lumatone/practice/ewi.ts'; export {practiceInstrument} from './src/lumatone/practice/instruments.ts'; export {spreadOverlappingMoves} from './src/lumatone/practice/arrowLanes.ts';`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',define:{'import.meta.env.BASE_URL':JSON.stringify('/')},external:['react','react/jsx-runtime','@chakra-ui/react','next-themes','react-icons/lu']});
 const mod={exports:{}};new Function('module','exports','require',built.outputFiles[0].text)(mod,mod.exports,require);
 const api=mod.exports;
 const store=()=>{const backing=new Map();return {backing,getItem:key=>backing.get(key)??null,setItem:(key,value)=>backing.set(key,value)};};
@@ -66,6 +66,15 @@ const card=renderToStaticMarkup(React.createElement(api.SectionPathGraphic,{note
 assert.equal((card.match(/data-section-cell=/g)??[]).length,3);
 assert.equal((card.match(/data-section-move=/g)??[]).length,4);
 assert.ok(card.includes('data-section-path="5"'));
+// Arrows are colored in order: the hue wheel in as many steps as there are arrows.
+const moveColors=markup=>[...markup.matchAll(/data-move-color="(#[0-9a-f]{6})"/g)].map(match=>match[1]);
+const Color=require('colorjs.io').default;
+const hsl=moveColors(card).map(hex=>new Color(hex).to('okhsl').coords);
+assert.equal(new Set(moveColors(card)).size,4,'Each arrow has its own color');
+hsl.forEach(([hue,saturation,lightness],index)=>{
+  assert.ok(Math.abs(((hue-90*index+540)%360)-180)<3,`Arrow ${index} hue ${hue}`);
+  assert.ok(saturation>0.4&&saturation<0.7&&lightness>0.7,`Light and mid-saturated: ${saturation}, ${lightness}`);
+});
 assert.ok(!renderToStaticMarkup(React.createElement(api.SectionPathGraphic,{notes:[],transpose:0,id:'t'})).includes('<svg'),'An empty section draws nothing');
 
 // Board: a selected section dims every other cell but never a played or held one.
@@ -78,6 +87,7 @@ assert.ok(!plain.includes('data-dimmed'),'A note group alone dims nothing');
 const board=render({group,dimOutsideGroup:true});
 assert.equal((board.match(/data-group-cell=/g)??[]).length,3);
 assert.equal((board.match(/data-group-move=/g)??[]).length,4);
+assert.deepEqual(moveColors(board),moveColors(card),'The board and the card use the same order colors');
 const total=(board.match(/class="practice-hex"/g)??[]).length, dimmed=(board.match(/data-dimmed="true"/g)??[]).length;
 assert.ok(total-dimmed>=3&&total-dimmed<total/2,`Only section cells stay bright (${total-dimmed} of ${total})`);
 assert.ok(cell(board,64).some(tag=>!tag.includes('data-dimmed')),'Section cell stays bright');
@@ -90,3 +100,23 @@ assert.equal((inSection.match(/data-heard="true"/g)??[]).length,1);
 assert.ok(/<g transform="translate\(46\.7[^"]*,0\)"[^>]*data-heard="true"/.test(inSection),'A played section pitch lights the section cell');
 assert.ok(!render({dimOutsideGroup:true}).includes('data-dimmed'),'No section, no dimming');
 console.log('Passed EWI instrument, section cards and free-play dimming on the board.');
+
+// Arrows that would be drawn over one another are spread into parallel lanes.
+const P=(x,y)=>({x,y}), move=(from,to)=>({from,to});
+const spread=(moves,spacing=8,max=32)=>api.spreadOverlappingMoves(moves,spacing,max).map(shift=>[Math.round(shift.x*100)/100+0,Math.round(shift.y*100)/100+0]);
+assert.deepEqual(spread([move(P(0,0),P(10,0)),move(P(10,0),P(20,0)),move(P(0,0),P(0,10))]),[[0,0],[0,0],[0,0]],'Arrows that only touch or cross stay put');
+assert.deepEqual(spread([move(P(0,0),P(10,0)),move(P(10,0),P(0,0))]),[[0,-4],[0,4]],'A retraced move');
+assert.deepEqual(spread([move(P(0,0),P(10,0)),move(P(0,0),P(10,0)),move(P(10,0),P(0,0))]),[[0,-8],[0,0],[0,8]],'A repeated move gets its own lane too');
+assert.deepEqual(spread([move(P(0,0),P(20,0)),move(P(10,0),P(30,0)),move(P(40,0),P(50,0))]),[[0,-4],[0,4],[0,0]],'A partial overlap along the same line');
+assert.deepEqual(spread([move(P(0,0),P(10,0)),move(P(20,0),P(30,0)),move(P(0,0),P(30,0))]),[[0,-4],[0,-4],[0,4]],'Lanes are reused where arrows do not overlap');
+assert.deepEqual(spread([move(P(0,0),P(10,0)),move(P(0,5),P(10,5))]),[[0,0],[0,0]],'Parallel arrows on different lines are already apart');
+const many=spread(Array.from({length:9},()=>move(P(0,0),P(0,10))));
+assert.deepEqual([many[0],many[8]],[[16,0],[-16,0]],'Many arrows on one line are squeezed into the allowed width');
+assert.equal(new Set(many.map(String)).size,9);
+const diagonal=spread([move(P(0,0),P(30,40)),move(P(30,40),P(0,0))],10);
+assert.deepEqual(diagonal,[[4,-3],[-4,3]],'Shifts are perpendicular to the arrows');
+const repeated=[note(0,0,0),note(1,0,1),note(0,0,2),note(1,0,3),note(0,0,4)];
+const starts=markup=>[...markup.matchAll(/data-(?:group|section)-move="\d+"[^>]*><path d="M ([-\d.]+) ([-\d.]+) L/g)].map(match=>match[2]);
+assert.equal(new Set(starts(render({group:{notes:repeated,current:0}}))).size,4,'Four moves between two cells are all visible on the board');
+assert.equal(new Set(starts(renderToStaticMarkup(React.createElement(api.SectionPathGraphic,{notes:repeated,transpose:0,id:'t'})))).size,4,'and on the card');
+console.log('Passed arrow spreading: retraced, repeated and partially overlapping moves, squeezing, and crossing arrows left alone.');

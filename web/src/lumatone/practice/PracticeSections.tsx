@@ -1,12 +1,13 @@
 import {Box, Button, chakra, Flex, Text} from '@chakra-ui/react';
 import {useMemo} from 'react';
-import {getNoteColorHsl} from '../colors.ts';
+import {getNoteColorHsl, orderColor} from '../colors.ts';
 import {pointyHexAxialToPixel} from '../hexUtils.ts';
 import {pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {sectionNotes} from './practiceSections.ts';
+import {spreadOverlappingMoves} from './arrowLanes.ts';
 import type {PracticeSection} from './practiceSections.ts';
 
 const R = 10;
@@ -28,13 +29,14 @@ export function SectionPathGraphic({notes, transpose, id}: {notes: MelodyAttack[
       const to = visits[index + 1];
       return to && to.key !== from.key ? [{from, to, index}] : [];
     });
-    const segments = moves.map(({from, to, index}) => {
+    const shifts = spreadOverlappingMoves(moves, 3.2, 12);
+    const segments = moves.map(({from, to, index}, order) => {
       const distance = Math.hypot(to.x - from.x, to.y - from.y);
       const unit = {x: (to.x - from.x) / distance, y: (to.y - from.y) / distance};
-      const shift = moves.some(move => move.from.key === to.key && move.to.key === from.key) ? 2 : 0;
+      const shift = shifts[order];
       const padding = Math.min(R * 0.55, distance * 0.3);
-      const point = (along: number) => `${(from.x + unit.x * along - unit.y * shift).toFixed(2)} ${(from.y + unit.y * along + unit.x * shift).toFixed(2)}`;
-      return {index, d: `M ${point(padding)} L ${point(distance - padding)}`};
+      const point = (along: number) => `${(from.x + unit.x * along + shift.x).toFixed(2)} ${(from.y + unit.y * along + shift.y).toFixed(2)}`;
+      return {index, color: orderColor(order, moves.length), d: `M ${point(padding)} L ${point(distance - padding)}`};
     });
     const xs = cells.map(cell => cell.x), ys = cells.map(cell => cell.y);
     const left = Math.min(...xs) - R - 2, top = Math.min(...ys) - R - 2;
@@ -42,10 +44,13 @@ export function SectionPathGraphic({notes, transpose, id}: {notes: MelodyAttack[
   }, [notes, transpose]);
   if (!drawing.cells.length) return <div style={{width: 132, height: 72}}/>;
   return <svg data-section-path={notes.length} viewBox={drawing.viewBox} width={132} height={72} preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false" style={{display: 'block'}}>
-    <defs><marker id={id} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1.5 L 9 5 L 1 8.5 Z" fill="currentColor"/></marker></defs>
     {drawing.cells.map(cell => <polygon key={cell.key} data-section-cell={cell.note} points={hex} transform={`translate(${cell.x.toFixed(2)},${cell.y.toFixed(2)})`} fill={getNoteColorHsl(cell.note).toString({format: 'hex'})}/>)}
     <circle cx={drawing.first.x} cy={drawing.first.y} r={2.2} fill="currentColor"/>
-    {drawing.segments.map(segment => <path key={segment.index} data-section-move={segment.index} d={segment.d} fill="none" stroke="currentColor" strokeWidth={1} markerEnd={`url(#${id})`}/>)}
+    {drawing.segments.map(segment => <g key={segment.index} data-section-move={segment.index} data-move-color={segment.color}>
+      <path d={segment.d} fill="none" stroke="#111" strokeWidth={2.6} strokeOpacity={0.6} strokeLinecap="round"/>
+      <path d={segment.d} fill="none" stroke={segment.color} strokeWidth={1.3} markerEnd={`url(#${id}-${segment.index})`}/>
+      <marker id={`${id}-${segment.index}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1.5 L 9 5 L 1 8.5 Z" fill={segment.color}/></marker>
+    </g>)}
   </svg>;
 }
 

@@ -4,7 +4,7 @@ import type {NoteTrailSettings} from './noteTrail.ts';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useEffect, useId, useMemo, useRef, useState} from 'react';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
-import {getNoteColorHsl} from '../colors.ts';
+import {getNoteColorHsl, orderColor} from '../colors.ts';
 import {pointyHexAxialToPixel} from '../hexUtils.ts';
 import {pitchLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
@@ -17,6 +17,7 @@ import type {UpcomingAttack} from './lookahead.ts';
 import type {PolyphonicTuning} from './polyphonicTuning.ts';
 import {detectedChordCells, detectedPitchCell} from './detectedPitchCell.ts';
 import {transposePosition} from './transposition.ts';
+import {spreadOverlappingMoves} from './arrowLanes.ts';
 
 const RADIUS = 27;
 const referenceCells = Array.from({length: 10}, (_, row) => Array.from({length: 11}, (_, col) => {
@@ -115,8 +116,8 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const arrowUnit = arrowFrom && nextCell && arrowDistance ? {x: (nextCell.x - arrowFrom.x) / arrowDistance, y: (nextCell.y - arrowFrom.y) / arrowDistance} : {x: 0, y: 1};
   const arrowPadding = Math.min(RADIUS + 5, arrowDistance * 0.25);
   const arrowPath = arrowFrom && nextCell ? `M ${arrowFrom.x + arrowUnit.x * arrowPadding} ${arrowFrom.y + arrowUnit.y * arrowPadding} L ${nextCell.x - arrowUnit.x * arrowPadding} ${nextCell.y - arrowUnit.y * arrowPadding}` : '';
-  // Group path: one arrow per move between different cells. A move that is
-  // later retraced in the opposite direction is shifted sideways so both show.
+  // Group path: one arrow per move between different cells. Moves that would be
+  // drawn over one another are spread into parallel lanes.
   const groupCells = group ? group.notes.map(note => cells.find(cell => atTarget(cell, note))) : [];
   const groupCellSet = new Set(groupCells);
   // In free play there is no single prompt, so a played pitch is shown on the
@@ -126,13 +127,13 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     const to = groupCells[index + 1];
     return from && to && from !== to ? [{from, to, index}] : [];
   });
-  const groupSegments = groupMoves.map(({from, to, index}) => {
+  const groupShifts = spreadOverlappingMoves(groupMoves, 8, 32);
+  const groupSegments = groupMoves.map(({from, to, index}, order) => {
     const distance = Math.hypot(to.x - from.x, to.y - from.y);
     const unit = {x: (to.x - from.x) / distance, y: (to.y - from.y) / distance};
-    const retraced = groupMoves.some(move => move.from === to && move.to === from);
-    const shift = retraced ? 4.5 : 0, padding = Math.min(RADIUS * 0.62, distance * 0.3);
-    const point = (along: number) => `${from.x + unit.x * along - unit.y * shift} ${from.y + unit.y * along + unit.x * shift}`;
-    return {index, played: index < (group?.current ?? 0), d: `M ${point(padding)} L ${point(distance - padding)}`};
+    const shift = groupShifts[order], padding = Math.min(RADIUS * 0.62, distance * 0.3);
+    const point = (along: number) => `${from.x + unit.x * along + shift.x} ${from.y + unit.y * along + shift.y}`;
+    return {index, color: orderColor(order, groupMoves.length), played: index < (group?.current ?? 0), d: `M ${point(padding)} L ${point(distance - padding)}`};
   });
   const midiCells = new Set(midiNotes.map(note => {
     const matches = cells.filter(cell => cell.note === note);
@@ -162,8 +163,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     ?? previewCells.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
   return (
     <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected instrument note; dot above center means sharp, below means flat." viewBox={`${viewLeft} ${top} ${viewWidth} ${height}`} style={{width: '100%', height: 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
-      <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke={targetColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></marker>
-        <marker id={`${arrowId}-group`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1.5 L 9 5 L 1 8.5 Z" fill={targetColor}/></marker></defs>
+      <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke={targetColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></marker></defs>
       <style>{`
         .practice-hex:focus { outline: none; }
         .practice-hex:focus-visible > polygon:first-child,
@@ -266,9 +266,10 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
         {[...new Set(groupCells)].map(cell => cell && <polygon key={`${cell.q},${cell.r}`} data-group-cell={cell.note} points={points}
           transform={`translate(${cell.x},${cell.y}) scale(0.93)`} fill="none" stroke={targetColor} strokeWidth={1}
           opacity={groupCells.lastIndexOf(cell) < group.current ? 0.2 : 0.55} vectorEffect="non-scaling-stroke"/>)}
-        {groupSegments.map(segment => <g key={segment.index} data-group-move={segment.index} data-played={segment.played ? 'true' : undefined} opacity={segment.played ? 0.25 : 0.9}>
-          <path d={segment.d} fill="none" stroke={isLight ? '#fff' : '#111'} strokeWidth={4} strokeOpacity={0.55} strokeLinecap="round"/>
-          <path d={segment.d} fill="none" stroke={targetColor} strokeWidth={1.5} markerEnd={`url(#${arrowId}-group)`}/>
+        {groupSegments.map(segment => <g key={segment.index} data-group-move={segment.index} data-move-color={segment.color} data-played={segment.played ? 'true' : undefined} opacity={segment.played ? 0.25 : 1}>
+          <path d={segment.d} fill="none" stroke="#111" strokeWidth={5} strokeOpacity={0.6} strokeLinecap="round"/>
+          <path d={segment.d} fill="none" stroke={segment.color} strokeWidth={2.2} markerEnd={`url(#${arrowId}-group-${segment.index})`}/>
+          <marker id={`${arrowId}-group-${segment.index}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1.5 L 9 5 L 1 8.5 Z" fill={segment.color} stroke="#111" strokeOpacity={0.6} strokeWidth={0.8} strokeLinejoin="round"/></marker>
         </g>)}
       </g>}
       {showArrow && arrowDistance > 1 && <g data-next-note-arrow="true" role="img" aria-label={`Next note: ${pitchLabel(nextCell.note, mode)}`} pointerEvents="none" opacity={0.4 + 0.6 * (1 - nextAttack.beatsAway)}>

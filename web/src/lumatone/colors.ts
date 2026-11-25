@@ -17,6 +17,13 @@ export const getNoteColorHsl = (n: number): Color => {
   });
 };
 
+// Colors that show order in a run of moves: the hue wheel divided into as many
+// steps as there are moves, light and mid-saturated so they read on any pitch color.
+export const orderColor = (index: number, count: number): string => new Color({
+  space: 'okhsl',
+  coords: [360 * index / Math.max(1, count), 0.65, 0.76],
+}).toString({format: 'hex'});
+
 export const colorGrey = new Color({
   space: 'okhsl',
   coords: [
