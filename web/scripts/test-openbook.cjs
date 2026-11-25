@@ -34,7 +34,7 @@ const {privateDataPlugin, privateRoot} = require('./private-data-test.cjs');
   for (const score of scores) {
     assert.equal(score.bars[0], 0, score.id);
     assert.ok(score.end > 0 && score.melody.length, score.id);
-    if (!score.chords.length) assert.ok(['Effendi', 'Wikifonia'].includes(score.collection), score.id);
+    if (!score.chords.length) assert.ok(['Effendi', 'Wikifonia', 'MuseScore'].includes(score.collection), score.id);
     for (const sequence of [score.melody, score.chords]) {
       sequence.forEach((event, index) => {
         assert.ok(event.duration > 0 && event.start >= score.start - 1e-6, score.id);

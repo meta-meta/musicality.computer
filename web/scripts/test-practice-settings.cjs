@@ -35,4 +35,11 @@ setHistory([session('unknown','2026-11-02T10:00:00Z',{instrumentId:'future-instr
 backing.set(key,'{');assert.equal(read(storage).bpm,110,'Malformed preferences do not block history');
 backing.set(key,JSON.stringify(preferences));backing.set(historyKey,'{');assert.deepEqual(read(storage),preferences);
 setHistory([]);assert.deepEqual(read(storage),preferences);
-console.log('Passed practice settings: preferences, latest activity, key/register derivation, legacy instruments and unchanged history.');
+// An edit made after the last recorded session is kept; an older one yields to it.
+setHistory([latest]);
+backing.set(key,JSON.stringify({...preferences,instrumentId:'ewi',savedAt:Date.parse('2026-11-02T10:00:01Z')}));
+assert.deepEqual(read(storage),{...preferences,instrumentId:'ewi'},'A newer edit wins over history');
+backing.set(key,JSON.stringify({...preferences,instrumentId:'ewi',savedAt:Date.parse('2026-11-02T09:59:59Z')}));
+assert.equal(read(storage).instrumentId,'tenor-sax','A newer session wins over an older edit');
+backing.set(key,JSON.stringify({...preferences,savedAt:'soon'}));assert.equal(read(storage).bpm,110,'An unreadable edit time counts as old');
+console.log('Passed practice settings: preferences, latest activity, newer edits, key/register derivation, legacy instruments and unchanged history.');

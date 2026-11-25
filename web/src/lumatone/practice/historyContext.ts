@@ -5,7 +5,7 @@ import type {PracticeSession} from './practiceHistory.ts';
 
 const shortNames: Record<string, string> = {flute: 'Flute', piccolo: 'Picc.', 'alto-flute': 'Alto fl.',
   'bass-flute': 'Bass fl.', bb: 'Cl. B♭', 'bb-trumpet': 'Tpt. B♭', 'soprano-sax': 'Sop.sax',
-  'a-clarinet': 'Cl. A', 'alto-sax': 'Alto sax', 'tenor-sax': 'Tenor', 'baritone-sax': 'Bari sax', horn: 'Horn F', guitar: 'Guitar'};
+  'a-clarinet': 'Cl. A', 'alto-sax': 'Alto sax', 'tenor-sax': 'Tenor', 'baritone-sax': 'Bari sax', horn: 'Horn F', guitar: 'Guitar', ewi: 'EWI'};
 
 export function historySessionContext(session: PracticeSession, mode: LabelMode) {
   const id = session.settings.instrumentId;

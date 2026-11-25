@@ -8,6 +8,7 @@ function instrumentIconKind(id?: string) {
   if (id === 'bb-trumpet') return 'trumpet';
   if (id === 'guitar') return 'guitar';
   if (id === 'horn') return 'horn';
+  if (id === 'ewi') return 'ewi';
   return 'unknown';
 }
 
@@ -39,6 +40,10 @@ export function InstrumentIcon({instrumentId, size = 18, ...props}: SVGProps<SVG
       {kind === 'horn' && <>
         <path d="M12 3H8L6 6l2 3a7 7 0 1 0 11 7l-4-4 7-2-1 11-4-3"/>
         <circle cx={10} cy={15} r={3.5}/><path d="M10 9V7h5v6m-3-5v5m2-5v5"/>
+      </>}
+      {kind === 'ewi' && <>
+        <path d="M10 2h4l1 3v14l-1 3h-4l-1-3V5Z"/>
+        <path d="M12 8h.01M12 11h.01M12 14h.01M12 17h.01" strokeWidth={2.2}/>
       </>}
       {kind === 'unknown' && <><circle cx={12} cy={12} r={9}/><path d="M9.5 9a2.5 2.5 0 1 1 4 2l-1.5 1.5V14M12 17h.01"/></>}
     </g>

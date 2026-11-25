@@ -18,6 +18,9 @@ import {PracticeLyrics} from './lumatone/practice/PracticeLyrics.tsx';
 import {PracticeTempoInput} from './lumatone/practice/PracticeTempoInput.tsx';
 import {COUNT_IN_BEATS} from './lumatone/practice/transport.ts';
 import {usePracticeSettings} from './lumatone/practice/usePracticeSettings.ts';
+import {booleanRecord, isBoolean, numberBetween, oneOf, useSavedState} from './lumatone/practice/useSavedState.ts';
+import {nextSectionName, readScoreSections, sectionNotes, writeScoreSections} from './lumatone/practice/practiceSections.ts';
+import {PracticeSections} from './lumatone/practice/PracticeSections.tsx';
 import {PracticeTimeline} from './lumatone/practice/PracticeTimeline.tsx';
 import {PracticeAnalysisControls} from './lumatone/practice/PracticeAnalysisControls.tsx';
 import {defaultAnalysis, defaultPhraseStarts} from './lumatone/practice/analysis.ts';
@@ -34,9 +37,10 @@ import MidiConfig from './MidiConfig.tsx';
 import {AccordionItem, AccordionItemContent, AccordionItemTrigger, AccordionRoot} from './components/chakra-ui/accordion.tsx';
 import {usePracticeMidi} from './lumatone/practice/usePracticeMidi.ts';
 import {useEwiInput} from './lumatone/practice/useEwiInput.ts';
-import {DEFAULT_EWI_BEND_RANGE, EWI_BEND_RANGES} from './lumatone/practice/ewi.ts';
+import {DEFAULT_EWI_BEND_RANGE, EWI_BEND_RANGES, looksLikeWindController} from './lumatone/practice/ewi.ts';
 import type {Entrance} from './lumatone/practice/pitch.ts';
-import {useAppSelector} from './redux/hooks.ts';
+import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
+import {ewiInSet} from './redux/midiReducer.ts';
 import {useColorModeValue} from './components/chakra-ui/color-mode.tsx';
 import {instrumentRangeFit, melodyPitchBounds, practiceKeyTranspose, instrumentPitchLabel, practiceInstrument, transposingInstruments, writtenPracticeScore} from './lumatone/practice/instruments.ts';
 import {transposeChord} from './lumatone/practice/transposition.ts';
@@ -69,41 +73,64 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const rangeLabel = (fit: typeof range) => !fit ? '— no melody' : fit.fits ? '✓ fits' : fit.tooLow && fit.tooHigh ? '⚠ too low & high' : fit.tooLow ? '⚠ too low' : '⚠ too high';
   const transpose = register + keyTranspose;
   const pieceHarmonies = useMemo(() => harmonies.map(chord => transposeChord(chord, keyTranspose)), [keyTranspose, harmonies]);
-  const [guide, setGuide] = useState(true);
-  const [metronome, setMetronome] = useState(false);
-  const [followMonophone, setFollowMonophone] = useState(false);
-  const [allowLowOctaveUp, setAllowLowOctaveUp] = useState(true);
-  const [showLyrics, setShowLyrics] = useState(true);
-  const [showMelody, setShowMelody] = useState(true);
-  const [showHarmony, setShowHarmony] = useState(score.chords.length > 0);
-  const [showMelodyRoles, setShowMelodyRoles] = useState(score.chords.length > 0);
-  const [showChordTransitions, setShowChordTransitions] = useState(true);
-  const [lookahead, setLookahead] = useState(3);
-  const [noteGroupMode, setNoteGroupMode] = useState<NoteGroupMode>('off');
+  // Saved preferences. Chord options stay saved while a tune without chords is open.
+  const hasChords = score.chords.length > 0;
+  const [guide, setGuide] = useSavedState('guide', true, isBoolean);
+  const [metronome, setMetronome] = useSavedState('metronome', false, isBoolean);
+  const [followMonophone, setFollowMonophone] = useSavedState('freeTime', false, isBoolean);
+  const [allowLowOctaveUp, setAllowLowOctaveUp] = useSavedState('allowLowOctaveUp', true, isBoolean);
+  const [showLyrics, setShowLyrics] = useSavedState('showLyrics', true, isBoolean);
+  const [showMelody, setShowMelody] = useSavedState('showMelody', true, isBoolean);
+  const [wantHarmony, setShowHarmony] = useSavedState('showHarmony', true, isBoolean);
+  const showHarmony = wantHarmony && hasChords;
+  const [wantMelodyRoles, setShowMelodyRoles] = useSavedState('showMelodyRoles', true, isBoolean);
+  const showMelodyRoles = wantMelodyRoles && hasChords;
+  const [showChordTransitions, setShowChordTransitions] = useSavedState('showChordTransitions', true, isBoolean);
+  const [lookahead, setLookahead] = useSavedState('lookahead', 3, numberBetween(0, 8, true));
+  const [noteGroupMode, setNoteGroupMode] = useSavedState<NoteGroupMode>('noteGroups', 'off', oneOf('off', 'beams', 'contour'));
   const noteGroups = useMemo(() => melodyGroups(exercise, noteGroupMode, score.bars), [exercise, noteGroupMode, score.bars]);
-  const [analysis, setAnalysis] = useState(defaultAnalysis);
+  const [analysis, setAnalysis] = useSavedState('analysis', defaultAnalysis, booleanRecord(Object.keys(defaultAnalysis)));
   const [phraseStarts, setPhraseStarts] = useState(defaultPhraseStarts);
-  const [harmonySound, setHarmonySound] = useState(score.chords.length > 0);
-  const [harmonyVolume, setHarmonyVolume] = useState(35);
-  const [loopStart, setLoopStart] = useState<number | null>(null);
-  const [loopEnd, setLoopEnd] = useState<number | null>(null);
-  const changeLoopStart = (value: number | null) => {
-    const point = value === null ? null : Math.max(START, Math.min(END - 1 / 6, value));
-    setLoopStart(point);
-    if (point !== null && loopEnd !== null && point >= loopEnd) setLoopEnd(null);
-  };
-  const changeLoopEnd = (value: number | null) => {
-    const point = value === null ? null : Math.max(START + 1 / 6, Math.min(END, value));
-    setLoopEnd(point);
-    if (point !== null && loopStart !== null && point <= loopStart) setLoopStart(null);
-  };
-  const [mode, setMode] = useState<LabelMode>('dozenal');
-  const [latency, setLatency] = useState(()=>{
-    try {return latestSavedCalibration(window.localStorage)?.correction??0;} catch {return 0;}
+  const [wantHarmonySound, setHarmonySound] = useSavedState('harmonySound', true, isBoolean);
+  const harmonySound = wantHarmonySound && hasChords;
+  const [harmonyVolume, setHarmonyVolume] = useSavedState('harmonyVolume', 35, numberBetween(0, 100));
+  // Loop points and saved sections belong to the tune. Moving a loop point by
+  // hand leaves the selected section, which keeps its own saved range.
+  const [saved, setSaved] = useState(() => {
+    try {return readScoreSections(window.localStorage, score.id, {start: START, end: END});}
+    catch {return readScoreSections({getItem: () => null}, score.id, {start: START, end: END});}
   });
+  useEffect(() => {
+    try {writeScoreSections(window.localStorage, score.id, saved);} catch { /* Sections still work for this visit. */ }
+  }, [saved, score.id]);
+  const {loopStart, loopEnd} = saved;
+  const changeLoopStart = (value: number | null) => setSaved(current => {
+    const point = value === null ? null : Math.max(START, Math.min(END - 1 / 6, value));
+    return {...current, selected: null, loopStart: point, loopEnd: point !== null && current.loopEnd !== null && point >= current.loopEnd ? null : current.loopEnd};
+  });
+  const changeLoopEnd = (value: number | null) => setSaved(current => {
+    const point = value === null ? null : Math.max(START + 1 / 6, Math.min(END, value));
+    return {...current, selected: null, loopEnd: point, loopStart: point !== null && current.loopStart !== null && point <= current.loopStart ? null : current.loopStart};
+  });
+  const setLoopRange = useCallback((start: number, end: number) => setSaved(current => ({...current, selected: null, loopStart: start, loopEnd: end})), []);
+  const [mode, setMode] = useSavedState<LabelMode>('labels', 'dozenal', oneOf('dozenal', 'jazz'));
+  const calibrated = useMemo(() => {
+    try {return latestSavedCalibration(window.localStorage)?.correction ?? 0;} catch {return 0;}
+  }, []);
+  const [latency, setLatency] = useSavedState('latency', calibrated, numberBetween(-300, 500));
   const [calibrating,setCalibrating] = useState(false);
-  const [inputMode, setInputMode] = useState<'monophonic' | 'polyphonic' | 'ewi'>('monophonic');
-  const ewiSelected = useAppSelector(s => Boolean(s.midi.ewiIn));
+  // The EWI is an instrument: choosing it switches input to the MIDI wind controller.
+  const [detection, setDetection] = useSavedState<'monophonic' | 'polyphonic'>('detection', 'monophonic', oneOf('monophonic', 'polyphonic'));
+  const inputMode: 'monophonic' | 'polyphonic' | 'ewi' = instrumentId === 'ewi' ? 'ewi' : detection;
+  const dispatch = useAppDispatch();
+  const ewiIn = useAppSelector(s => s.midi.ewiIn);
+  const midiInputs = useAppSelector(s => s.midi.inputs);
+  const ewiSelected = Boolean(ewiIn);
+  useEffect(() => {
+    if (instrumentId !== 'ewi' || (ewiIn && midiInputs.some(input => input.value === ewiIn))) return;
+    const found = midiInputs.find(input => looksLikeWindController(input.label));
+    if (found) dispatch(ewiInSet(found.value));
+  }, [instrumentId, ewiIn, midiInputs, dispatch]);
   const [ewiBendRange, setEwiBendRange] = useState(() => {
     try {const saved = Number(window.localStorage.getItem('musicality.ewi-bend-range.v1')); return EWI_BEND_RANGES.includes(saved) ? saved : DEFAULT_EWI_BEND_RANGE;} catch {return DEFAULT_EWI_BEND_RANGE;}
   });
@@ -166,14 +193,36 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const microphone = inputMode === 'polyphonic' ? polyphone : inputMode === 'ewi' ? ewi : monophone;
   const {running, stop} = playback;
   const {finish: finishHistory} = history;
+  // An input that is no longer the chosen one must not keep the microphone open.
+  const stopMicrophones = useRef(() => {});
+  stopMicrophones.current = () => {monophone.stop(); polyphone.stop();};
+  useEffect(() => stopMicrophones.current(), [inputMode]);
+  const selectedSection = saved.sections.find(section => section.id === saved.selected) ?? null;
+  const sectionRange = selectedSection ? sectionNotes(exercise, selectedSection.start, selectedSection.end) : null;
+  const canSaveSection = (loopStart !== null || loopEnd !== null) && sectionNotes(exercise, loopStart ?? START, loopEnd ?? END).notes.length > 0;
+  const selectSection = (id: string | null) => {
+    const section = saved.sections.find(item => item.id === id);
+    stop(); finishHistory();
+    setSaved(current => section ? {...current, selected: section.id, loopStart: section.start, loopEnd: section.end} : {...current, selected: null});
+    if (section) {setLoop(true); playback.seek(section.start);}
+  };
+  const saveSection = () => {
+    if (!canSaveSection) return;
+    const section = {id: `s${Date.now().toString(36)}`, name: nextSectionName(saved.sections), start: loopStart ?? START, end: loopEnd ?? END};
+    stop(); finishHistory();
+    setSaved(current => ({...current, sections: [...current.sections, section], selected: section.id, loopStart: section.start, loopEnd: section.end}));
+    setLoop(true); playback.seek(section.start);
+  };
+  const renameSection = (id: string, name: string) => setSaved(current => ({...current, sections: current.sections.map(section => section.id === id ? {...section, name} : section)}));
+  const deleteSection = (id: string) => setSaved(current => ({...current, sections: current.sections.filter(section => section.id !== id), selected: current.selected === id ? null : current.selected}));
   // A paused run must not acquire judgements from a different instrument.
   useEffect(() => {stop(); finishHistory();}, [instrumentId, stop, finishHistory]);
   const suggestionSeek = useRef(playback.seek); suggestionSeek.current = playback.seek;
   const applySuggestedLoop = useCallback((start: number,end: number) => {
     stop(); finishHistory();
-    setLoopStart(start); setLoopEnd(end); setLoop(true);
+    setLoopRange(start, end); setLoop(true);
     suggestionSeek.current(start);
-  },[stop,finishHistory,setLoop]);
+  },[stop,finishHistory,setLoop,setLoopRange]);
   useEffect(() => {
     if (followMonophone && running && microphone.status === 'off') stop();
   }, [followMonophone, running, microphone.status, stop]);
@@ -198,6 +247,9 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const writtenHarmony = harmony ? writtenHarmonies[pieceHarmonies.indexOf(harmony)] : undefined;
   const writtenTarget = targetIndex >= 0 ? writtenScore.melody[targetIndex] : undefined;
   const writtenAttempts = useMemo(() => Object.fromEntries(Object.entries(attempts).map(([id, attempt]) => [id, {...attempt, note: attempt.note + writtenOffset}])), [attempts, writtenOffset]);
+  // A selected section is drawn like a note group, whether or not practice is running.
+  const sectionGroup = sectionRange && sectionRange.notes.length ? {notes: writtenScore.melody.slice(sectionRange.first, sectionRange.first + sectionRange.notes.length),
+    current: playback.running || playback.paused ? Math.max(0, targetIndex - sectionRange.first) : 0} : undefined;
   const togglePlayback = async () => {
     if (microphone.status === 'starting' || calibrating) return;
     if (playback.running) {playback.pause(); return;}
@@ -264,13 +316,13 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Instrument input</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={1} direction="column" width="100%" minWidth={0}>Audio detection
-          <select aria-label="Audio detection" value={inputMode} disabled={playback.running || calibrating || microphone.status === 'starting'} onChange={event => {
+          <select aria-label="Audio detection" value={inputMode} onChange={event => {
             monophone.stop(); polyphone.stop(); playback.stop(); history.finish();
-            setInputMode(event.target.value as 'monophonic' | 'polyphonic' | 'ewi');
-          }}>
+            setDetection(event.target.value === 'polyphonic' ? 'polyphonic' : 'monophonic');
+          }} disabled={playback.running || calibrating || microphone.status === 'starting' || instrumentId === 'ewi'}>
             <option value="monophonic">Single note / precise tuner</option>
             <option value="polyphonic">Guitar / polyphonic (experimental)</option>
-            <option value="ewi">EWI / MIDI wind controller</option>
+            {instrumentId === 'ewi' && <option value="ewi">MIDI wind controller (set by the EWI instrument)</option>}
           </select>
         </Flex>
         {inputMode === 'ewi' && <Flex gap={2} wrap="wrap" align="center" width="100%">
@@ -304,7 +356,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}><input type="checkbox" checked={guide} onChange={event => setGuide(event.target.checked)}/>Guide sound</Flex>
         <Flex as="label" gap={2}><input type="checkbox" checked={metronome} disabled={followMonophone} onChange={event => setMetronome(event.target.checked)}/>Metronome</Flex>
-        <Flex as="label" gap={2}><input type="checkbox" checked={harmonySound} disabled={!score.chords.length} onChange={event => setHarmonySound(event.target.checked)}/>Chord sound</Flex>
+        <Flex as="label" gap={2}><input type="checkbox" checked={harmonySound} disabled={!hasChords} onChange={event => setHarmonySound(event.target.checked)}/>Chord sound</Flex>
         <Flex as="label" gap={2} align="center" fontSize="sm">Chord volume
           <input aria-label="Chord volume" type="range" min={0} max={100} value={harmonyVolume} style={{width: 90}} onChange={event => setHarmonyVolume(Number(event.target.value))}/>
         </Flex>
@@ -349,15 +401,17 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         {playback.running && <PracticeJudgement attempt={lastAttempt ? {...lastAttempt, note: lastAttempt.note + writtenOffset} : null} freeTime={followMonophone} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap group={showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={inputMode === 'ewi' ? ewi.reading ? ewi.reading.note + writtenOffset : null : pitch ? pitch.note + writtenOffset : null} heardCents={inputMode === 'ewi' ? null : pitch?.cents ?? null}
+      <PracticeHexMap dimOutsideGroup={Boolean(sectionGroup)} group={sectionGroup ?? (showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined)} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={inputMode === 'ewi' ? ewi.reading ? ewi.reading.note + writtenOffset : null : pitch ? pitch.note + writtenOffset : null} heardCents={inputMode === 'ewi' ? null : pitch?.cents ?? null}
         heardBreath={inputMode === 'ewi' && ewi.reading ? ewi.reading.breath : null} heardBend={inputMode === 'ewi' && ewi.reading ? ewi.reading.bend : null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
         cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}
+      <PracticeSections sections={saved.sections} selected={saved.selected} melody={writtenScore.melody} transpose={transpose} mode={mode} disabled={playback.running || calibrating}
+        canSave={canSaveSection} onSave={saveSection} onSelect={selectSection} onRename={renameSection} onDelete={deleteSection}/>
       <PracticeTimeline beat={beat} entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} running={playback.running}
         onTogglePlayback={() => void togglePlayback()} onToggleListening={toggleListening} microphoneStarting={microphone.status==='starting'} onBpmChange={setBpm} onBack={goBack} transportDisabled={microphone.status === 'starting' || calibrating}
         pendingBeat={playback.pendingBeat} target={writtenTarget} harmony={writtenHarmony} mode={mode} transpose={transpose} keyTranspose={keyTranspose} notationOffset={writtenOffset} pieceHarmonies={writtenHarmonies} showHarmony={showHarmony} showMelody={showMelody} showMelodyRoles={showMelody && showMelodyRoles} showChordTransitions={showChordTransitions} bpm={bpm}
-        loop={loop} loopStart={loopStart} loopEnd={loopEnd} onLoopChange={setLoop} onLoopStart={changeLoopStart} onLoopEnd={changeLoopEnd} onSeek={playback.seek}
+        loop={loop} loopStart={loopStart} loopEnd={loopEnd} onLoopChange={setLoop} onLoopStart={changeLoopStart} onLoopEnd={changeLoopEnd} onLoopRange={setLoopRange} onSeek={playback.seek}
         onMelody={note => {if(calibrating)return;playback.seek(note.start); void playback.playNote(note.note + transpose - writtenOffset);}}
         onHarmony={chord => {if(calibrating)return;playback.seek(chord.start); void playback.playChord(chord.notes.map(note => note.note - writtenOffset));}}
         attempts={writtenAttempts} listening={microphone.status === 'listening'} freeTime={followMonophone} analysis={analysis} phraseStarts={phraseStarts} noteGroups={showMelody ? noteGroups : []}/>
@@ -379,7 +433,7 @@ export default function LumatonePractice() {
 
 function PracticeLibrary() {
   const settings = usePracticeSettings();
-  const [selected, setSelected] = useState(practiceScores[0].id);
+  const [selected, setSelected] = useSavedState('tune', practiceScores[0].id, value => practiceScores.some(piece => piece.id === value));
   const [score, setScore] = useState(stellaScore);
   const [loadError, setLoadError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -393,7 +447,7 @@ function PracticeLibrary() {
     return () => controller.abort();
   }, [selected, retry]);
   const [search, setSearch] = useState('');
-  const [collection, setCollection] = useState('all');
+  const [collection, setCollection] = useSavedState('collection', 'all', oneOf('all', 'custom', 'OpenBook', 'Effendi', 'Wikifonia'));
   const failures = [...(importReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'OpenBook'})), ...(effendiReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'Effendi'})), ...(wikifoniaReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'Wikifonia'}))];
   const matches = practiceScores.filter(piece => piece.id === selected || ((collection === 'all' || piece.collection === collection || (collection === 'custom' && !piece.collection)) && `${piece.title} ${piece.composer} ${piece.edition ?? ''}`.toLowerCase().includes(search.toLowerCase())));
   return <>

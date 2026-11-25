@@ -88,7 +88,7 @@ function MidiConfig() {
 
         <Field
           label="EWI In"
-          helperText="A MIDI wind controller for monophone practice: choose EWI under Instrument input → Audio detection."
+          helperText="A MIDI wind controller for monophone practice: choose EWI as the practice instrument. A port that looks like a wind controller is selected automatically."
         >
           <MidiDeviceSelect
             selectionType={SelectionType.Input}

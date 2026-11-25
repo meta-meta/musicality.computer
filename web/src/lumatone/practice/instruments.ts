@@ -23,6 +23,10 @@ export const transposingInstruments = [
   // Standard seven-string B1–E4 tuning, 24 frets; written one octave up.
   {id: 'guitar', label: 'Guitar (7 string)', soundingOffset: -12, writtenLow: 47, writtenHigh: 100},
   {id: 'horn', label: 'Horn in F', soundingOffset: -7, writtenLow: 42, writtenHigh: 84},
+  // A MIDI wind controller at concert pitch. The limits are a nominal span for
+  // the octave rollers, not a measured range; transposition set on the
+  // controller itself is not known here. Selecting it switches input to EWI In.
+  {id: 'ewi', label: 'EWI / MIDI wind controller', soundingOffset: 0, writtenLow: 24, writtenHigh: 108},
 ] as const;
 export type InstrumentId = typeof transposingInstruments[number]['id'];
 export type TransposingInstrument = typeof transposingInstruments[number];

@@ -64,3 +64,9 @@ export class EwiTracker {
     return {note, bend, breath, pitch: {frequency: 440 * 2 ** ((midi - 69) / 12), note: nearest, cents: (midi - nearest) * 100, clarity: 1, rms: breath}};
   }
 }
+
+// A guess from the port name only, used to preselect EWI In; the user can
+// always choose another input under MIDI configuration.
+export function looksLikeWindController(label: string): boolean {
+  return /\b(ewi|aerophone|nuwind|nurad|sylphyo|travel ?sax|wx-?[57]|yds-?\d+|elefue|robkoo|wind ?(controller|synth|instrument))/i.test(label);
+}

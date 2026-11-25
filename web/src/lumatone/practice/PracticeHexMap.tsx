@@ -33,7 +33,9 @@ const points = Array.from({length: 6}, (_, index) => {
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, heardBreath = null, heardBend = null}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+  // Free play on a saved section: every cell outside the group is dimmed.
+  dimOutsideGroup?: boolean;
   // Wind-controller input: breath 0–1 sizes a marker on the fingered note's cell,
   // and bend (semitones) slides it along the whole-tone axis of the layout.
   heardBreath?: number | null; heardBend?: number | null;
@@ -116,6 +118,10 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   // Group path: one arrow per move between different cells. A move that is
   // later retraced in the opposite direction is shifted sideways so both show.
   const groupCells = group ? group.notes.map(note => cells.find(cell => atTarget(cell, note))) : [];
+  const groupCellSet = new Set(groupCells);
+  // In free play there is no single prompt, so a played pitch is shown on the
+  // section's own cell for it when there is one.
+  const promptCell = (dimOutsideGroup ? groupCells.find(cell => cell && cell.note === heard) : undefined) ?? targetCell ?? null;
   const groupMoves = groupCells.flatMap((from, index) => {
     const to = groupCells[index + 1];
     return from && to && from !== to ? [{from, to, index}] : [];
@@ -145,7 +151,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
   const previousHeardCell = useRef<{x: number; y: number} | null>(null);
   const heardCell = detectedPitchCell(cells, heard, previousHeardCell.current,
-    {left: viewLeft, top, width: viewWidth, height}, RADIUS, targetCell ?? null);
+    {left: viewLeft, top, width: viewWidth, height}, RADIUS, promptCell);
   useEffect(() => {
     // Keep the anchor through silence between articulations; update only after
     // a committed render, without adding state updates to the audio frame loop.
@@ -183,8 +189,9 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
         const chordTone = harmony?.notes.find(note => note.at.q === cell.q && note.at.r === cell.r);
         const root = harmony?.notes.find(note => note.root);
         const guideTone = showGuideTones && chordTone && root && [3, 4, 10, 11].includes(((chordTone.note - root.note) % 12 + 12) % 12);
+        const dimmed = dimOutsideGroup && Boolean(group) && !groupCellSet.has(cell) && !active && !live && !midi;
         return (
-          <g key={`${cell.q},${cell.r}`} transform={`translate(${cell.x},${cell.y})`} data-note={cell.note} data-target={active ? 'true' : undefined} data-preview={cell === previewCell ? 'true' : undefined} data-detected-chord={detected ? 'true' : undefined} data-heard={live ? 'true' : undefined} data-harmony={chordTone ? 'true' : undefined} data-chord-root={chordTone?.root ? 'true' : undefined}
+          <g key={`${cell.q},${cell.r}`} transform={`translate(${cell.x},${cell.y})`} opacity={dimmed ? 0.22 : undefined} data-dimmed={dimmed ? 'true' : undefined} data-note={cell.note} data-target={active ? 'true' : undefined} data-preview={cell === previewCell ? 'true' : undefined} data-detected-chord={detected ? 'true' : undefined} data-heard={live ? 'true' : undefined} data-harmony={chordTone ? 'true' : undefined} data-chord-root={chordTone?.root ? 'true' : undefined}
              className="practice-hex" role="button" tabIndex={0} aria-label={`Play ${pitchLabel(cell.note, mode)} octave ${Math.floor(cell.note / 12) - 1}`} style={{cursor: 'pointer'}}
              onClick={event => {
                if (event.detail > 0) event.currentTarget.blur();

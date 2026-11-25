@@ -818,8 +818,15 @@ the beat fallback, and the hex-board group layer.
 ### EWI / MIDI wind controller input
 
 **MIDI configuration → EWI In** selects a wind controller, saved with the other
-MIDI selections. Under **Instrument input → Audio detection**, choose **EWI / MIDI
-wind controller** to use it in place of the microphone: note-ons are judged as
+MIDI selections. Under **Instrument input → Instrument**, choose **EWI / MIDI wind
+controller** to use it in place of the microphone; Audio detection then shows the
+wind controller and cannot be changed until another instrument is chosen. If EWI In
+is empty or its device is not connected, a connected port whose name looks like a
+wind controller (EWI, Aerophone, NuRAD, Sylphyo, Travel Sax, WX5/WX7, YDS, Elefue,
+Robkoo) is selected. That is a guess from the port name; change it under MIDI
+configuration if it is wrong. The EWI instrument is treated as concert pitch, and
+its 24–108 range is a nominal span for the octave rollers, not a measured limit;
+transposition set on the controller is not known to the page. Note-ons are judged as
 entrances, held notes drive monophone-follow mode, and the tuner, judgements and
 history work as they do for microphone input. No microphone is opened, and the
 microphone timing correction is not applied to MIDI timestamps.
@@ -859,3 +866,49 @@ The picker lives in `src/components/ratePicker/` as a copy of the lab's `RatePic
 `PickerConfiguration`, `landmarks` and `frequency` modules, with the lab's theme
 variables mapped to Chakra tokens in `ratePicker.css`. Behaviour changes should be
 made in both places.
+
+### Loop lane and practice sections
+
+A **Loop** lane sits above the melody on the same beat scale. Drag across it to set
+both loop points; drag either end to move just that end; double-click to clear. Points
+snap to bar lines and to the starts and ends of melody notes. The lane is locked while
+practice is running. The loop selects, "Set start/end here" buttons and Shift+[ / ]
+shortcuts still work, and remain the keyboard route: the lane itself is pointer-only.
+
+**Save loop as section** keeps the current loop as a named section of the tune. Saved
+sections appear as a row of cards, each a small drawing of the section on the
+isomorphic layout: one hexagon per distinct cell, one arrow per move, and a dot on
+the first note. Choosing a card:
+
+- loads that section as the loop and moves the playhead to its start;
+- draws every note of the section on the hex board with arrows, like a note group,
+  and dims every other cell. Played and held notes are never dimmed;
+- shows a played pitch on the section's own cell for that pitch when it has one.
+
+This is free play: nothing is judged or recorded until **Start practice** is pressed,
+which then practises the section as an ordinary judged loop with the section still
+drawn. Choose the card again or **Leave free play** to return to the whole tune.
+Moving a loop point by hand also leaves the section; the saved section keeps its own
+range. A section contains the notes that begin inside its range. Sections can be
+renamed and deleted, and are stored per tune with the tune's loop points in
+`musicality.practice-sections.v1`. They are not part of the practice-history export.
+
+### Saved settings
+
+Practice controls are restored on the next visit:
+
+- tempo, loop on/off, instrument, concert key and register in
+  `musicality.practice-settings.v1`. The newer of a recorded practice session and a
+  later edit to these controls wins; before, a recorded session always won, so an
+  instrument chosen without practising was lost on reload;
+- the chosen tune and collection filter, sound and display options, labels, upcoming
+  attacks, note groups, analysis lanes, free time, octave acceptance, audio
+  detection and input timing correction in `musicality.practice-view.v1`;
+- loop points and sections per tune (above), and, as before, MIDI selections, EWI
+  bend range, tempo dial, note trails, timing calibration and practice history.
+
+Chord options stay saved while a tune without chords is open. Phrase starts for the
+Stella analysis are not saved. Everything is kept in this browser only.
+
+Run `node scripts/test-practice-sections.cjs` for section ranges, loop snapping,
+storage, saved preferences, the EWI instrument, section cards and board dimming.

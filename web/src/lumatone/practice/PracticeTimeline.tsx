@@ -1,6 +1,7 @@
 import {Box, Button, chakra, Flex, Stack, Text} from '@chakra-ui/react';
 import {useCallback, useEffect, useMemo, useRef} from 'react';
 import {PracticeTempoInput} from './PracticeTempoInput.tsx';
+import {PracticeLoopLane} from './PracticeLoopLane.tsx';
 import {chordLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
@@ -17,12 +18,13 @@ import {HarmonicDestinationLane, MelodicIntervalLane, PhraseAnalysisLanes} from 
 
 
 export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendingBeat, target, harmony, mode, transpose, keyTranspose = 0, notationOffset = 0, pieceHarmonies, showHarmony, showMelody = true, showMelodyRoles, showChordTransitions, bpm,
-  loop, loopStart, loopEnd, onLoopChange, onLoopStart, onLoopEnd, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts, onTogglePlayback, onToggleListening, microphoneStarting, onBpmChange, onBack, transportDisabled, noteGroups = []}: {
+  loop, loopStart, loopEnd, onLoopChange, onLoopStart, onLoopEnd, onLoopRange, onSeek, onMelody, onHarmony, attempts, listening, freeTime, analysis, phraseStarts, onTogglePlayback, onToggleListening, microphoneStarting, onBpmChange, onBack, transportDisabled, noteGroups = []}: {
   noteGroups?: NoteGroup[];
   beat: number; entryBeat: number; endBeat: number; pass: number; running: boolean; pendingBeat: number | null;
   target?: MelodyAttack; harmony?: PracticeChord; mode: LabelMode; transpose: number; keyTranspose?: number; notationOffset?: number; pieceHarmonies: PracticeChord[]; showHarmony: boolean; showMelody?: boolean; showMelodyRoles: boolean; showChordTransitions: boolean; bpm: number;
   loop: boolean; loopStart: number | null; loopEnd: number | null; onLoopChange: (enabled: boolean) => void;
   onLoopStart: (beat: number | null) => void; onLoopEnd: (beat: number | null) => void;
+  onLoopRange: (start: number, end: number) => void;
   onSeek: (beat: number) => void; onMelody: (note: MelodyAttack) => void; onHarmony: (chord: PracticeChord) => void;
   attempts: Record<string, Attempt>; listening: boolean; freeTime: boolean;
   analysis: AnalysisOptions; phraseStarts: number[];
@@ -84,7 +86,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
         <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: '1 1 160px', minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
-      <Text fontSize="xs" color="fg.muted">Space: play/pause · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. Shortcuts leave text fields and sliders alone.</Text>
+      <Text fontSize="xs" color="fg.muted">Space: play/pause · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. Shortcuts leave text fields and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}>Loop start
           <select aria-label="Loop start" disabled={running} value={loopStart ?? ''} onChange={event => onLoopStart(event.target.value === '' ? null : Number(event.target.value))}>
@@ -108,6 +110,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <Stack gap={1} minWidth={`${72 + LENGTH * 64}px`} position="relative">
           {showMelody && analysis.phrases && <PhraseAnalysisLanes starts={phraseStarts} mode={mode}/>}
           {showMelody && analysis.melodicIntervals && <MelodicIntervalLane mode={mode} transpose={transpose + notationOffset}/>}
+          <PracticeLoopLane loopStart={loopStart} loopEnd={loopEnd} disabled={running} onRange={onLoopRange} onClear={() => {onLoopStart(null); onLoopEnd(null);}}/>
           {showMelody && <Flex role="group" aria-label="Passage rhythm" align="center">
             <Text width="72px" flexShrink={0} position="sticky" left={0} bg="bg" zIndex={3} fontSize="xs" color="fg.muted">Melody</Text>
             <Box position="relative" flex={1} height={showMelodyRoles ? '168px' : '144px'}>
