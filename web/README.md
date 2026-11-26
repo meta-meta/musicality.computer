@@ -105,6 +105,8 @@ Space toggles play/pause whatever has focus (a button, checkbox, menu, slider or
 note hex), except in a text field, where it types a space; `[` / `]` move to the previous/next melody note;
 `Shift+[` / `Shift+]` (`{` / `}`) move through the configured loop points and
 the beginning/end of the track; Left/Right move to adjacent bar boundaries.
+M turns the metronome on or off from any focus except a text field (not in free
+time, where the metronome is unavailable).
 Down Arrow auditions the current chord without moving the playhead; holding
 the key does not repeatedly retrigger it.
 The back button goes to the previous loop point or beginning. While timed
@@ -849,6 +851,12 @@ bend, twelve-tone equal temperament at A4 = 440 Hz), so a bent note can read as 
 of tune or as its neighbour. MIDI channels are merged. A slurred note is an entrance;
 releasing a note while an earlier one is still held returns to that note.
 
+The live reading is not React state. The board and the tuner subscribe to it
+directly (`WindSource` in `ewi.ts`), so a breath stream redraws only the marker, a
+new note redraws only the cells that changed, and the practice page itself is not
+re-rendered by the controller. A note is shown as its MIDI message arrives; breath
+and bend are coalesced to one update per frame.
+
 Run `node scripts/test-ewi.cjs` for note, legato, breath and bend handling and the
 hex-board marker. The fixtures are synthetic MIDI messages, not a real controller.
 
@@ -891,7 +899,13 @@ as there are arrows, so the first arrow is pink-red and the colors run once arou
 
 This is free play: nothing is judged or recorded until **Start practice** is pressed,
 which then practises the section as an ordinary judged loop with the section still
-drawn. Choose the card again or **Leave free play** to return to the whole tune.
+drawn. With a section selected, Left/Right move to the previous or next card instead
+of the adjacent bar, stopping at either end of the row. Sections can be switched
+while practice is playing, by key or by clicking a card: the new section is cued,
+playback jumps to its start on the next beat (at once in free time) and loops there,
+and its judgements begin a new history session. With looping turned off, or while
+paused, switching stops playback first, as before.
+Choose the card again or **Leave free play** to return to the whole tune.
 Moving a loop point by hand also leaves the section; the saved section keeps its own
 range. A section contains the notes that begin inside its range. Sections can be
 renamed and deleted, and are stored per tune with the tune's loop points in

@@ -120,3 +120,11 @@ const starts=markup=>[...markup.matchAll(/data-(?:group|section)-move="\d+"[^>]*
 assert.equal(new Set(starts(render({group:{notes:repeated,current:0}}))).size,4,'Four moves between two cells are all visible on the board');
 assert.equal(new Set(starts(renderToStaticMarkup(React.createElement(api.SectionPathGraphic,{notes:repeated,transpose:0,id:'t'})))).size,4,'and on the card');
 console.log('Passed arrow spreading: retraced, repeated and partially overlapping moves, squeezing, and crossing arrows left alone.');
+
+// Left/right step along the cards and stop at the ends.
+assert.equal(api.adjacentSection(sections,'a',1),sections[1]);assert.equal(api.adjacentSection(sections,'b',-1),sections[0]);
+assert.equal(api.adjacentSection(sections,'b',1),null);assert.equal(api.adjacentSection(sections,'a',-1),null);assert.equal(api.adjacentSection(sections,null,1),null);
+// The line ends at the base of the arrowhead, short of the tip.
+const arrow=render({group:{notes:[note(0,0,0),note(2,0,1)],current:0}}).match(/data-group-move="0"[^>]*><path d="M ([-\d.]+) [^ "]+ L ([-\d.]+) [^ "]+"[^>]*><\/path><path data-group-head="true" d="M ([-\d.]+) /);
+assert.ok(Number(arrow[1])<Number(arrow[2])&&Number(arrow[3])-Number(arrow[2])>=7.9,`Line ${arrow[2]} stops before tip ${arrow[3]}`);
+console.log('Passed section stepping and arrowhead geometry.');

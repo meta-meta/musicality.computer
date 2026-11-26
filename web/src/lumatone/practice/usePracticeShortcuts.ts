@@ -12,7 +12,9 @@ export function spaceTypesText(element: {tagName: string; isContentEditable?: bo
   return tag === 'input' && textInputTypes.includes((element.getAttribute('type') ?? 'text').toLowerCase());
 }
 
-export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void}) {
+export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void; onToggleMetronome?: () => void;
+  // Left/right first offer the step here; returning true means it was used (moving between saved sections).
+  onStep?: (direction: -1 | 1) => boolean}) {
   const {score} = usePracticeScore();
   const latest = useRef({...actions, score});
   useEffect(() => {latest.current = {...actions, score};}, [actions, score]);
@@ -34,6 +36,12 @@ export function usePracticeShortcuts(actions: {beat: number; loopStart: number |
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
       const element = event.target instanceof Element ? event.target : null;
+      // M works from any focus except where a letter would be typed.
+      if (event.key.toLowerCase() === 'm' && !spaceTypesText(event.target instanceof HTMLElement ? event.target : null)) {
+        event.preventDefault();
+        if (!event.repeat) latest.current.onToggleMetronome?.();
+        return;
+      }
       if (element?.closest('input, textarea, select, [contenteditable="true"], [role="slider"], [role="textbox"]')) return;
       const current = latest.current;
       if (event.key === 'ArrowDown') {
@@ -51,6 +59,7 @@ export function usePracticeShortcuts(actions: {beat: number; loopStart: number |
         current.onSeek(adjacentLoopPoint(current.beat, event.key === '{' ? -1 : 1, current.loopStart, current.loopEnd, current.score));
       } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
+        if (current.onStep?.(event.key === 'ArrowLeft' ? -1 : 1)) return;
         current.onSeek(adjacentBar(current.beat, event.key === 'ArrowLeft' ? -1 : 1, current.score));
       }
     };

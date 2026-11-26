@@ -82,3 +82,9 @@ export function nextSectionName(sections: PracticeSection[]): string {
     if (!sections.some(section => section.name === `Section ${number}`)) return `Section ${number}`;
   }
 }
+
+// The neighbouring card in the row, or null at either end or with nothing selected.
+export function adjacentSection(sections: PracticeSection[], selected: string | null, direction: -1 | 1): PracticeSection | null {
+  const index = sections.findIndex(section => section.id === selected);
+  return index < 0 ? null : sections[index + direction] ?? null;
+}

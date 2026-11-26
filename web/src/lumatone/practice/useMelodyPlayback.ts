@@ -69,7 +69,15 @@ export function useMelodyPlayback(options: Options) {
     if (saved.beat < saved.entryBeat) publish({...saved, beat: saved.entryBeat});
   }, [release, publish]);
   useEffect(() => release, [release]);
-  useEffect(() => {stop();}, [options.bpm, options.transpose, options.harmonyTranspose, options.loop, options.loopStart, options.loopEnd, options.followMonophone, stop]);
+  useEffect(() => {stop();}, [options.bpm, options.transpose, options.harmonyTranspose, options.loop, options.followMonophone, stop]);
+  // Changing the loop stops playback, except for a loop that was cued: that
+  // change is already queued on the transport and takes over on the next beat.
+  const cuedLoop = useRef<string | null>(null);
+  useEffect(() => {
+    const cued = cuedLoop.current === `${options.loopStart}:${options.loopEnd}`;
+    cuedLoop.current = null;
+    if (!cued) stop();
+  }, [options.loopStart, options.loopEnd, stop]);
   useEffect(() => {
     const hidden = () => {if (document.hidden) stop();};
     document.addEventListener('visibilitychange', hidden);
@@ -106,8 +114,11 @@ export function useMelodyPlayback(options: Options) {
     } catch (reason) {stop(); setError(String(reason));}
   };
 
-  const seek = (requested: number) => {
+  // `range` is a loop being cued together with the jump; without it the jump
+  // ends where the current loop setting says.
+  const seek = (requested: number, range?: {start: number; end: number}) => {
     const beat = Math.max(START, Math.min(END, requested));
+    const endFor = (settings: Options) => range ? range.end : settings.loop && beat < (settings.loopEnd ?? END) ? settings.loopEnd ?? END : END;
     if (pausedAt.current !== null || beat === END) {
       stop();
       publish({beat, pass: savedPosition.current.pass + 1, entryBeat: beat, endBeat: END});
@@ -115,8 +126,7 @@ export function useMelodyPlayback(options: Options) {
     }
     const following = follower.current;
     if (following) {
-      const settings = currentOptions.current;
-      const end = settings.loop && beat < (settings.loopEnd ?? END) ? settings.loopEnd ?? END : END;
+      const end = endFor(currentOptions.current);
       following.voices.forEach(voice => voice.stopAt(following.context.currentTime + 0.012));
       following.state = createFollower(beat, end, following.state.pass + 1, performance.now() / 1000, 0, exercise);
       following.chord = following.guide = -1;
@@ -135,13 +145,24 @@ export function useMelodyPlayback(options: Options) {
     previous.endTime = time;
     previous.endBeat = previous.beat + (time - previous.time) / seconds;
     current.voices.forEach(voice => {if (voice.start >= time) voice.cancel(); else voice.stopAt(time);});
-    const endBeat = currentOptions.current.loop && beat < (currentOptions.current.loopEnd ?? END) ? currentOptions.current.loopEnd ?? END : END;
+    const endBeat = endFor(currentOptions.current);
     current.segments.push({id: current.nextId++, time, beat, entryBeat: beat, endBeat, endTime: time + (endBeat - beat) * seconds, pass: segment.pass + 1});
     current.pending = {time, beat};
     setPendingBeat(beat);
     current.schedule();
   };
 
+
+  // Switch to another loop without stopping: playback jumps to its start on the
+  // next beat (at once in free time) and loops there from then on. Returns false
+  // when nothing is playing or looping is off, so the caller can stop and switch.
+  const cue = (start: number, end: number) => {
+    const settings = currentOptions.current;
+    if (pausedAt.current !== null || !settings.loop || !(transport.current ?? follower.current) || end <= start) return false;
+    if (settings.loopStart !== start || settings.loopEnd !== end) cuedLoop.current = `${start}:${end}`;
+    seek(start, {start, end});
+    return true;
+  };
 
   const followPitch = (note: number, cents: number, time: number, articulation: number) => {
     if (pausedAt.current !== null) return null;
@@ -312,5 +333,5 @@ export function useMelodyPlayback(options: Options) {
       setError(reason instanceof Error ? reason.message : 'Playback could not start.');
     }
   };
-  return {running, paused, ...position, pendingBeat, previewNote, positionAt, seek, start, stop, pause, resume, playNote, playChord, followPitch, waiting, error, stopPreview: () => {releasePreview();setPreviewNote(null);}};
+  return {running, paused, ...position, pendingBeat, previewNote, positionAt, seek, cue, start, stop, pause, resume, playNote, playChord, followPitch, waiting, error, stopPreview: () => {releasePreview();setPreviewNote(null);}};
 }

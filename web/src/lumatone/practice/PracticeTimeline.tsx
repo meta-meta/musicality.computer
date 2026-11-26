@@ -86,7 +86,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
         <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: '1 1 160px', minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
-      <Text fontSize="xs" color="fg.muted">Space: play/pause from anywhere except a text field · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord. The other shortcuts leave text fields, menus and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
+      <Text fontSize="xs" color="fg.muted">Space: play/pause from anywhere except a text field · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord · M: metronome on/off. The other shortcuts leave text fields, menus and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}>Loop start
           <select aria-label="Loop start" disabled={running} value={loopStart ?? ''} onChange={event => onLoopStart(event.target.value === '' ? null : Number(event.target.value))}>

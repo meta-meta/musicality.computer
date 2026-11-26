@@ -2,7 +2,8 @@ import {InputNoteHighlight} from './InputNoteHighlight.tsx';
 import {defaultNoteTrail} from './noteTrail.ts';
 import type {NoteTrailSettings} from './noteTrail.ts';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
-import {useEffect, useId, useMemo, useRef, useState} from 'react';
+import {memo, useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore} from 'react';
+import type {WindSource} from './ewi.ts';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
 import {getNoteColorHsl, orderColor} from '../colors.ts';
 import {pointyHexAxialToPixel} from '../hexUtils.ts';
@@ -34,7 +35,113 @@ const points = Array.from({length: 6}, (_, index) => {
   return `${Math.cos(angle) * (RADIUS - 2)},${Math.sin(angle) * (RADIUS - 2)}`;
 }).join(' ');
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard, heardCents = null, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+type Cell = {q: number; r: number; note: number; x: number; y: number};
+const HexCell = memo(function HexCell({cell, fills, active, live, midi, detected, tuningCents, chord, guideTone, dimmed, preview, mode, isLight, showGuideTones, windActive, heardCents, practicing, progress, noteTrail, onPlay}: {
+  cell: Cell; fills: {normal: string; played: string}; active: boolean; live: boolean; midi: boolean; detected: boolean;
+  tuningCents: number | null | undefined; chord: 'tone' | 'root' | null; guideTone: boolean; dimmed: boolean; preview: boolean;
+  mode: LabelMode; isLight: boolean; showGuideTones: boolean; windActive: boolean; heardCents: number | null;
+  practicing: boolean; progress: number; noteTrail: NoteTrailSettings; onPlay: (note: number) => void;
+}) {
+  const targetColor = isLight ? '#111' : '#fff';
+  const harmonyColor = isLight ? '#422006' : '#dec89d';
+  const progressColor = isLight ? '#111' : '#d1d5db';
+  const tuningOffset = -Math.max(-50, Math.min(50, heardCents ?? 0)) / 50 * 4;
+  const label = pitchLabel(cell.note, mode);
+  return (
+    <g transform={`translate(${cell.x},${cell.y})`} opacity={dimmed ? 0.22 : undefined} data-dimmed={dimmed ? 'true' : undefined} data-note={cell.note} data-target={active ? 'true' : undefined} data-preview={preview ? 'true' : undefined} data-detected-chord={detected ? 'true' : undefined} data-heard={live ? 'true' : undefined} data-harmony={chord ? 'true' : undefined} data-chord-root={chord === 'root' ? 'true' : undefined}
+       className="practice-hex" role="button" tabIndex={0} aria-label={`Play ${label} octave ${Math.floor(cell.note / 12) - 1}`} style={{cursor: 'pointer'}}
+       onClick={event => {
+         if (event.detail > 0) event.currentTarget.blur();
+         onPlay(cell.note);
+       }} onKeyDown={event => {
+         if (event.key !== 'Enter' && event.key !== ' ') return;
+         event.preventDefault();
+         if (!event.repeat) onPlay(cell.note);
+       }}>
+      <polygon points={points} fill={active || preview || chord ? fills.played : fills.normal} opacity={active || live || midi || !showGuideTones || !chord || guideTone ? 1 : chord === 'root' ? 0.65 : 0.35}/>
+      <InputNoteHighlight active={midi || live} note={cell.note} points={points} fill={fills.played} stroke={targetColor} settings={noteTrail}/>
+      {detected && tuningCents !== null && tuningCents !== undefined && <g data-polyphonic-tuning={cell.note} data-cents={tuningCents}
+        transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
+        <title>{`${Math.abs(tuningCents).toFixed(0)} cents ${Math.abs(tuningCents) < 3 ? 'in tune' : tuningCents > 0 ? 'sharp' : 'flat'} (experimental)`}</title>
+        <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
+        <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
+        <circle cy={-Math.max(-50, Math.min(50, tuningCents)) / 50 * 4} r={1.8} fill={targetColor}/>
+      </g>}
+      {live && !windActive && <g data-monophone-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
+        <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
+        <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
+        <circle cy={tuningOffset} r={1.8} fill={targetColor}/>
+      </g>}
+      <text fill={isLight ? '#fffc' : '#000c'} textAnchor="middle" dominantBaseline="central" style={{fontSize: RADIUS * (label.length > 1 ? 0.65 : 0.95)}}>{label}</text>
+      <text x={RADIUS * 0.5} y={RADIUS * 0.25} fill={isLight ? '#fff7' : '#0007'} textAnchor="middle" style={{fontSize: RADIUS * 0.32}}>{Math.floor(cell.note / 12) - 1}</text>
+      {active && <>
+        {practicing && <g data-duration-bar="true" pointerEvents="none">
+          <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7} height={2.5} rx={1.25} fill={progressColor} opacity={0.2}/>
+          <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7 * Math.max(0, Math.min(1, 1 - progress))} height={2.5} rx={1.25} fill={progressColor}/>
+        </g>}
+      </>}
+      {chord && <polygon data-chord-border="true" points={points} transform="scale(0.86)" fill="none" stroke={harmonyColor} strokeWidth={chord === 'root' ? 1.8 : 1.2} opacity={0.9} vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
+      {chord === 'root' && <polygon data-root-outer-border="true" points={points} transform="scale(1.08)" fill="none" stroke={harmonyColor} strokeWidth={1.2} opacity={0.9} vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
+      {guideTone && <circle data-guide-tone={cell.note} cx={RADIUS * 0.43} cy={-RADIUS * 0.44} r={3} fill={isLight ? '#b45309' : '#fbbf24'} stroke={isLight ? '#fff' : '#111820'} strokeWidth={1}/>}
+    </g>
+  );
+});
+
+const noSubscribe = () => () => {};
+const noValue = () => null;
+// Breath sets the marker's size; bend slides it. With a live source the marker
+// follows it directly and nothing else on the board re-renders.
+function windShape(value: {breath: number; bend: number}) {
+  const breath = Math.max(0, Math.min(1, value.breath));
+  // One cell to the right is two semitones higher, so a bend is drawn to scale.
+  const slide = value.bend / 2 * Math.sqrt(3) * RADIUS;
+  return {breath, bend: value.bend, slide, radius: RADIUS * (0.18 + 0.6 * breath), fill: 0.12 + 0.4 * breath,
+    label: `Wind controller: breath ${Math.round(breath * 100)}%, bend ${value.bend.toFixed(2)} semitones`};
+}
+function WindIndicator({source, breath: fixedBreath, bend: fixedBend, x, y, color}: {
+  source?: WindSource; breath: number | null; bend: number | null; x: number; y: number; color: string;
+}) {
+  const group = useRef<SVGGElement>(null), line = useRef<SVGLineElement>(null), ring = useRef<SVGCircleElement>(null), dot = useRef<SVGCircleElement>(null);
+  // With a live source the marker is redrawn here, outside React. A React
+  // update per breath message would keep interrupting the lower-priority
+  // playhead update, and the note cues would stall while a note is held.
+  useEffect(() => {
+    if (!source) return;
+    const draw = () => {
+      const value = source.getWind(), node = group.current;
+      if (!node || !line.current || !ring.current || !dot.current) return;
+      node.style.display = value ? '' : 'none';
+      if (!value) return;
+      const shape = windShape(value);
+      node.setAttribute('data-breath', String(shape.breath));
+      node.setAttribute('data-bend', String(shape.bend));
+      node.setAttribute('aria-label', shape.label);
+      line.current.setAttribute('x2', String(shape.slide));
+      line.current.style.display = Math.abs(shape.slide) > 0.5 ? '' : 'none';
+      ring.current.setAttribute('cx', String(shape.slide));
+      ring.current.setAttribute('r', String(shape.radius));
+      ring.current.setAttribute('fill-opacity', String(shape.fill));
+      dot.current.setAttribute('cx', String(shape.slide));
+    };
+    draw();
+    return source.subscribe(draw);
+  }, [source]);
+  const value = source ? source.getWind() : fixedBreath === null ? null : {breath: fixedBreath, bend: fixedBend ?? 0};
+  if (!value && !source) return null;
+  const shape = windShape(value ?? {breath: 0, bend: 0});
+  return <g ref={group} data-wind-indicator="true" data-breath={shape.breath} data-bend={shape.bend} role="img" pointerEvents="none"
+    aria-label={shape.label} transform={`translate(${x},${y})`} style={value ? undefined : {display: 'none'}}>
+    <line ref={line} x2={shape.slide} stroke={color} strokeWidth={1.5} strokeOpacity={0.7} style={Math.abs(shape.slide) > 0.5 ? undefined : {display: 'none'}}/>
+    <circle ref={ring} cx={shape.slide} r={shape.radius} fill={color} fillOpacity={shape.fill} stroke={color} strokeWidth={1.5}/>
+    <circle ref={dot} cx={shape.slide} r={2} fill={color}/>
+  </g>;
+}
+
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard: heardNote, heardCents = null, wind, windOffset = 0, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+  // A live wind controller. When given, it supplies the played note (plus
+  // `windOffset` semitones to written pitch), breath and bend, replacing
+  // `heard`, `heardBreath` and `heardBend`.
+  wind?: WindSource; windOffset?: number;
   // Free play on a saved section: every cell outside the group is dimmed.
   dimOutsideGroup?: boolean;
   // Wind-controller input: breath 0–1 sizes a marker on the fingered note's cell,
@@ -60,13 +167,17 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   // Two extra low rows expose the seven-string low B in written pitch.
   const height = baseHeight + (extendedLowRange ? 3 * RADIUS : 0);
   const {exercise} = usePracticeScore();
+  const windNote = useSyncExternalStore(wind?.subscribe ?? noSubscribe, wind?.getNote ?? noValue, noValue);
+  const heard = wind ? windNote === null ? null : windNote + windOffset : heardNote;
+  const windActive = wind ? true : heardBreath !== null;
+  const latestPlay = useRef(onPlayNote);
+  latestPlay.current = onPlayNote;
+  const playNote = useCallback((note: number) => latestPlay.current(note), []);
+  const chordRoot = harmony?.notes.find(note => note.root);
   const arrowId = useId().replace(/:/g, "");
   const {colorMode} = useColorMode();
   const isLight = colorMode === 'light';
   const targetColor = isLight ? '#111' : '#fff';
-  const harmonyColor = isLight ? '#422006' : '#dec89d';
-  const progressColor = isLight ? '#111' : '#d1d5db';
-  const tuningOffset = -Math.max(-50, Math.min(50, heardCents ?? 0)) / 50 * 4;
   const markers = futureAttacks.map(attack => ({id: attack.id, attackId: attack.id, step: attack.ordinal - 1}));
   const svg = useRef<SVGSVGElement>(null);
   const [aspect, setAspect] = useState(width / height);
@@ -132,8 +243,11 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     const distance = Math.hypot(to.x - from.x, to.y - from.y);
     const unit = {x: (to.x - from.x) / distance, y: (to.y - from.y) / distance};
     const shift = groupShifts[order], padding = Math.min(RADIUS * 0.62, distance * 0.3);
-    const point = (along: number) => `${from.x + unit.x * along + shift.x} ${from.y + unit.y * along + shift.y}`;
-    return {index, color: orderColor(order, groupMoves.length), played: index < (group?.current ?? 0), d: `M ${point(padding)} L ${point(distance - padding)}`};
+    const point = (along: number, side = 0) => `${from.x + unit.x * along - unit.y * side + shift.x} ${from.y + unit.y * along + unit.x * side + shift.y}`;
+    // The line stops at the base of the head, so the head ends in a clean point.
+    const tip = distance - padding, head = Math.min(8, (tip - padding) * 0.45);
+    return {index, color: orderColor(order, groupMoves.length), played: index < (group?.current ?? 0), d: `M ${point(padding)} L ${point(tip - head)}`,
+      head: `M ${point(tip)} L ${point(tip - head, head * 0.42)} L ${point(tip - head, -head * 0.42)} Z`};
   });
   const midiCells = new Set(midiNotes.map(note => {
     const matches = cells.filter(cell => cell.note === note);
@@ -181,65 +295,22 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
         }
       `}</style>
       {cells.map((cell, index) => {
-        const active = atTarget(cell, target);
+        const active = Boolean(atTarget(cell, target));
         const live = cell === heardCell;
         const detected = detectedSet.has(cell);
         const tuning = detected ? detectedTunings.find(reading => reading.note === cell.note) : undefined;
         const midi = midiCells.has(cell) || detected;
         const chordTone = harmony?.notes.find(note => note.at.q === cell.q && note.at.r === cell.r);
-        const root = harmony?.notes.find(note => note.root);
-        const guideTone = showGuideTones && chordTone && root && [3, 4, 10, 11].includes(((chordTone.note - root.note) % 12 + 12) % 12);
+        const guideTone = Boolean(showGuideTones && chordTone && chordRoot && [3, 4, 10, 11].includes(((chordTone.note - chordRoot.note) % 12 + 12) % 12));
         const dimmed = dimOutsideGroup && Boolean(group) && !groupCellSet.has(cell) && !active && !live && !midi;
-        return (
-          <g key={`${cell.q},${cell.r}`} transform={`translate(${cell.x},${cell.y})`} opacity={dimmed ? 0.22 : undefined} data-dimmed={dimmed ? 'true' : undefined} data-note={cell.note} data-target={active ? 'true' : undefined} data-preview={cell === previewCell ? 'true' : undefined} data-detected-chord={detected ? 'true' : undefined} data-heard={live ? 'true' : undefined} data-harmony={chordTone ? 'true' : undefined} data-chord-root={chordTone?.root ? 'true' : undefined}
-             className="practice-hex" role="button" tabIndex={0} aria-label={`Play ${pitchLabel(cell.note, mode)} octave ${Math.floor(cell.note / 12) - 1}`} style={{cursor: 'pointer'}}
-             onClick={event => {
-               if (event.detail > 0) event.currentTarget.blur();
-               onPlayNote(cell.note);
-             }} onKeyDown={event => {
-               if (event.key !== 'Enter' && event.key !== ' ') return;
-               event.preventDefault();
-               if (!event.repeat) onPlayNote(cell.note);
-             }}>
-            <polygon points={points} fill={active || cell === previewCell || chordTone ? colors[index].played : colors[index].normal} opacity={active || live || midi || !showGuideTones || !chordTone || guideTone ? 1 : chordTone.root ? 0.65 : 0.35}/>
-            <InputNoteHighlight active={midi || live} note={cell.note} points={points} fill={colors[index].played} stroke={targetColor} settings={noteTrail}/>
-            {detected && tuning?.cents !== null && tuning?.cents !== undefined && <g data-polyphonic-tuning={cell.note} data-cents={tuning.cents}
-              transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
-              <title>{`${Math.abs(tuning.cents).toFixed(0)} cents ${Math.abs(tuning.cents) < 3 ? 'in tune' : tuning.cents > 0 ? 'sharp' : 'flat'} (experimental)`}</title>
-              <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
-              <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
-              <circle cy={-Math.max(-50, Math.min(50, tuning.cents)) / 50 * 4} r={1.8} fill={targetColor}/>
-            </g>}
-            {live && heardBreath === null && <g data-monophone-indicator="true" data-cents={heardCents ?? undefined} transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
-              <circle r={6} fill="none" stroke={targetColor} strokeWidth={1}/>
-              <path d="M -4 0 H 4" stroke={targetColor} strokeWidth={0.75} opacity={0.45}/>
-              <circle cy={tuningOffset} r={1.8} fill={targetColor}/>
-            </g>}
-            <text fill={isLight ? '#fffc' : '#000c'} textAnchor="middle" dominantBaseline="central" style={{fontSize: RADIUS * (pitchLabel(cell.note, mode).length > 1 ? 0.65 : 0.95)}}>{pitchLabel(cell.note, mode)}</text>
-            <text x={RADIUS * 0.5} y={RADIUS * 0.25} fill={isLight ? '#fff7' : '#0007'} textAnchor="middle" style={{fontSize: RADIUS * 0.32}}>{Math.floor(cell.note / 12) - 1}</text>
-            {active && <>
-              {practicing && <g data-duration-bar="true" pointerEvents="none">
-                <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7} height={2.5} rx={1.25} fill={progressColor} opacity={0.2}/>
-                <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7 * Math.max(0, Math.min(1, 1 - progress))} height={2.5} rx={1.25} fill={progressColor}/>
-              </g>}
-            </>}
-            {chordTone && <polygon data-chord-border="true" points={points} transform="scale(0.86)" fill="none" stroke={harmonyColor} strokeWidth={chordTone.root ? 1.8 : 1.2} opacity={0.9} vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
-            {chordTone?.root && <polygon data-root-outer-border="true" points={points} transform="scale(1.08)" fill="none" stroke={harmonyColor} strokeWidth={1.2} opacity={0.9} vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
-            {guideTone && <circle data-guide-tone={cell.note} cx={RADIUS * 0.43} cy={-RADIUS * 0.44} r={3} fill={isLight ? '#b45309' : '#fbbf24'} stroke={isLight ? '#fff' : '#111820'} strokeWidth={1}/>}
-          </g>
-        );
+        // Only the props of cells that changed differ between renders, so a new
+        // played note or a moving target redraws a few cells, not the board.
+        return <HexCell key={`${cell.q},${cell.r}`} cell={cell} fills={colors[index]} active={active} live={live} midi={midi} detected={detected}
+          tuningCents={detected ? tuning?.cents : undefined} chord={chordTone ? chordTone.root ? 'root' : 'tone' : null} guideTone={guideTone} dimmed={dimmed}
+          preview={cell === previewCell} mode={mode} isLight={isLight} showGuideTones={showGuideTones} windActive={windActive}
+          heardCents={live ? heardCents : null} practicing={practicing && active} progress={active && practicing ? progress : 0} noteTrail={noteTrail} onPlay={playNote}/>;
       })}
-      {heardCell && heardBreath !== null && (() => {
-        const breath = Math.max(0, Math.min(1, heardBreath));
-        // One cell to the right is two semitones higher, so a bend is drawn to scale.
-        const slide = (heardBend ?? 0) / 2 * Math.sqrt(3) * RADIUS;
-        return <g data-wind-indicator="true" data-breath={breath} data-bend={heardBend ?? 0} role="img" pointerEvents="none"
-          aria-label={`Wind controller: breath ${Math.round(breath * 100)}%, bend ${(heardBend ?? 0).toFixed(2)} semitones`} transform={`translate(${heardCell.x},${heardCell.y})`}>
-          {Math.abs(slide) > 0.5 && <line x2={slide} stroke={targetColor} strokeWidth={1.5} strokeOpacity={0.7}/>}
-          <circle cx={slide} r={RADIUS * (0.18 + 0.6 * breath)} fill={targetColor} fillOpacity={0.12 + 0.4 * breath} stroke={targetColor} strokeWidth={1.5}/>
-          <circle cx={slide} r={2} fill={targetColor}/>
-        </g>;
-      })()}
+      {heardCell && windActive && <WindIndicator source={wind} breath={heardBreath} bend={heardBend} x={heardCell.x} y={heardCell.y} color={targetColor}/>}
       {[...markers].sort((a, b) => b.step - a.step).map(marker => {
         const approaching = futureAttacks[marker.step];
         if (!approaching || approaching.id !== marker.attackId) return null;
@@ -267,9 +338,9 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
           transform={`translate(${cell.x},${cell.y}) scale(0.93)`} fill="none" stroke={targetColor} strokeWidth={1}
           opacity={groupCells.lastIndexOf(cell) < group.current ? 0.2 : 0.55} vectorEffect="non-scaling-stroke"/>)}
         {groupSegments.map(segment => <g key={segment.index} data-group-move={segment.index} data-move-color={segment.color} data-played={segment.played ? 'true' : undefined} opacity={segment.played ? 0.25 : 1}>
-          <path d={segment.d} fill="none" stroke="#111" strokeWidth={5} strokeOpacity={0.6} strokeLinecap="round"/>
-          <path d={segment.d} fill="none" stroke={segment.color} strokeWidth={2.2} markerEnd={`url(#${arrowId}-group-${segment.index})`}/>
-          <marker id={`${arrowId}-group-${segment.index}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1.5 L 9 5 L 1 8.5 Z" fill={segment.color} stroke="#111" strokeOpacity={0.6} strokeWidth={0.8} strokeLinejoin="round"/></marker>
+          <path d={segment.d} fill="none" stroke="#111" strokeWidth={3} strokeOpacity={0.6}/>
+          <path data-group-head="true" d={segment.head} fill={segment.color} stroke="#111" strokeOpacity={0.6} strokeWidth={0.8} strokeLinejoin="round"/>
+          <path d={segment.d} fill="none" stroke={segment.color} strokeWidth={1.3}/>
         </g>)}
       </g>}
       {showArrow && arrowDistance > 1 && <g data-next-note-arrow="true" role="img" aria-label={`Next note: ${pitchLabel(nextCell.note, mode)}`} pointerEvents="none" opacity={0.4 + 0.6 * (1 - nextAttack.beatsAway)}>

@@ -70,3 +70,14 @@ export class EwiTracker {
 export function looksLikeWindController(label: string): boolean {
   return /\b(ewi|aerophone|nuwind|nurad|sylphyo|travel ?sax|wx-?[57]|yds-?\d+|elefue|robkoo|wind ?(controller|synth|instrument))/i.test(label);
 }
+
+// Live wind-controller state for the parts of the page that must follow it
+// closely. Components subscribe to it directly, so a stream of breath messages
+// redraws only the board marker and the tuner, never the whole practice page.
+// Each getter returns the same value until that aspect changes.
+export type WindSource = {
+  subscribe: (listener: () => void) => () => void;
+  getNote: () => number | null;
+  getPitch: () => Pitch | null;
+  getWind: () => {breath: number; bend: number} | null;
+};

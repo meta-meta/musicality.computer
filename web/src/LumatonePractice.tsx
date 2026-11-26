@@ -7,7 +7,7 @@ import type {Attempt} from './lumatone/practice/exercise.ts';
 import {NoteTrailControls} from './lumatone/practice/NoteTrailControls.tsx';
 import {useNoteTrailSettings} from './lumatone/practice/useNoteTrailSettings.ts';
 import {PracticeHexMap} from './lumatone/practice/PracticeHexMap.tsx';
-import {PracticeTuner} from './lumatone/practice/PracticeTuner.tsx';
+import {PracticeTuner, WindPracticeTuner} from './lumatone/practice/PracticeTuner.tsx';
 import {PracticeJudgement} from './lumatone/practice/PracticeJudgement.tsx';
 import {latestSavedCalibration} from './lumatone/practice/timingCalibration.ts';
 import {TimingCalibration} from './lumatone/practice/TimingCalibration.tsx';
@@ -19,7 +19,7 @@ import {PracticeTempoInput} from './lumatone/practice/PracticeTempoInput.tsx';
 import {COUNT_IN_BEATS} from './lumatone/practice/transport.ts';
 import {usePracticeSettings} from './lumatone/practice/usePracticeSettings.ts';
 import {booleanRecord, isBoolean, numberBetween, oneOf, useSavedState} from './lumatone/practice/useSavedState.ts';
-import {nextSectionName, readScoreSections, sectionNotes, writeScoreSections} from './lumatone/practice/practiceSections.ts';
+import {adjacentSection, nextSectionName, readScoreSections, sectionNotes, writeScoreSections} from './lumatone/practice/practiceSections.ts';
 import {PracticeSections} from './lumatone/practice/PracticeSections.tsx';
 import {PracticeTimeline} from './lumatone/practice/PracticeTimeline.tsx';
 import {PracticeAnalysisControls} from './lumatone/practice/PracticeAnalysisControls.tsx';
@@ -200,10 +200,28 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const selectedSection = saved.sections.find(section => section.id === saved.selected) ?? null;
   const sectionRange = selectedSection ? sectionNotes(exercise, selectedSection.start, selectedSection.end) : null;
   const canSaveSection = (loopStart !== null || loopEnd !== null) && sectionNotes(exercise, loopStart ?? START, loopEnd ?? END).notes.length > 0;
+  // While practice is playing, choosing a section cues it: playback moves there
+  // on the next beat instead of stopping. Its judgements start a new history
+  // session, because a session records the loop it was played with.
+  const restartHistory = useRef(false);
+  useEffect(() => {
+    if (!restartHistory.current) return;
+    restartHistory.current = false;
+    history.finish(); history.begin();
+  // The loop points are the trigger; the history handle is stable enough to call.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loopStart, loopEnd]);
   const selectSection = (id: string | null) => {
     const section = saved.sections.find(item => item.id === id);
+    const change = (current: typeof saved) => section ? {...current, selected: section.id, loopStart: section.start, loopEnd: section.end} : {...current, selected: null};
+    if (!section && playback.running) {setSaved(change); return;}
+    if (section && playback.running && playback.cue(section.start, section.end)) {
+      restartHistory.current = section.start !== loopStart || section.end !== loopEnd;
+      setSaved(change);
+      return;
+    }
     stop(); finishHistory();
-    setSaved(current => section ? {...current, selected: section.id, loopStart: section.start, loopEnd: section.end} : {...current, selected: null});
+    setSaved(change);
     if (section) {setLoop(true); playback.seek(section.start);}
   };
   const saveSection = () => {
@@ -267,6 +285,14 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const navigationBeat = playback.pendingBeat ?? Math.max(beat, playback.entryBeat);
   const goBack = () => playback.seek(adjacentLoopPoint(navigationBeat, -1, loopStart, loopEnd, score));
   usePracticeShortcuts({beat: navigationBeat, loopStart, loopEnd, noteGroups, onToggle: () => void togglePlayback(), onSeek: playback.seek,
+    onToggleMetronome: () => {if (!followMonophone) setMetronome(value => !value);},
+    // With a section selected, left/right move along the cards; while playing, the next one is cued.
+    onStep: direction => {
+      if (!saved.selected || calibrating) return false;
+      const next = adjacentSection(saved.sections, saved.selected, direction);
+      if (next) selectSection(next.id);
+      return true;
+    },
     onPlayChord: () => {if (!calibrating && harmony) void playback.playChord(harmony.notes.map(note => note.note));}});
   return (
     <Stack p={3} gap={4} maxWidth="1200px" mx="auto" fontFamily="'JetBrains Mono', monospace">
@@ -355,7 +381,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Sound</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}><input type="checkbox" checked={guide} onChange={event => setGuide(event.target.checked)}/>Guide sound</Flex>
-        <Flex as="label" gap={2}><input type="checkbox" checked={metronome} disabled={followMonophone} onChange={event => setMetronome(event.target.checked)}/>Metronome</Flex>
+        <Flex as="label" gap={2}><input type="checkbox" checked={metronome} disabled={followMonophone} onChange={event => setMetronome(event.target.checked)}/>Metronome (M)</Flex>
         <Flex as="label" gap={2}><input type="checkbox" checked={harmonySound} disabled={!hasChords} onChange={event => setHarmonySound(event.target.checked)}/>Chord sound</Flex>
         <Flex as="label" gap={2} align="center" fontSize="sm">Chord volume
           <input aria-label="Chord volume" type="range" min={0} max={100} value={harmonyVolume} style={{width: 90}} onChange={event => setHarmonyVolume(Number(event.target.value))}/>
@@ -395,18 +421,21 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
           <Text fontWeight="semibold">Polyphonic input · experimental</Text>
           <Text data-testid="polyphonic-note-readout" fontSize="lg" height="2.75rem" lineHeight="1.5" whiteSpace="nowrap" overflowX="auto" overflowY="hidden" tabIndex={0} aria-label="Detected notes in written pitch">{polyphone.notes.length ? polyphone.notes.map(note => {const cents = polyphone.tunings.find(reading => reading.note === note)?.cents; return `${pitchLabel(note + writtenOffset, mode)}${Math.floor((note + writtenOffset) / 12) - 1}${cents === null || cents === undefined ? ' (—)' : ` (${cents >= 0 ? '+' : ''}${Math.round(cents)}¢)`}`;}).join(' · ') : microphone.status === 'listening' ? 'Listening for notes…' : 'Start listening to detect guitar notes'}</Text>
           <Text fontSize="xs" color="fg.muted">{polyphone.delayMs === null ? '' : `Detector delay: ${polyphone.delayMs} ms · `}Experimental per-note tuning: dot above center = sharp, below = flat. A dash means insufficient isolated harmonics. Tuning estimates are visual feedback; melody judgements check the detected note set; full chord voicings are not graded. Use headphones to keep guide/chord audio out of the microphone.</Text>
-        </Box> : <PracticeTuner target={playback.running && writtenTarget ? writtenTarget.note + transpose : undefined} pitch={pitch} mode={mode} notationOffset={writtenOffset} allowLowOctaveUp={allowLowOctaveUp}
+        </Box> : inputMode === 'ewi' ? <WindPracticeTuner source={ewi.source} target={playback.running && writtenTarget ? writtenTarget.note + transpose : undefined} mode={mode} notationOffset={writtenOffset} allowLowOctaveUp={allowLowOctaveUp}
+          listening={microphone.status === 'listening'} countIn={countIn ? Math.min(COUNT_IN_BEATS, Math.ceil(playback.entryBeat - beat)) : null}
+          location={!playback.running ? 'Free tuning' : followMonophone && !countIn ? playback.waiting ? 'Waiting for your instrument' : 'Following your pace' : target?.location ?? 'Three-beat count-in from the playhead'}/>
+          : <PracticeTuner target={playback.running && writtenTarget ? writtenTarget.note + transpose : undefined} pitch={pitch} mode={mode} notationOffset={writtenOffset} allowLowOctaveUp={allowLowOctaveUp}
           listening={microphone.status === 'listening'} countIn={countIn ? Math.min(COUNT_IN_BEATS, Math.ceil(playback.entryBeat - beat)) : null}
           location={!playback.running ? 'Free tuning' : followMonophone && !countIn ? playback.waiting ? 'Waiting for your instrument' : 'Following your pace' : target?.location ?? 'Three-beat count-in from the playhead'}/>}
         {playback.running && <PracticeJudgement attempt={lastAttempt ? {...lastAttempt, note: lastAttempt.note + writtenOffset} : null} freeTime={followMonophone} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap dimOutsideGroup={Boolean(sectionGroup)} group={sectionGroup ?? (showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined)} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={inputMode === 'ewi' ? ewi.reading ? ewi.reading.note + writtenOffset : null : pitch ? pitch.note + writtenOffset : null} heardCents={inputMode === 'ewi' ? null : pitch?.cents ?? null}
-        heardBreath={inputMode === 'ewi' && ewi.reading ? ewi.reading.breath : null} heardBend={inputMode === 'ewi' && ewi.reading ? ewi.reading.bend : null} transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
+      <PracticeHexMap dimOutsideGroup={Boolean(sectionGroup)} group={sectionGroup ?? (showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined)} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={pitch ? pitch.note + writtenOffset : null} heardCents={pitch?.cents ?? null} wind={inputMode === 'ewi' ? ewi.source : undefined} windOffset={writtenOffset}
+        transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
         cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}
-      <PracticeSections sections={saved.sections} selected={saved.selected} melody={writtenScore.melody} transpose={transpose} mode={mode} disabled={playback.running || calibrating}
+      <PracticeSections sections={saved.sections} selected={saved.selected} melody={writtenScore.melody} transpose={transpose} mode={mode} disabled={calibrating} editingDisabled={playback.running || calibrating}
         canSave={canSaveSection} onSave={saveSection} onSelect={selectSection} onRename={renameSection} onDelete={deleteSection}/>
       <PracticeTimeline beat={beat} entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} running={playback.running}
         onTogglePlayback={() => void togglePlayback()} onToggleListening={toggleListening} microphoneStarting={microphone.status==='starting'} onBpmChange={setBpm} onBack={goBack} transportDisabled={microphone.status === 'starting' || calibrating}

@@ -4,6 +4,8 @@ import {noteName} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import {matchesPracticePitch} from './exercise.ts';
 import type {Pitch} from './pitch.ts';
+import type {WindSource} from './ewi.ts';
+import {startTransition, useEffect, useState} from 'react';
 
 const point = (cents: number, radius: number) => {
   const angle = cents / 50 * Math.PI / 3;
@@ -74,4 +76,17 @@ export function PracticeTuner({target, pitch, mode, allowLowOctaveUp, listening,
       </Flex>
     </Box>
   );
+}
+
+// The tuner for a wind controller: it follows the live source itself, so pitch
+// bend moves the needle without re-rendering the practice page. Updates are
+// transitions, the same priority as the playhead, so neither holds up the other.
+export function WindPracticeTuner({source, ...props}: Omit<Parameters<typeof PracticeTuner>[0], 'pitch'> & {source: WindSource}) {
+  const [pitch, setPitch] = useState(source.getPitch);
+  useEffect(() => {
+    const update = () => startTransition(() => setPitch(source.getPitch()));
+    update();
+    return source.subscribe(update);
+  }, [source]);
+  return <PracticeTuner {...props} pitch={pitch}/>;
 }
