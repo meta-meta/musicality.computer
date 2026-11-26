@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const esbuild=require('esbuild');
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
-const built=esbuild.buildSync({stdin:{contents:`export * from './src/lumatone/practice/noteGroups.ts'; export * from './src/lumatone/practice/navigation.ts'; export * from './src/lumatone/practice/PracticeHexMap.tsx';`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',define:{'import.meta.env.BASE_URL':JSON.stringify('/')},external:['react','react/jsx-runtime','@chakra-ui/react','next-themes','react-icons/lu']});
+const built=esbuild.buildSync({stdin:{contents:`export * from './src/lumatone/practice/noteGroups.ts'; export * from './src/lumatone/practice/navigation.ts'; export {spaceTypesText} from './src/lumatone/practice/usePracticeShortcuts.ts'; export * from './src/lumatone/practice/PracticeHexMap.tsx';`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',define:{'import.meta.env.BASE_URL':JSON.stringify('/')},external:['react','react/jsx-runtime','@chakra-ui/react','next-themes','react-icons/lu']});
 const mod={exports:{}};new Function('module','exports','require',built.outputFiles[0].text)(mod,mod.exports,require);
 const api=mod.exports;
 
@@ -69,3 +69,9 @@ assert.equal(map.match(/data-played="true"/g).length,2,'Moves before the target 
 const paths=[...map.matchAll(/data-group-move="(\d)"[^>]*><path d="M ([-\d.]+) ([-\d.]+) L/g)].map(match=>({index:match[1],y:Number(match[3])}));
 assert.ok(paths[0].y!==paths[1].y,'A retraced move is offset from its opposite');
 console.log('Passed hex-map group outlines, arrows, played state and retraced offsets.');
+
+// Space is play/pause unless the focused element takes typed text.
+const el=(tagName,attributes={},isContentEditable=false)=>({tagName,isContentEditable,getAttribute:name=>attributes[name]??null});
+for(const typing of [el('INPUT'),el('INPUT',{type:'text'}),el('INPUT',{type:'Search'}),el('TEXTAREA'),el('DIV',{},true),el('DIV',{role:'textbox'})])assert.ok(api.spaceTypesText(typing));
+for(const other of [null,el('BUTTON'),el('SELECT'),el('A'),el('INPUT',{type:'checkbox'}),el('INPUT',{type:'range'}),el('INPUT',{type:'number'}),el('G',{role:'button'}),el('DIV',{role:'slider'}),el('BODY')])assert.ok(!api.spaceTypesText(other));
+console.log('Passed Space handling: text entry keeps the key, everything else is play/pause.');

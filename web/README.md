@@ -101,15 +101,17 @@ Run `node scripts/test-pitch-range.cjs` to check low-register and harmonic-rich 
 Play/pause and back controls sit beside the playhead. Pausing suspends the
 playback audio clock and preserves the current pass and count-in; resuming
 continues from there. In monophone-follow mode, the follower's clock pauses too.
-Space toggles play/pause; `[` / `]` move to the previous/next melody note;
+Space toggles play/pause whatever has focus (a button, checkbox, menu, slider or
+note hex), except in a text field, where it types a space; `[` / `]` move to the previous/next melody note;
 `Shift+[` / `Shift+]` (`{` / `}`) move through the configured loop points and
 the beginning/end of the track; Left/Right move to adjacent bar boundaries.
 Down Arrow auditions the current chord without moving the playhead; holding
 the key does not repeatedly retrigger it.
 The back button goes to the previous loop point or beginning. While timed
 playback runs, navigation queues on the next beat, as strip clicks do; seeking
-to the end stops playback. Inputs, sliders, and editable text retain their own
-keyboard behavior. Focused buttons and note hexes retain native Space actions.
+to the end stops playback. For the other shortcuts, inputs, menus, sliders and
+editable text retain their own keyboard behavior. Space no longer activates a
+focused button or note hex on the practice page; use Enter for that.
 
 The practice page's **Key** selector transposes Stella's melody and harmony
 together into any of the 12 keys (B♭ major by default). Playback, audition,
