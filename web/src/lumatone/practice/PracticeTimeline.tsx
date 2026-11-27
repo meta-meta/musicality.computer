@@ -76,9 +76,9 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <Button size="sm" variant="outline" aria-label="Previous loop point or beginning" title="Previous loop point or beginning (Shift+[)" onClick={onBack}>⏮</Button>
         <Button size="sm" aria-label={running ? 'Pause playback' : 'Play playback'} title="Play / pause (Space)" disabled={transportDisabled} onClick={onTogglePlayback}>{running ? '⏸' : '▶'}</Button>
         <Button size="sm" variant={loop ? 'solid' : 'outline'} colorPalette={loop ? 'cyan' : undefined}
-          aria-label="Loop playback" aria-pressed={loop} title={running ? 'Pause to change looping' : loop ? 'Looping on' : 'Looping off'}
-          disabled={running || transportDisabled} onClick={() => onLoopChange(!loop)}>↻</Button>
-        <Flex as="label" gap={1} align="center"><PracticeTempoInput label="Playhead tempo" bpm={bpm} onChange={onBpmChange} disabled={running || transportDisabled}/> BPM</Flex>
+          aria-label="Loop playback" aria-pressed={loop} title={loop ? 'Looping on (R)' : 'Looping off (R)'}
+          disabled={transportDisabled} onClick={() => onLoopChange(!loop)}>↻</Button>
+        <Flex as="label" gap={1} align="center"><PracticeTempoInput label="Playhead tempo" bpm={bpm} onChange={onBpmChange} disabled={transportDisabled}/> BPM</Flex>
         <Button size="sm" variant={listening ? 'solid' : 'outline'} aria-pressed={listening}
           aria-label={listening ? 'Stop microphone at playhead' : 'Listen to monophone at playhead'} disabled={transportDisabled} onClick={onToggleListening}>
           {microphoneStarting ? 'Opening…' : listening ? 'Listening' : 'Listen'}
@@ -86,7 +86,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
         <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: '1 1 160px', minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
-      <Text fontSize="xs" color="fg.muted">Space: play/pause from anywhere except a text field · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↓: play current chord · M: metronome on/off. The other shortcuts leave text fields, menus and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
+      <Text fontSize="xs" color="fg.muted">Space: play/pause from anywhere except a text field · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↑ / ↓: tempo ±1 BPM (Shift: ±10), also while playing · C: play current chord · M: metronome on/off · R: loop on/off. The other shortcuts leave text fields, menus and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}>Loop start
           <select aria-label="Loop start" disabled={running} value={loopStart ?? ''} onChange={event => onLoopStart(event.target.value === '' ? null : Number(event.target.value))}>

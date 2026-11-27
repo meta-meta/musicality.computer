@@ -2,7 +2,7 @@ import {InputNoteHighlight} from './InputNoteHighlight.tsx';
 import {defaultNoteTrail} from './noteTrail.ts';
 import type {NoteTrailSettings} from './noteTrail.ts';
 import {usePracticeScore} from './PracticeScoreContext.tsx';
-import {memo, useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore} from 'react';
+import {memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react';
 import type {WindSource} from './ewi.ts';
 import {useColorMode} from '../../components/chakra-ui/color-mode.tsx';
 import {getNoteColorHsl, orderColor} from '../colors.ts';
@@ -36,11 +36,11 @@ const points = Array.from({length: 6}, (_, index) => {
 }).join(' ');
 
 type Cell = {q: number; r: number; note: number; x: number; y: number};
-const HexCell = memo(function HexCell({cell, fills, active, live, midi, detected, tuningCents, chord, guideTone, dimmed, preview, mode, isLight, showGuideTones, windActive, heardCents, practicing, progress, noteTrail, onPlay}: {
+const HexCell = memo(function HexCell({cell, fills, active, live, midi, detected, tuningCents, chord, guideTone, dimmed, preview, mode, isLight, showGuideTones, windActive, heardCents, practicing, progress, barId, barEndAt, barMs, noteTrail, onPlay}: {
   cell: Cell; fills: {normal: string; played: string}; active: boolean; live: boolean; midi: boolean; detected: boolean;
   tuningCents: number | null | undefined; chord: 'tone' | 'root' | null; guideTone: boolean; dimmed: boolean; preview: boolean;
   mode: LabelMode; isLight: boolean; showGuideTones: boolean; windActive: boolean; heardCents: number | null;
-  practicing: boolean; progress: number; noteTrail: NoteTrailSettings; onPlay: (note: number) => void;
+  practicing: boolean; progress: number; barId: string; barEndAt: number | null; barMs: number; noteTrail: NoteTrailSettings; onPlay: (note: number) => void;
 }) {
   const targetColor = isLight ? '#111' : '#fff';
   const harmonyColor = isLight ? '#422006' : '#dec89d';
@@ -59,7 +59,7 @@ const HexCell = memo(function HexCell({cell, fills, active, live, midi, detected
          if (!event.repeat) onPlay(cell.note);
        }}>
       <polygon points={points} fill={active || preview || chord ? fills.played : fills.normal} opacity={active || live || midi || !showGuideTones || !chord || guideTone ? 1 : chord === 'root' ? 0.65 : 0.35}/>
-      <InputNoteHighlight active={midi || live} note={cell.note} points={points} fill={fills.played} stroke={targetColor} settings={noteTrail}/>
+      <InputNoteHighlight active={midi || live} note={cell.note} points={points} fill={fills.played} stroke={windActive && live && !midi ? null : targetColor} settings={noteTrail}/>
       {detected && tuningCents !== null && tuningCents !== undefined && <g data-polyphonic-tuning={cell.note} data-cents={tuningCents}
         transform={`translate(0,${-RADIUS * 0.6})`} pointerEvents="none">
         <title>{`${Math.abs(tuningCents).toFixed(0)} cents ${Math.abs(tuningCents) < 3 ? 'in tune' : tuningCents > 0 ? 'sharp' : 'flat'} (experimental)`}</title>
@@ -75,10 +75,7 @@ const HexCell = memo(function HexCell({cell, fills, active, live, midi, detected
       <text fill={isLight ? '#fffc' : '#000c'} textAnchor="middle" dominantBaseline="central" style={{fontSize: RADIUS * (label.length > 1 ? 0.65 : 0.95)}}>{label}</text>
       <text x={RADIUS * 0.5} y={RADIUS * 0.25} fill={isLight ? '#fff7' : '#0007'} textAnchor="middle" style={{fontSize: RADIUS * 0.32}}>{Math.floor(cell.note / 12) - 1}</text>
       {active && <>
-        {practicing && <g data-duration-bar="true" pointerEvents="none">
-          <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7} height={2.5} rx={1.25} fill={progressColor} opacity={0.2}/>
-          <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7 * Math.max(0, Math.min(1, 1 - progress))} height={2.5} rx={1.25} fill={progressColor}/>
-        </g>}
+        {practicing && <DurationBar key={barId} progress={progress} color={progressColor} endAt={barEndAt} ms={barMs}/>}
       </>}
       {chord && <polygon data-chord-border="true" points={points} transform="scale(0.86)" fill="none" stroke={harmonyColor} strokeWidth={chord === 'root' ? 1.8 : 1.2} opacity={0.9} vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
       {chord === 'root' && <polygon data-root-outer-border="true" points={points} transform="scale(1.08)" fill="none" stroke={harmonyColor} strokeWidth={1.2} opacity={0.9} vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
@@ -86,6 +83,57 @@ const HexCell = memo(function HexCell({cell, fills, active, live, midi, detected
     </g>
   );
 });
+
+const useBeforePaint = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+const CUE_GROW = (RADIUS - 2 + 9) / (RADIUS - 2);
+const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
+// The dashed outline of an upcoming attack. It closes onto its hex during the
+// last beat before the attack. With an arrival time (timed playback) that is
+// one animation scheduled to end at the attack, so it runs smoothly and lands
+// on time however busy the page is. Without one (free time, paused, or no
+// animation support) the size follows `radius` from each render, as before.
+function UpcomingHex({radius, color, opacity, transition, arriveAt, msPerBeat}: {
+  radius: number; color: string; opacity: number; transition: string; arriveAt: number | null; msPerBeat: number;
+}) {
+  const hex = useRef<SVGPolygonElement>(null);
+  const arrival = useRef(arriveAt);
+  arrival.current = arriveAt;
+  const timed = arriveAt !== null && msPerBeat > 0;
+  useBeforePaint(() => {
+    const node = hex.current, at = arrival.current;
+    if (!timed || at === null || !node?.animate) return;
+    const animation = node.animate([{transform: `scale(${CUE_GROW})`, strokeWidth: `${1.5 / CUE_GROW}px`}, {transform: 'scale(1)', strokeWidth: '1.5px'}],
+      {duration: msPerBeat, delay: at - msPerBeat - performance.now(), fill: 'both', easing: 'linear'});
+    return () => animation.cancel();
+    // The arrival time is read once per attack: later renders only refine it by
+    // clock jitter, and restarting the animation for that would make it stutter.
+  }, [timed, msPerBeat]);
+  return <polygon ref={hex} className="practice-upcoming-motion" data-upcoming-hex="true" data-cue-timed={timed ? 'true' : undefined} points={points}
+    style={{transform: `scale(${radius / (RADIUS - 2)})`, transformOrigin: '0px 0px', opacity, transition}}
+    fill="none" stroke={color} strokeWidth={1.5 * (RADIUS - 2) / radius}
+    strokeDasharray={`${upcomingDashPeriod * 3 / 7} ${upcomingDashPeriod * 4 / 7}`}/>;
+}
+
+// The bar on the target hex that empties over the note's length. With an end
+// time (timed playback) it is one animation scheduled to finish when the note
+// ends; otherwise its width follows `progress` from each render.
+function DurationBar({progress, color, endAt, ms}: {progress: number; color: string; endAt: number | null; ms: number}) {
+  const bar = useRef<SVGRectElement>(null);
+  const end = useRef(endAt);
+  end.current = endAt;
+  const timed = endAt !== null && ms > 0;
+  useBeforePaint(() => {
+    const node = bar.current, at = end.current;
+    if (!timed || at === null || !node?.animate) return;
+    const animation = node.animate([{transform: 'scaleX(1)'}, {transform: 'scaleX(0)'}], {duration: ms, delay: at - ms - performance.now(), fill: 'both', easing: 'linear'});
+    return () => animation.cancel();
+  }, [timed, ms]);
+  return <g data-duration-bar="true" data-bar-timed={timed ? 'true' : undefined} pointerEvents="none">
+    <rect x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7} height={2.5} rx={1.25} fill={color} opacity={0.2}/>
+    <rect ref={bar} x={-RADIUS * 0.35} y={RADIUS * 0.52 - 2} width={RADIUS * 0.7 * (timed ? 1 : Math.max(0, Math.min(1, 1 - progress)))} height={2.5} rx={1.25} fill={color}
+      style={timed ? {transformBox: 'fill-box', transformOrigin: 'left center', transform: `scaleX(${Math.max(0, Math.min(1, 1 - progress))})`} : undefined}/>
+  </g>;
+}
 
 const noSubscribe = () => () => {};
 const noValue = () => null;
@@ -137,7 +185,16 @@ function WindIndicator({source, breath: fixedBreath, bend: fixedBend, x, y, colo
   </g>;
 }
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, heard: heardNote, heardCents = null, wind, windOffset = 0, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, fill = false, cueBeat = 0, cueClock, targetSpan, heard: heardNote, heardCents = null, wind, windOffset = 0, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+  // Fill the parent's height instead of the page layout's clamped height.
+  fill?: boolean;
+  // Timed playback: the beat `futureAttacks` was computed for, and a way to
+  // read the audio clock's beat now, so cue outlines can be scheduled to land
+  // exactly on their attacks. Omit `cueClock` where the playhead waits for the player.
+  cueBeat?: number; cueClock?: () => {beat: number; msPerBeat: number} | null;
+  // The sounding span of the target note in beats, and an id that changes with
+  // each new attack (including a repeat of the same note), for the duration bar.
+  targetSpan?: {id: string; start: number; end: number};
   // A live wind controller. When given, it supplies the played note (plus
   // `windOffset` semitones to written pitch), breath and bend, replacing
   // `heard`, `heardBreath` and `heardBend`.
@@ -238,14 +295,14 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     const to = groupCells[index + 1];
     return from && to && from !== to ? [{from, to, index}] : [];
   });
-  const groupShifts = spreadOverlappingMoves(groupMoves, 8, 32);
+  const groupShifts = spreadOverlappingMoves(groupMoves, 4.5, 18);
   const groupSegments = groupMoves.map(({from, to, index}, order) => {
     const distance = Math.hypot(to.x - from.x, to.y - from.y);
     const unit = {x: (to.x - from.x) / distance, y: (to.y - from.y) / distance};
     const shift = groupShifts[order], padding = Math.min(RADIUS * 0.62, distance * 0.3);
     const point = (along: number, side = 0) => `${from.x + unit.x * along - unit.y * side + shift.x} ${from.y + unit.y * along + unit.x * side + shift.y}`;
     // The line stops at the base of the head, so the head ends in a clean point.
-    const tip = distance - padding, head = Math.min(8, (tip - padding) * 0.45);
+    const tip = distance - padding, head = Math.min(5.5, (tip - padding) * 0.45);
     return {index, color: orderColor(order, groupMoves.length), played: index < (group?.current ?? 0), d: `M ${point(padding)} L ${point(tip - head)}`,
       head: `M ${point(tip)} L ${point(tip - head, head * 0.42)} L ${point(tip - head, -head * 0.42)} Z`};
   });
@@ -263,7 +320,10 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     if (detectedCells.length) previousDetectedChord.current = detectedCells;
   }, [detectedCells]);
   const detectedSet = new Set(detectedCells);
-  const upcomingDashPeriod = 6 * (RADIUS - 2) / 24;
+  // The audio clock's beat right now, to time the cue outlines. Unusable when
+  // the clock has already wrapped into another pass than the one being drawn.
+  const clockNow = practicing ? cueClock?.() ?? null : null;
+  const cueNow = clockNow && Math.abs(clockNow.beat - cueBeat) < 1 ? {...clockNow, at: performance.now()} : null;
   const previousHeardCell = useRef<{x: number; y: number} | null>(null);
   const heardCell = detectedPitchCell(cells, heard, previousHeardCell.current,
     {left: viewLeft, top, width: viewWidth, height}, RADIUS, promptCell);
@@ -276,7 +336,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const previewCell = previewCells.find(cell => atTarget(cell, target))
     ?? previewCells.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
   return (
-    <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected instrument note; dot above center means sharp, below means flat." viewBox={`${viewLeft} ${top} ${viewWidth} ${height}`} style={{width: '100%', height: 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
+    <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected instrument note; dot above center means sharp, below means flat." viewBox={`${viewLeft} ${top} ${viewWidth} ${height}`} style={{width: '100%', height: fill ? '100%' : 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
       <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke={targetColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></marker></defs>
       <style>{`
         .practice-hex:focus { outline: none; }
@@ -308,7 +368,9 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
         return <HexCell key={`${cell.q},${cell.r}`} cell={cell} fills={colors[index]} active={active} live={live} midi={midi} detected={detected}
           tuningCents={detected ? tuning?.cents : undefined} chord={chordTone ? chordTone.root ? 'root' : 'tone' : null} guideTone={guideTone} dimmed={dimmed}
           preview={cell === previewCell} mode={mode} isLight={isLight} showGuideTones={showGuideTones} windActive={windActive}
-          heardCents={live ? heardCents : null} practicing={practicing && active} progress={active && practicing ? progress : 0} noteTrail={noteTrail} onPlay={playNote}/>;
+          heardCents={live ? heardCents : null} practicing={practicing && active} progress={active && practicing ? progress : 0}
+          barId={active && targetSpan ? targetSpan.id : ''} barEndAt={active && practicing && cueNow && targetSpan ? cueNow.at + (targetSpan.end - cueNow.beat) * cueNow.msPerBeat : null}
+          barMs={active && cueNow && targetSpan ? (targetSpan.end - targetSpan.start) * cueNow.msPerBeat : 0} noteTrail={noteTrail} onPlay={playNote}/>;
       })}
       {heardCell && windActive && <WindIndicator source={wind} breath={heardBreath} bend={heardBend} x={heardCell.x} y={heardCell.y} color={targetColor}/>}
       {[...markers].sort((a, b) => b.step - a.step).map(marker => {
@@ -326,15 +388,14 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
           aria-label={`Upcoming attack ${ordinal}: ${pitchLabel(cell.note, mode)}`}
           data-traveller-id={marker.id} data-traveller-note={cell.note} data-traveller-step={marker.step} data-attack-id={marker.attackId}
           style={{transform: `translate(${cell.x}px, ${cell.y}px)`, transition}} pointerEvents="none">
-          <polygon className="practice-upcoming-motion" data-upcoming-hex="true" points={points}
-            style={{transform: `scale(${radius / (RADIUS - 2)})`, transformOrigin: '0px 0px', opacity: cueStyle.opacity, transition: practicing ? `opacity 240ms ease-out ${delay}ms` : 'none'}}
-            fill="none" stroke={cueStyle.color} strokeWidth={1.5 * (RADIUS - 2) / radius}
-            strokeDasharray={`${upcomingDashPeriod * 3 / 7} ${upcomingDashPeriod * 4 / 7}`}/>
+          <UpcomingHex radius={radius} color={cueStyle.color} opacity={cueStyle.opacity} transition={practicing ? `opacity 240ms ease-out ${delay}ms` : 'none'}
+            arriveAt={practicing && cueNow ? cueNow.at + (cueBeat + approaching.beatsAway - cueNow.beat) * cueNow.msPerBeat : null} msPerBeat={cueNow?.msPerBeat ?? 0}/>
         </g>;
       })}
       {group && <g data-note-group="true" data-group-size={group.notes.length} role="img" pointerEvents="none"
         aria-label={`Note group: ${group.notes.map(note => pitchLabel(note.note + transpose, mode)).join(', ')}`}>
-        {[...new Set(groupCells)].map(cell => cell && <polygon key={`${cell.q},${cell.r}`} data-group-cell={cell.note} points={points}
+        {/* A section's cells already stand out against the dimmed board, so they need no outline. */}
+        {!dimOutsideGroup && [...new Set(groupCells)].map(cell => cell && <polygon key={`${cell.q},${cell.r}`} data-group-cell={cell.note} points={points}
           transform={`translate(${cell.x},${cell.y}) scale(0.93)`} fill="none" stroke={targetColor} strokeWidth={1}
           opacity={groupCells.lastIndexOf(cell) < group.current ? 0.2 : 0.55} vectorEffect="non-scaling-stroke"/>)}
         {groupSegments.map(segment => <g key={segment.index} data-group-move={segment.index} data-move-color={segment.color} data-played={segment.played ? 'true' : undefined} opacity={segment.played ? 0.25 : 1}>

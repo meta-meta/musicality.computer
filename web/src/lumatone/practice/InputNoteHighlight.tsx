@@ -4,7 +4,9 @@ import type {NoteTrailSettings} from './noteTrail.ts';
 const useBeforePaint = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 export function InputNoteHighlight({active, note, points, fill, stroke, settings}: {
-  active: boolean; note: number; points: string; fill: string; stroke: string; settings: NoteTrailSettings;
+  active: boolean; note: number; points: string; fill: string; settings: NoteTrailSettings;
+  // Null draws the highlight without an outline (a wind controller has its own marker).
+  stroke: string | null;
 }) {
   const element = useRef<SVGGElement>(null);
   const previouslyActive = useRef(active);
@@ -27,8 +29,11 @@ export function InputNoteHighlight({active, note, points, fill, stroke, settings
       animation.cancel();
     };
   }, [active, enabled, dropMs, level, fadeMs, dropCurve, fadeCurve]);
+  // A fading trail keeps the look the note had while it was held.
+  const heldStroke = useRef(stroke);
+  if (active) heldStroke.current = stroke;
   return <g ref={element} data-input-highlight={active ? 'held' : 'released'} style={{opacity: active ? 1 : 0}} pointerEvents="none" aria-hidden="true">
     <polygon points={points} fill={fill}/>
-    <polygon data-midi-note={active ? note : undefined} points={points} fill="none" stroke={stroke} strokeWidth={1.6}/>
+    <polygon data-midi-note={active ? note : undefined} points={points} fill="none" stroke={heldStroke.current ?? 'none'} strokeWidth={1.6}/>
   </g>;
 }

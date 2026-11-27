@@ -51,7 +51,7 @@ import effendiReport from './lumatone/practice/effendi/catalog.report.json';
 import wikifoniaReport from './lumatone/practice/wikifonia/catalog.report.json';
 import {noteName, pitchLabel} from './lumatone/leadSheet/labels.ts';
 const registerOptions = [{value: -12, label: 'Octave below'}, {value: 0, label: 'Original'}, {value: 12, label: 'Octave above'}, {value: 24, label: 'Two octaves above'}];
-function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettings>}) {
+function PracticePiece({settings, maximized, onMaximize}: {settings:ReturnType<typeof usePracticeSettings>; maximized: boolean; onMaximize: (value: boolean) => void}) {
   const {score, START, END, exercise, harmonies} = usePracticeScore();
   const midiNotes = usePracticeMidi();
   const noteTrails = useNoteTrailSettings();
@@ -119,6 +119,15 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   }, []);
   const [latency, setLatency] = useSavedState('latency', calibrated, numberBetween(-300, 500));
   const [calibrating,setCalibrating] = useState(false);
+  // A brief confirmation for changes made from the keyboard, where the control
+  // itself may be off screen or, with the board maximized, not rendered.
+  const [notice, setNotice] = useState<{text: string; id: number} | null>(null);
+  const announce = useCallback((text: string) => setNotice(current => ({text, id: (current?.id ?? 0) + 1})), []);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   // The EWI is an instrument: choosing it switches input to the MIDI wind controller.
   const [detection, setDetection] = useSavedState<'monophonic' | 'polyphonic'>('detection', 'monophonic', oneOf('monophonic', 'polyphonic'));
   const inputMode: 'monophonic' | 'polyphonic' | 'ewi' = instrumentId === 'ewi' ? 'ewi' : detection;
@@ -138,9 +147,14 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
   const [lastAttempt, setLastAttempt] = useState<Attempt | null>(null);
   const [betweenTargets, setBetweenTargets] = useState(false);
-  const playback = useMelodyPlayback({bpm, transpose, harmonyTranspose: keyTranspose, guide, metronome, loop, loopStart, loopEnd, harmonySound, harmonyVolume, followMonophone, allowLowOctaveUp});
+  // With looping off and a section selected, the sections play in card order.
+  const sectionChain = useMemo(() => {
+    const index = saved.sections.findIndex(section => section.id === saved.selected);
+    return loop || index < 0 ? null : {index, ranges: saved.sections.map(section => ({start: section.start, end: section.end}))};
+  }, [loop, saved.sections, saved.selected]);
+  const playback = useMelodyPlayback({chain: sectionChain, bpm, transpose, harmonyTranspose: keyTranspose, guide, metronome, loop, loopStart, loopEnd, harmonySound, harmonyVolume, followMonophone, allowLowOctaveUp});
   const history = usePracticeHistory({bpm, transpose, keyTranspose, instrumentId, freeTime: followMonophone, allowLowOctaveUp, loop, loopStart, loopEnd, latencyMs: latency});
-  useEffect(() => {setAttempts({}); setLastAttempt(null); setBetweenTargets(false);}, [bpm, transpose, loopStart, loopEnd, followMonophone, allowLowOctaveUp]);
+  useEffect(() => {setAttempts({}); setLastAttempt(null); setBetweenTargets(false);}, [transpose, loopStart, loopEnd, followMonophone, allowLowOctaveUp]);
   // Shared by the microphone and the EWI; MIDI needs no latency correction.
   const judgeMonophone = (entrance: Entrance, latencyMs: number) => {
     if (followMonophone || calibrating) return;
@@ -192,6 +206,12 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   });
   const microphone = inputMode === 'polyphonic' ? polyphone : inputMode === 'ewi' ? ewi : monophone;
   const {running, stop} = playback;
+  useEffect(() => {
+    if (!maximized) return;
+    const escape = (event: KeyboardEvent) => {if (event.key === 'Escape') onMaximize(false);};
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
+  }, [maximized, onMaximize]);
   const {finish: finishHistory} = history;
   // An input that is no longer the chosen one must not keep the microphone open.
   const stopMicrophones = useRef(() => {});
@@ -211,6 +231,29 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   // The loop points are the trigger; the history handle is stable enough to call.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loopStart, loopEnd]);
+  // Follow the transport as it moves on to the next chained section.
+  const playingEntry = playback.entryBeat, playingEnd = playback.endBeat;
+  useEffect(() => {
+    if (!sectionChain || !running) return;
+    const matches = saved.sections.map((section, index) => ({section, index})).filter(({section}) => Math.abs(section.end - playingEnd) < 1e-6 && section.start <= playingEntry + 1e-6);
+    const playing = (matches.find(match => match.index >= sectionChain.index) ?? matches[0])?.section;
+    if (!playing || playing.id === saved.selected) return;
+    playback.expectLoop(playing.start, playing.end);
+    restartHistory.current = playing.start !== loopStart || playing.end !== loopEnd;
+    setSaved(current => ({...current, selected: playing.id, loopStart: playing.start, loopEnd: playing.end}));
+    announce(playing.name);
+  // Position changes are the trigger; the rest is read as of that moment.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playingEntry, playingEnd, running, sectionChain]);
+  // A history session records its tempo and looping, so changing either while
+  // playing closes the session and opens another with the new settings.
+  const historySettings = useRef(`${bpm}:${loop}`);
+  useEffect(() => {
+    if (historySettings.current === `${bpm}:${loop}`) return;
+    historySettings.current = `${bpm}:${loop}`;
+    if (running) {history.finish(); history.begin();}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bpm, loop]);
   const selectSection = (id: string | null) => {
     const section = saved.sections.find(item => item.id === id);
     const change = (current: typeof saved) => section ? {...current, selected: section.id, loopStart: section.start, loopEnd: section.end} : {...current, selected: null};
@@ -285,15 +328,51 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
   const navigationBeat = playback.pendingBeat ?? Math.max(beat, playback.entryBeat);
   const goBack = () => playback.seek(adjacentLoopPoint(navigationBeat, -1, loopStart, loopEnd, score));
   usePracticeShortcuts({beat: navigationBeat, loopStart, loopEnd, noteGroups, onToggle: () => void togglePlayback(), onSeek: playback.seek,
-    onToggleMetronome: () => {if (!followMonophone) setMetronome(value => !value);},
+    onToggleMetronome: () => {
+      if (followMonophone) {announce('No metronome in free time'); return;}
+      announce(`Metronome ${metronome ? 'off' : 'on'}`); setMetronome(!metronome);
+    },
+    onToggleLoop: () => {
+      if (calibrating) return;
+      announce(`Loop ${loop ? 'off' : 'on'}`); setLoop(!loop);
+    },
+    onTempoStep: step => {
+      if (calibrating) return;
+      const next = Math.max(10, Math.min(420, Math.round(bpm) + step));
+      announce(`${next} BPM`); setBpm(next);
+    },
     // With a section selected, left/right move along the cards; while playing, the next one is cued.
     onStep: direction => {
       if (!saved.selected || calibrating) return false;
       const next = adjacentSection(saved.sections, saved.selected, direction);
-      if (next) selectSection(next.id);
+      if (next) {announce(playback.running ? `Next: ${next.name}` : next.name); selectSection(next.id);}
       return true;
     },
     onPlayChord: () => {if (!calibrating && harmony) void playback.playChord(harmony.notes.map(note => note.note));}});
+  const toast = notice && <Box key={notice.id} role="status" aria-live="polite" data-practice-toast="true" position="fixed" left="50%" bottom="28px" transform="translateX(-50%)" zIndex={1500}
+    px={4} py={2} borderRadius="full" borderWidth="1px" bg="bg" color="fg" fontSize="sm" fontWeight="semibold" boxShadow="lg" pointerEvents="none" whiteSpace="nowrap" fontFamily="'JetBrains Mono', monospace">{notice.text}</Box>;
+  // The board is the same element in the page and in the distraction-free view.
+  const board = <PracticeHexMap fill={maximized} targetSpan={target && noteEnd > noteStart ? {id: `${playback.pass}:${targetIndex}`, start: noteStart, end: noteEnd} : undefined} cueBeat={beat} cueClock={followMonophone ? undefined : () => {
+          const now = playback.positionAt(performance.now());
+          return now ? {beat: now.beat, msPerBeat: 60000 / bpm} : null;
+        }} dimOutsideGroup={Boolean(sectionGroup)} group={sectionGroup ?? (showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined)} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={pitch ? pitch.note + writtenOffset : null} heardCents={pitch?.cents ?? null} wind={inputMode === 'ewi' ? ewi.source : undefined} windOffset={writtenOffset}
+        transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>;
+  const boardToggle = <button type="button" data-board-maximize={maximized ? 'exit' : 'enter'} aria-pressed={maximized}
+    aria-label={maximized ? 'Exit full-window board' : 'Maximize the board'} title={maximized ? 'Exit full-window board (Esc)' : 'Maximize the board: hides everything else'}
+    onClick={event => {event.currentTarget.blur(); onMaximize(!maximized);}}
+    style={{position: 'absolute', top: 8, right: 8, width: 32, height: 32, display: 'grid', placeItems: 'center', borderRadius: 6, cursor: 'pointer',
+      border: '1px solid var(--chakra-colors-border)', background: 'var(--chakra-colors-bg)', color: 'var(--chakra-colors-fg)', opacity: 0.75}}>
+    <svg width={16} height={16} viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      {maximized ? <path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4"/> : <path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/>}
+    </svg>
+  </button>;
+  // Distraction-free: only the board, filling the window. Playback, input and
+  // the keyboard shortcuts keep working; nothing else on the page is rendered.
+  if (maximized) return <Box data-board-maximized="true" position="fixed" inset={0} zIndex={1400} bg="bg" fontFamily="'JetBrains Mono', monospace">
+    <PracticeScoreContext.Provider value={writtenScore}>{board}</PracticeScoreContext.Provider>
+    {boardToggle}
+    {toast}
+  </Box>;
   return (
     <Stack p={3} gap={4} maxWidth="1200px" mx="auto" fontFamily="'JetBrains Mono', monospace">
       <Link asChild textDecoration="underline" alignSelf="start"><RouterLink to="/lumatone">Back to Lumatone</RouterLink></Link>
@@ -318,7 +397,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         <Box as="legend" px={1} fontSize="sm" fontWeight="semibold">Playback</Box>
         <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2} align="center">Tempo
-          <PracticeTempoInput bpm={bpm} onChange={setBpm} disabled={playback.running || calibrating}/> BPM
+          <PracticeTempoInput bpm={bpm} onChange={setBpm} disabled={calibrating}/> BPM
         </Flex>
         <Flex as="label" gap={2} align="center" wrap="wrap" width="100%">Concert key
           {range && !range.fits && <Text as="span" color={outsideColor} aria-label="Melody outside instrument range">⚠</Text>}
@@ -331,7 +410,7 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
             {registerOptions.map((option, index) => <option key={option.value} value={option.value} style={{color: rangeColor(registerRanges[index])}}>{option.label} · {rangeLabel(registerRanges[index])}</option>)}
           </select>
         </Flex>
-        <Flex as="label" gap={2}><input type="checkbox" checked={loop} disabled={playback.running} onChange={event => setLoop(event.target.checked)}/>Loop playback</Flex>
+        <Flex as="label" gap={2}><input type="checkbox" checked={loop} onChange={event => setLoop(event.target.checked)}/>Loop playback (R)</Flex>
         </Flex>
         <Text id="practice-instrument-range" role="status" fontSize="xs" mt={2} color={rangeColor(range)} data-testid="instrument-range-warning">
           {range ? `${rangeLabel(range)}: written melody ${noteName(range.low, mode)}–${noteName(range.high, mode)}; ${instrument.label} range ${noteName(instrument.writtenLow, mode)}–${noteName(instrument.writtenHigh, mode)}.` : 'No melody to check.'}
@@ -430,8 +509,8 @@ function PracticePiece({settings}: {settings:ReturnType<typeof usePracticeSettin
         {playback.running && <PracticeJudgement attempt={lastAttempt ? {...lastAttempt, note: lastAttempt.note + writtenOffset} : null} freeTime={followMonophone} running={playback.running} listening={microphone.status === 'listening'}
           betweenTargets={betweenTargets} mode={mode} transpose={transpose}/>}
       </Flex>
-      <PracticeHexMap dimOutsideGroup={Boolean(sectionGroup)} group={sectionGroup ?? (showMelody && targetGroup && targetGroup.end > targetGroup.start ? {notes: writtenScore.melody.slice(targetGroup.start, targetGroup.end + 1), current: targetIndex - targetGroup.start} : undefined)} noteTrail={noteTrails.settings} extendedLowRange={instrumentId === 'guitar'} midiNotes={midiNotes.map(note => note + writtenOffset)} detectedTunings={inputMode === 'polyphonic' ? polyphone.tunings.map(reading => ({...reading, note: reading.note + writtenOffset})) : []} detectedNotes={inputMode === 'polyphonic' ? polyphone.notes.map(note => note + writtenOffset) : []} target={showMelody ? writtenTarget : undefined} targetHit={targetHit} futureAttacks={showMelody ? futureAttacks.map(cue => ({...cue, note: writtenScore.melody[exercise.indexOf(cue.note)]})) : []} progress={progress} heard={pitch ? pitch.note + writtenOffset : null} heardCents={pitch?.cents ?? null} wind={inputMode === 'ewi' ? ewi.source : undefined} windOffset={writtenOffset}
-        transpose={transpose} mode={mode} harmony={showHarmony ? writtenHarmony : undefined} previewNote={playback.previewNote === null ? null : playback.previewNote + writtenOffset} practicing={playback.running} onPlayNote={note => {if(!calibrating) void playback.playNote(note - writtenOffset);}} showGuideTones={analysis.guideTones}/>
+      <Box position="relative">{board}{boardToggle}</Box>
+      {toast}
       {showLyrics && Boolean(score.lyrics?.length) && <PracticeLyrics lyrics={score.lyrics!} beat={beat} countIn={countIn}
         entryBeat={playback.entryBeat} endBeat={playback.endBeat} pass={playback.pass} cueCount={lookahead}
         cueing={playback.running || playback.paused} loop={loop ? {start: loopStart ?? START, end: loopEnd ?? END} : null}/>}
@@ -465,6 +544,7 @@ function PracticeLibrary() {
   const [selected, setSelected] = useSavedState('tune', practiceScores[0].id, value => practiceScores.some(piece => piece.id === value));
   const [score, setScore] = useState(stellaScore);
   const [loadError, setLoadError] = useState('');
+  const [maximized, setMaximized] = useState(false);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
@@ -480,7 +560,7 @@ function PracticeLibrary() {
   const failures = [...(importReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'OpenBook'})), ...(effendiReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'Effendi'})), ...(wikifoniaReport.failures as {file: string; reason: string}[]).map(item => ({...item, collection: 'Wikifonia'}))];
   const matches = practiceScores.filter(piece => piece.id === selected || ((collection === 'all' || piece.collection === collection || (collection === 'custom' && !piece.collection)) && `${piece.title} ${piece.composer} ${piece.edition ?? ''}`.toLowerCase().includes(search.toLowerCase())));
   return <>
-    <Flex gap={3} wrap="wrap" align="center" p={3} maxWidth="1200px" mx="auto">
+    {!maximized && <Flex gap={3} wrap="wrap" align="center" p={3} maxWidth="1200px" mx="auto">
       <Flex gap={2} align="center" wrap="wrap" fontSize="sm" width="100%" minWidth={0}>
         <Text color="fg.muted">Collections:</Text>
         <Link href="https://github.com/veltzer/book-openbook" target="_blank" rel="noopener noreferrer" textDecoration="underline">OpenBook</Link>
@@ -502,8 +582,8 @@ function PracticeLibrary() {
         <Text>Voicings are generated. Melody chords use their upper note. Marked D.S./D.C. jumps follow written order. Roman-numeral analysis is available for your Stella arrangement. Up to 50 source issues are shown here; complete reports are available in the collection files.</Text>
         {failures.slice(0, 50).map(item => <Text key={`${item.collection}-${item.file}`}>{item.collection} · {item.file.replace('.ly.tera', '').replace(/_/g, ' ')}: {item.reason}</Text>)}
       </Box>
-    </Flex>
-    {score.id === selected ? <PracticeScoreContext.Provider value={score}><PracticePiece key={score.id} settings={settings}/></PracticeScoreContext.Provider>
+    </Flex>}
+    {score.id === selected ? <PracticeScoreContext.Provider value={score}><PracticePiece key={score.id} settings={settings} maximized={maximized} onMaximize={setMaximized}/></PracticeScoreContext.Provider>
       : <Stack p={4} role="status"><Text>{loadError || 'Loading tune…'}</Text>{loadError && <Button onClick={() => setRetry(value => value + 1)}>Try again</Button>}</Stack>}
   </>;
 }

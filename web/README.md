@@ -101,14 +101,31 @@ Run `node scripts/test-pitch-range.cjs` to check low-register and harmonic-rich 
 Play/pause and back controls sit beside the playhead. Pausing suspends the
 playback audio clock and preserves the current pass and count-in; resuming
 continues from there. In monophone-follow mode, the follower's clock pauses too.
+In timed playback each dashed cue outline closes onto its hex with a single animation
+scheduled from the audio clock to end at the attack, so it stays smooth and lands on
+time when the page is busy. The bar on the target hex that empties over the note's
+length is scheduled the same way, to finish when the note ends. In free time, where the playhead waits for the player,
+the outline still follows the playhead on each update.
 Space toggles play/pause whatever has focus (a button, checkbox, menu, slider or
 note hex), except in a text field, where it types a space; `[` / `]` move to the previous/next melody note;
 `Shift+[` / `Shift+]` (`{` / `}`) move through the configured loop points and
 the beginning/end of the track; Left/Right move to adjacent bar boundaries.
 M turns the metronome on or off from any focus except a text field (not in free
-time, where the metronome is unavailable).
-Down Arrow auditions the current chord without moving the playhead; holding
-the key does not repeatedly retrigger it.
+time, where the metronome is unavailable). R turns looping on or off the same way.
+Looping can be changed while practice is playing, by key, button or checkbox. Turned
+on, the current pass ends at the loop end (if the playhead has not passed it) and
+repeats; turned off, it plays on to the end of the tune, or through the remaining
+sections when one is selected. A new history session starts with the new setting.
+Changes made with M, R, Up/Down and the section arrows are confirmed by a brief
+message at the bottom of the window (for example "Loop off" or "84 BPM"), which
+also says when a key is ignored ("Pause to change tempo"). It shows with the board
+maximized too.
+Up/Down change the tempo by 1 BPM, or 10 with Shift, landing on whole BPM; holding
+a key repeats. Tempo can be changed while practice is playing, by key or with the
+tempo dial: the playhead keeps its place and continues at the new tempo about 30 ms
+later, notes already sounding ring to their original length, and a new history
+session starts at the new tempo. C auditions the current chord without moving the playhead
+(this was Down Arrow); holding the key does not repeatedly retrigger it.
 The back button goes to the previous loop point or beginning. While timed
 playback runs, navigation queues on the next beat, as strip clicks do; seeking
 to the end stops playback. For the other shortcuts, inputs, menus, sliders and
@@ -877,6 +894,14 @@ The picker lives in `src/components/ratePicker/` as a copy of the lab's `RatePic
 variables mapped to Chakra tokens in `ratePicker.css`. Behaviour changes should be
 made in both places.
 
+### Full-window board
+
+The button at the top right of the hex board maximizes it: the board fills the
+browser window and nothing else on the practice page is rendered (controls, tuner,
+judgement, sections, timeline, history and the tune picker). Playback, instrument
+input and the keyboard shortcuts keep working. The same button, or Esc, returns to
+the page. The choice is not saved; a reload opens the normal page.
+
 ### Loop lane and practice sections
 
 A **Loop** lane sits above the melody on the same beat scale. Drag across it to set
@@ -905,6 +930,13 @@ while practice is playing, by key or by clicking a card: the new section is cued
 playback jumps to its start on the next beat (at once in free time) and loops there,
 and its judgements begin a new history session. With looping turned off, or while
 paused, switching stops playback first, as before.
+
+With **Loop playback** off and a section selected, practice plays the sections in
+card order: it starts in the selected section and, as each one ends, moves straight
+on to the start of the next, selecting its card. It stops after the last section.
+Sections need not be adjacent in the tune; a gap between them is skipped. Each
+section's judgements go to their own history session. Cue outlines look ahead only
+within the current section.
 Choose the card again or **Leave free play** to return to the whole tune.
 Moving a loop point by hand also leaves the section; the saved section keeps its own
 range. A section contains the notes that begin inside its range. Sections can be

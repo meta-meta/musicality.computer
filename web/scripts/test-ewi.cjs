@@ -53,6 +53,9 @@ assert.ok(mic.includes('data-monophone-indicator')&&!mic.includes('data-wind-ind
 const wind=render({heard:64,heardCents:null,heardBreath:0.5,heardBend:2});
 assert.ok(wind.includes('data-wind-indicator="true" data-breath="0.5" data-bend="2"'));
 assert.ok(!wind.includes('data-monophone-indicator'),'The tuning dot yields to the wind marker');
+assert.ok(/data-input-highlight="held"[^>]*><polygon[^>]*><\/polygon><polygon data-midi-note="64"[^>]*stroke="none"/.test(wind),'A wind note is highlighted without an outline');
+assert.ok(/data-input-highlight="held"[^>]*><polygon[^>]*><\/polygon><polygon data-midi-note="64"[^>]*stroke="#/.test(mic),'A microphone note keeps its outline');
+assert.ok(/data-midi-note="66"[^>]*stroke="#/.test(render({heard:64,heardBreath:0.5,heardBend:0,midiNotes:[66]})),'A held Lumatone key keeps its outline beside a wind note');
 const centre=name=>Number(wind.match(new RegExp(`data-wind-indicator[^]*?<circle ${name}="([-\\d.]+)"`))[1]);
 close(centre('cx'),Math.sqrt(3)*27,'A two-semitone bend reaches the next cell');
 const radius=markup=>Number(markup.match(/data-wind-indicator[^]*?<circle cx="[-\d.]+" r="([-\d.]+)"/)[1]);

@@ -12,7 +12,9 @@ export function spaceTypesText(element: {tagName: string; isContentEditable?: bo
   return tag === 'input' && textInputTypes.includes((element.getAttribute('type') ?? 'text').toLowerCase());
 }
 
-export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void; onToggleMetronome?: () => void;
+export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void; onToggleMetronome?: () => void; onToggleLoop?: () => void;
+  // Up/down: tempo steps in BPM (positive is faster).
+  onTempoStep?: (bpm: number) => void;
   // Left/right first offer the step here; returning true means it was used (moving between saved sections).
   onStep?: (direction: -1 | 1) => boolean}) {
   const {score} = usePracticeScore();
@@ -36,15 +38,19 @@ export function usePracticeShortcuts(actions: {beat: number; loopStart: number |
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
       const element = event.target instanceof Element ? event.target : null;
-      // M works from any focus except where a letter would be typed.
-      if (event.key.toLowerCase() === 'm' && !spaceTypesText(event.target instanceof HTMLElement ? event.target : null)) {
+      // M and R work from any focus except where a letter would be typed.
+      const letter = event.key.toLowerCase();
+      if ((letter === 'm' || letter === 'r') && !spaceTypesText(event.target instanceof HTMLElement ? event.target : null)) {
         event.preventDefault();
-        if (!event.repeat) latest.current.onToggleMetronome?.();
+        if (!event.repeat) (letter === 'm' ? latest.current.onToggleMetronome : latest.current.onToggleLoop)?.();
         return;
       }
       if (element?.closest('input, textarea, select, [contenteditable="true"], [role="slider"], [role="textbox"]')) return;
       const current = latest.current;
-      if (event.key === 'ArrowDown') {
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        current.onTempoStep?.((event.key === 'ArrowUp' ? 1 : -1) * (event.shiftKey ? 10 : 1));
+      } else if (event.key.toLowerCase() === 'c') {
         event.preventDefault();
         if (!event.repeat) current.onPlayChord();
       } else if (event.key === '[' || event.key === ']') {

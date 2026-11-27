@@ -85,7 +85,8 @@ const cell=(markup,noteNumber)=>[...markup.matchAll(new RegExp(`<g transform="[^
 const plain=render({group});
 assert.ok(!plain.includes('data-dimmed'),'A note group alone dims nothing');
 const board=render({group,dimOutsideGroup:true});
-assert.equal((board.match(/data-group-cell=/g)??[]).length,3);
+assert.equal((plain.match(/data-group-cell=/g)??[]).length,3,'A note group outlines its cells');
+assert.equal((board.match(/data-group-cell=/g)??[]).length,0,'A section does not: its cells already stand out');
 assert.equal((board.match(/data-group-move=/g)??[]).length,4);
 assert.deepEqual(moveColors(board),moveColors(card),'The board and the card use the same order colors');
 const total=(board.match(/class="practice-hex"/g)??[]).length, dimmed=(board.match(/data-dimmed="true"/g)??[]).length;
@@ -126,5 +127,5 @@ assert.equal(api.adjacentSection(sections,'a',1),sections[1]);assert.equal(api.a
 assert.equal(api.adjacentSection(sections,'b',1),null);assert.equal(api.adjacentSection(sections,'a',-1),null);assert.equal(api.adjacentSection(sections,null,1),null);
 // The line ends at the base of the arrowhead, short of the tip.
 const arrow=render({group:{notes:[note(0,0,0),note(2,0,1)],current:0}}).match(/data-group-move="0"[^>]*><path d="M ([-\d.]+) [^ "]+ L ([-\d.]+) [^ "]+"[^>]*><\/path><path data-group-head="true" d="M ([-\d.]+) /);
-assert.ok(Number(arrow[1])<Number(arrow[2])&&Number(arrow[3])-Number(arrow[2])>=7.9,`Line ${arrow[2]} stops before tip ${arrow[3]}`);
+assert.ok(Number(arrow[1])<Number(arrow[2])&&Number(arrow[3])-Number(arrow[2])>=5.4,`Line ${arrow[2]} stops before tip ${arrow[3]}`);
 console.log('Passed section stepping and arrowhead geometry.');

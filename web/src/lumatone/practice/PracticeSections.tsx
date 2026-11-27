@@ -29,14 +29,14 @@ export function SectionPathGraphic({notes, transpose}: {notes: MelodyAttack[]; t
       const to = visits[index + 1];
       return to && to.key !== from.key ? [{from, to, index}] : [];
     });
-    const shifts = spreadOverlappingMoves(moves, 3.2, 12);
+    const shifts = spreadOverlappingMoves(moves, 1.9, 7);
     const segments = moves.map(({from, to, index}, order) => {
       const distance = Math.hypot(to.x - from.x, to.y - from.y);
       const unit = {x: (to.x - from.x) / distance, y: (to.y - from.y) / distance};
       const shift = shifts[order];
       const padding = Math.min(R * 0.55, distance * 0.3);
       const point = (along: number, side = 0) => `${(from.x + unit.x * along - unit.y * side + shift.x).toFixed(2)} ${(from.y + unit.y * along + unit.x * side + shift.y).toFixed(2)}`;
-      const tip = distance - padding, head = Math.min(3.6, (tip - padding) * 0.45);
+      const tip = distance - padding, head = Math.min(2.6, (tip - padding) * 0.45);
       return {index, color: orderColor(order, moves.length), d: `M ${point(padding)} L ${point(tip - head)}`,
         head: `M ${point(tip)} L ${point(tip - head, head * 0.42)} L ${point(tip - head, -head * 0.42)} Z`};
     });

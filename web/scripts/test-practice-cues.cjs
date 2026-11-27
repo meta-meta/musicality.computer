@@ -32,3 +32,33 @@ assert.ok(lowMap.includes('data-note="47" data-target="true"'),'Guitar low B has
 const viewBox=lowMap.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);
 assert.ok(121.5+27<viewBox[1]+viewBox[3],'Low B hex is fully inside the guitar viewport');
 console.log('Seven-string low-B target fits inside the extended hex viewport.');
+
+// Tempo change while playing: the playhead keeps its beat and continues at the new tempo.
+{
+  const transport=mod.exports;
+  const close=(a,b,message)=>assert.ok(Math.abs(a-b)<1e-9,`${message}: ${a} != ${b}`);
+  // 120 BPM (0.5 s per beat): beats 0-8 over 10 s-14 s, then a second pass already queued.
+  const first={id:0,time:10,beat:0,entryBeat:0,endBeat:8,endTime:14,pass:1,seconds:0.5};
+  const queued={id:1,time:14,beat:0,entryBeat:0,endBeat:8,endTime:18,pass:2,seconds:0.5};
+  const before=transport.positionAtTime([first,queued],11.5,0.5);
+  const retimed=transport.retimeSegments([first,queued],11.5,1,0.5,2);
+  assert.equal(retimed.dropped,1,'The queued pass is dropped for rescheduling');
+  assert.equal(retimed.segments.length,2);
+  const [cut,slow]=retimed.segments;
+  close(cut.endTime,11.5,'The old segment ends at the change');
+  assert.equal(cut.endBeat,8,'It still reports the range it belongs to');
+  assert.deepEqual([slow.id,slow.pass,slow.entryBeat,slow.endBeat,slow.seconds],[2,1,0,8,1],'Same pass and range, new tempo');
+  close(slow.beat,before.beat,'No jump at the change');close(slow.beat,3,'Beat 3');
+  close(slow.soundFrom,3,'Notes begun before beat 3 are not restarted');
+  close(slow.endTime,16.5,'Five beats remain at one second each');
+  close(transport.positionAtTime(retimed.segments,11.49,0.5).beat,2.98,'Before the change, old tempo');
+  close(transport.positionAtTime(retimed.segments,12.5,0.5).beat,4,'After the change, new tempo regardless of the fallback');
+  close(transport.nextBeatTime(slow,12.2,0.5),12.5,'Next beat follows the segment tempo');
+  const again=transport.retimeSegments(retimed.segments,12.5,0.25,1,3);
+  close(again.segments[2].beat,4,'A second change continues from the retimed segment');
+  close(again.segments[2].endTime,13.5,'Four beats at a quarter second');
+  assert.equal(transport.retimeSegments([first],14.2,1,0.5,2),null,'Nothing is playing after the last segment');
+  assert.equal(transport.retimeSegments([first],9.5,1,0.5,2),null,'Nor before the first');
+  assert.deepEqual(transport.positionAtTime([{...first,seconds:undefined}],11,0.5).beat,2,'Segments without their own tempo use the fallback');
+  console.log('Passed live tempo change: continuity, per-segment tempo, repeated changes and edges.');
+}
