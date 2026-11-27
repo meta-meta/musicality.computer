@@ -122,3 +122,37 @@ assert.ok(reusable.includes('translate(350,0)'));
 assert.ok(reusable.includes('Any label'));
 assert.throws(()=>renderToStaticMarkup(React.createElement(api.ViewportCenteredLabel,{start:0,end:100,labelWidth:20})),/requires ViewportCenteredLabels/);
 console.log('Reusable viewport-centered SVG labels render independently of practice history.');
+
+// Sessions remember the practice section they were played in.
+{
+  const inSection={...modern,id:'sectioned',settings:{...modern.settings,sectionId:'smabc123',sectionName:'Turnaround'}};
+  const round=api.parsePracticeHistory(JSON.stringify({...api.emptyHistory(),sessions:[inSection,modern]}));
+  assert.deepEqual([round.sessions[0].settings.sectionId,round.sessions[0].settings.sectionName],['smabc123','Turnaround']);
+  assert.equal('sectionId' in round.sessions[1].settings,false,'A session without a section has no section fields');
+  assert.throws(()=>api.parsePracticeHistory(JSON.stringify({...api.emptyHistory(),sessions:[{...inSection,settings:{...inSection.settings,sectionId:'<b>'}}]})),/Invalid history section/);
+  const unnamed=api.parsePracticeHistory(JSON.stringify({...api.emptyHistory(),sessions:[{...inSection,settings:{...inSection.settings,sectionName:undefined}}]}));
+  assert.equal(unnamed.sessions[0].settings.sectionName,'Section');
+  const one=history=>({...api.emptyHistory(),sessions:[history]});
+  const plain={...inSection,settings:{...modern.settings}};
+  assert.equal(api.mergePracticeHistories(one(plain),one(inSection)).sessions[0].settings.sectionName,'Turnaround','A backup can fill in an unrecorded section');
+  const renamed={...inSection,settings:{...inSection.settings,sectionName:'Renamed later'}};
+  assert.equal(api.mergePracticeHistories(one(inSection),one(renamed)).sessions[0].settings.sectionName,'Turnaround','The name recorded first is kept');
+  assert.throws(()=>api.mergePracticeHistories(one(inSection),one({...inSection,settings:{...inSection.settings,sectionId:'other'}})),/conflicts/,'A different section is a conflict');
+  // Tunes from any collection can be saved and read back.
+  for(const piece of ['musescore-snoopy_and_the_leaf','stella-by-starlight','openbook-fixture','effendi-a-tune_2'])
+    assert.equal(api.parsePracticeHistory(JSON.stringify(one({...modern,piece}))).sessions[0].piece,piece);
+  for(const piece of ['','Has Space','../etc','<script>'])
+    assert.throws(()=>api.parsePracticeHistory(JSON.stringify(one({...modern,piece}))),/Invalid session data/,piece);
+  const sections=[{id:'smabc123',name:'Turnaround',start:0,end:8}];
+  const draw=props=>renderToStaticMarkup(React.createElement(ChakraProvider,{value:api.system},React.createElement(api.PracticeHistoryGraph,
+    {sessions:[inSection,{...inSection,id:'sectioned-2'},modern],selected:null,selectedPass:null,mode:'jazz',onReview:()=>{},...props})));
+  const drawn=draw({sections,selectedSection:'smabc123'});
+  assert.ok(drawn.includes('data-history-resolution="bar"'),'Bars are the default rows');
+  assert.equal((drawn.match(/data-history-section="smabc123"/g)??[]).length,1,'Consecutive sessions in one section share a lane span');
+  assert.ok(/data-history-section="smabc123" data-group-start="\d" data-group-end="\d"/.test(drawn));
+  assert.ok(drawn.includes('>Turnaround<'),'The lane names the section');
+  assert.ok(!draw({}).includes('<option value="section" disabled="">Sections<'),'Without saved sections the Sections rows are unavailable');
+  assert.ok(draw({}).includes('Sections (none saved)'));
+  assert.ok(drawn.includes('<option value="split" selected="">Pitch + timing</option>'),'Pitch and timing together is the default cell');
+  console.log('Passed history sections: recorded section, merge rules, any-collection tunes and the section lane.');
+}

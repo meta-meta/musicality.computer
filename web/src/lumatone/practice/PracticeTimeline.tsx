@@ -2,6 +2,8 @@ import {Box, Button, chakra, Flex, Stack, Text} from '@chakra-ui/react';
 import {useCallback, useEffect, useMemo, useRef} from 'react';
 import {PracticeTempoInput} from './PracticeTempoInput.tsx';
 import {PracticeLoopLane} from './PracticeLoopLane.tsx';
+import {PracticeRestCell} from './PracticeRestCell.tsx';
+import {melodyRests} from './rhythm.ts';
 import {chordLabel} from '../leadSheet/labels.ts';
 import type {LabelMode} from '../leadSheet/labels.ts';
 import type {MelodyAttack} from '../leadSheet/stella.ts';
@@ -36,6 +38,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
   const ends = bars.map((_, i) => bars[i + 1] ?? END);
   const percent = (beat: number) => (beat - START) / LENGTH * 100;
   const chordConnections = useMemo(() => pieceHarmonies.map((chord, index) => connectVoices(pieceHarmonies[index - 1], chord)), [pieceHarmonies]);
+  const rests = useMemo(() => melodyRests(exercise, START, END), [exercise, START, END]);
   const scroll = useRef<HTMLDivElement>(null);
   const actions = useRef({onSeek, onMelody, onHarmony});
   useEffect(() => {actions.current = {onSeek, onMelody, onHarmony};}, [onSeek, onMelody, onHarmony]);
@@ -86,7 +89,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
         <chakra.label htmlFor="practice-playhead">Playhead</chakra.label>
         <input id="practice-playhead" aria-label="Playhead" type="range" min={START} max={END} step={1} value={position} style={{flex: '1 1 160px', minWidth: 0}} onChange={event => onSeek(Number(event.target.value))}/>
       </Flex>
-      <Text fontSize="xs" color="fg.muted">Space: play/pause from anywhere except a text field · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↑ / ↓: tempo ±1 BPM (Shift: ±10), also while playing · C: play current chord · M: metronome on/off · R: loop on/off. The other shortcuts leave text fields, menus and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
+      <Text fontSize="xs" color="fg.muted">?: show all keyboard shortcuts · Space: play/pause from anywhere except a text field · [ / ]: previous/next note · , / .: previous/next note group (when Note groups is on) · Shift+[ / Shift+]: previous/next loop point or track boundary · ← / →: previous/next bar · ↑ / ↓: tempo ±1 BPM (Shift: ±10), also while playing · C: play current chord · M: metronome on/off · R: loop on/off. The other shortcuts leave text fields, menus and sliders alone. Drag on the Loop lane above the melody to set loop points directly.</Text>
       <Flex gap={3} wrap="wrap" align="center" fontSize="sm">
         <Flex as="label" gap={2}>Loop start
           <select aria-label="Loop start" disabled={running} value={loopStart ?? ''} onChange={event => onLoopStart(event.target.value === '' ? null : Number(event.target.value))}>
@@ -120,6 +123,7 @@ export function PracticeTimeline({beat, entryBeat, endBeat, pass, running, pendi
                 return <PracticeMelodyCell key={index} note={note} attempt={attempt} missed={missed} mode={mode} transpose={transpose} pieceHarmonies={pieceHarmonies} showRoles={showMelodyRoles}
                   active={target === note} running={running} freeTime={freeTime} onSeek={seek} onMelody={playMelody}/>;
               })}
+              {rests.map(rest => <PracticeRestCell key={rest.start} start={rest.start} duration={rest.duration} tall={showMelodyRoles}/>)}
               {noteGroups.filter(group => group.end > group.start).map(group => <Box key={group.start} data-note-group-bracket={group.end - group.start + 1} aria-hidden="true" pointerEvents="none" position="absolute" top="1px" height="5px" zIndex={1}
                 left={`calc(${percent(exercise[group.start].start)}% + 2px)`} width={`calc(${(exercise[group.end].start + exercise[group.end].duration - exercise[group.start].start) / LENGTH * 100}% - 4px)`}
                 borderTopWidth="2px" borderLeftWidth="2px" borderRightWidth="2px" borderColor="cyan.400" opacity={0.8}/>)}

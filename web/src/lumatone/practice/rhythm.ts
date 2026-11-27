@@ -17,3 +17,17 @@ export function rhythmValues(start: number, duration: number): RhythmValue[] {
   }
   return result;
 }
+
+// The silences in a melody: every stretch of the tune with no note sounding,
+// including before the first note and after the last. A gap too short to write
+// as a sixteenth rest is ignored.
+export function melodyRests(melody: {start: number; duration: number}[], start: number, end: number): {start: number; duration: number}[] {
+  const rests: {start: number; duration: number}[] = [];
+  let position = start;
+  for (const note of [...melody].sort((a, b) => a.start - b.start)) {
+    if (note.start - position >= 0.25 - 1e-6) rests.push({start: position, duration: note.start - position});
+    position = Math.max(position, note.start + note.duration);
+  }
+  if (end - position >= 0.25 - 1e-6) rests.push({start: position, duration: end - position});
+  return rests;
+}

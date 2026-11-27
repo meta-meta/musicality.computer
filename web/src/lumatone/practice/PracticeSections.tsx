@@ -83,7 +83,7 @@ export function PracticeSections({sections, selected, melody, transpose, mode, d
         <Button size="xs" variant="ghost" disabled={disabled} onClick={() => onSelect(null)}>Leave free play</Button>
         <Button size="xs" variant="ghost" colorPalette="red" disabled={editingDisabled} onClick={() => onDelete(current.id)}>Delete</Button>
       </>}
-      <Text fontSize="xs" color="fg.muted">{current ? 'Free play: the section stays on the board and nothing is judged until you start practice. ← / → move to the previous or next section; while playing, it is cued for the next beat.'
+      <Text fontSize="xs" color="fg.muted">{current ? 'Free play: the section stays on the board and nothing is judged until you start practice. Esc leaves it. ← / → move to the previous or next section; while playing, it is cued for the next beat.'
         : sections.length ? 'Choose a card to play a section freely.' : 'Drag on the Loop lane, then save the loop to keep it as a section.'}</Text>
     </Flex>
     {sections.length > 0 && <Flex ref={row} role="listbox" aria-label="Saved sections" aria-orientation="horizontal" gap={2} overflowX="auto" pb={1} style={{scrollSnapType: 'x proximity'}}>

@@ -7,6 +7,9 @@ export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 export type HistorySettings = {
   bpm: number; transpose: number; keyTranspose?: number; instrumentId?: string; freeTime: boolean; allowLowOctaveUp: boolean;
   loop: boolean; loopStart: number | null; loopEnd: number | null; latencyMs: number;
+  // The saved practice section this session was played in, when one was selected.
+  // The name is as it was at the time; renaming a section does not rewrite history.
+  sectionId?: string; sectionName?: string;
 };
 export type HistoryJudgement = Attempt & {
   id: string; at: string; expectedNote: number; location: string; start: number; duration: number; latencyMs: number;
@@ -53,7 +56,7 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
   let total = 0;
   const sessions = root.sessions.map(value => {
     const s = object(value), config = object(s.settings);
-    if (typeof s.piece !== 'string' || !/^(stella-by-starlight|openbook-[a-z0-9_]+|effendi-[a-z0-9_-]+|wikifonia-[a-z0-9_-]+)$/.test(s.piece) || !Array.isArray(s.judgements)) throw new Error('Invalid session data.');
+    if (typeof s.piece !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,119}$/.test(s.piece) || !Array.isArray(s.judgements)) throw new Error('Invalid session data.');
     total += s.judgements.length;
     if (total > 100000) throw new Error('Too many judgements in this file.');
     const id = text(s.id, 100);
@@ -69,6 +72,12 @@ export function parsePracticeHistory(raw: string): PracticeHistoryData {
       const id = text(config.instrumentId, 60);
       if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new Error('Invalid history instrument.');
       settings.instrumentId = id;
+    }
+    if (config.sectionId !== undefined) {
+      const id = text(config.sectionId, 100);
+      if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new Error('Invalid history section.');
+      settings.sectionId = id;
+      settings.sectionName = config.sectionName === undefined ? 'Section' : text(config.sectionName, 60);
     }
     if (settings.loopStart !== null && settings.loopEnd !== null && settings.loopStart >= settings.loopEnd) throw new Error('Invalid loop range.');
     const eventIds = new Set<string>();
@@ -102,8 +111,9 @@ export function mergePracticeHistories(local: PracticeHistoryData, incoming: Pra
     // Backups can fill an unrecorded instrument without changing musical
     // settings or replacing a previously identified instrument.
     if (old.piece !== session.piece || old.startedAt !== session.startedAt || instrumentConflict
-      || !sameFields({...old.settings, keyTranspose: old.settings.keyTranspose ?? 0, instrumentId: undefined},
-        {...session.settings, keyTranspose: session.settings.keyTranspose ?? 0, instrumentId: undefined}))
+      || (old.settings.sectionId !== undefined && session.settings.sectionId !== undefined && old.settings.sectionId !== session.settings.sectionId)
+      || !sameFields({...old.settings, keyTranspose: old.settings.keyTranspose ?? 0, instrumentId: undefined, sectionId: undefined, sectionName: undefined},
+        {...session.settings, keyTranspose: session.settings.keyTranspose ?? 0, instrumentId: undefined, sectionId: undefined, sectionName: undefined}))
       throw new Error('A session ID conflicts with different saved settings. Nothing was imported.');
     const events = new Map(old.judgements.map(event => [event.id, event]));
     for (const event of session.judgements) {
@@ -111,7 +121,9 @@ export function mergePracticeHistories(local: PracticeHistoryData, incoming: Pra
       if (existing && !sameFields(existing, event)) throw new Error('A judgement ID conflicts with different saved data. Nothing was imported.');
       events.set(event.id, event);
     }
-    sessions.set(session.id, {...old, settings: {...old.settings, ...(instrumentId ? {instrumentId} : {})}, updatedAt: old.updatedAt > session.updatedAt ? old.updatedAt : session.updatedAt,
+    const sectionId = old.settings.sectionId ?? session.settings.sectionId;
+    const sectionName = old.settings.sectionId ? old.settings.sectionName : session.settings.sectionName;
+    sessions.set(session.id, {...old, settings: {...old.settings, ...(instrumentId ? {instrumentId} : {}), ...(sectionId ? {sectionId, sectionName} : {})}, updatedAt: old.updatedAt > session.updatedAt ? old.updatedAt : session.updatedAt,
       endedAt: old.endedAt && session.endedAt ? old.endedAt > session.endedAt ? old.endedAt : session.endedAt : old.endedAt ?? session.endedAt,
       judgements: [...events.values()].sort((a, b) => a.at.localeCompare(b.at))});
   }

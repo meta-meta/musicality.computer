@@ -116,6 +116,9 @@ Looping can be changed while practice is playing, by key, button or checkbox. Tu
 on, the current pass ends at the loop end (if the playhead has not passed it) and
 repeats; turned off, it plays on to the end of the tune, or through the remaining
 sections when one is selected. A new history session starts with the new setting.
+? shows or hides a panel listing every assigned key (from any focus except a text
+field, and with the board maximized); Esc or its Close button dismisses it. The list
+is `PRACTICE_SHORTCUTS` in `usePracticeShortcuts.ts`, kept beside the handlers.
 Changes made with M, R, Up/Down and the section arrows are confirmed by a brief
 message at the bottom of the window (for example "Loop off" or "84 BPM"), which
 also says when a key is ignored ("Pause to change tempo"). It shows with the board
@@ -811,12 +814,24 @@ retriggering, mid-fade edits, disabling, and zero-duration behavior.
 
 ### Melodic note groups
 
+While Note groups is on, every hex outside the current group is dimmed, as for a
+selected section, and the group's own cells are drawn without the inset outline.
+Played and held notes are never dimmed. A group of one note dims the board too, and
+at a rest or during the count-in, where there is no current group, the whole board
+is dimmed.
+
+The melody strip draws written rest symbols in the silences between notes, at the
+height of the note values: whole, half, quarter, eighth and sixteenth rests, dotted
+where needed, split at bar lines (4-beat bars are assumed, as for tied notes). A gap
+shorter than a sixteenth is not drawn.
+
 **Display → Note groups** shows every note of the group around the current target
-on the hex board: a thin outline on each cell and one arrow per move, so the shape
+on the hex board: its cells left bright against the dimmed board and one arrow per move, so the shape
 of the gesture is visible before it is played. Moves already passed are dimmed, a
 repeated pitch adds no arrow, and a move that is retraced in the opposite direction
 is drawn beside its counterpart. Brackets above the melody strip mark the same
-groups. The option is off by default and is not saved; single-note groups draw nothing.
+groups. The option is off by default and is saved with the other display settings;
+a single-note group has no arrows.
 With a grouping on, `,` and `.` move to the previous/next group start (single-note
 groups included); `,` inside a group first returns to that group's start.
 
@@ -894,13 +909,85 @@ The picker lives in `src/components/ratePicker/` as a copy of the lab's `RatePic
 variables mapped to Chakra tokens in `ratePicker.css`. Behaviour changes should be
 made in both places.
 
-### Full-window board
+### The board follows the music
+
+The board normally shows a fixed part of the layout. When the notes being practised
+would fall outside it (after a change of key, register or instrument, in a narrow
+window, or for a wide-ranging tune), the view moves the smallest distance that brings
+them all in, with a margin. If they are larger than the view, it zooms out, up to
+1.7× (hexes at about 60% size), and centres on them; past that the edges can still be
+cut off. "The notes being practised" are the selected section's, or the whole melody
+at the current transposition. The view is re-fitted when the section, transposition
+or board size changes, not as the playhead moves. Because the layout is isomorphic
+this changes only which part of it is on screen, so a pitch is not always at the same
+place on screen from one tune or section to the next. Chord voicings are not part of
+the fit.
+
+### Full-window board (focus mode)
+
+F toggles it from any focus except a text field, and a brief message announces
+entering and leaving it however that happens (F, the button or Esc). On the way out
+"Leaving focus mode…" is shown before the full page is rebuilt, which takes a
+moment, and "Focus mode off" once it is back.
 
 The button at the top right of the hex board maximizes it: the board fills the
 browser window and nothing else on the practice page is rendered (controls, tuner,
 judgement, sections, timeline, history and the tune picker). Playback, instrument
 input and the keyboard shortcuts keep working. The same button, or Esc, returns to
 the page. The choice is not saved; a reload opens the normal page.
+
+### Sections, notes and timing in the history graph
+
+A session played with a practice section selected records that section's id and name
+(`settings.sectionId`, `settings.sectionName`; the name as it was then). All sessions
+stay in one timeline. A **Section** lane under Instrument and Concert key marks the
+sessions played in a section; consecutive sessions in the same section share a span.
+Sessions recorded before this, or without a section, are unmarked.
+
+**Rows** chooses what a map row stands for:
+
+- **Bars**: every bar of the piece, as before, drawn to the bars' lengths.
+- **Sections**: one row per saved section, in tune order. A note counts in every
+  section it starts in, so overlapping sections each get it.
+- **Notes**: one row per melody note of one section, numbered in order with its
+  pitch. The section defaults to the one selected for practice and can be changed
+  beside the Rows menu; "Whole tune" lists every note, capped at 160 rows.
+
+In Sections and Notes, sessions that never touched the rows shown are left out.
+
+**Cells** defaults to **Pitch + timing**, which shows both in one cell:
+
+- on a note row, the fill is first-try pitch (the usual green/orange/red) and a white
+  tick is the mean signed timing error of the timed first judgements: left of centre
+  early, right late, with the cell edge at 150 ms or more;
+- on a bar or section row, the left half is first-try pitch and the right half is
+  on-time entrances.
+
+The progress line above uses full hits in that mode. The three single measures remain
+available. Rows and Cells are saved with the other view preferences. Clicking a cell
+opens the review of the bar that row starts in.
+
+History can now be saved and read back for a tune from any collection. Before, the
+reader accepted only Stella, OpenBook, Effendi and Wikifonia ids, so one recorded
+session for another tune (for example a MuseScore import) made the whole saved
+history unreadable on the next visit and blocked further saving. Data saved in that
+state was left untouched and loads again.
+
+### Collapsible page sections
+
+Each part of the practice page has a header that collapses it: Tune, the four
+settings groups (Playback, Instrument input, Sound, Display), Analysis, Tuner and
+judgement, Board, Lyrics, Sections, Transport and timeline, Suggested loops, Practice
+history, Source and credits, and Help. A collapsed part is not rendered at all, so it
+costs nothing while practising; playback, input and shortcuts do not depend on any of
+them being open. Open/closed is remembered per part in `musicality.practice-view.v1`.
+Source and Help start collapsed. MIDI configuration keeps its existing accordion,
+which stays mounted while closed. The Start and Listen buttons above the settings are
+always shown; the transport beside the playhead is part of Transport and timeline.
+
+Esc steps out one level: it leaves the full-window board first, then the selected
+section. Selecting or saving a section no longer turns looping on; looping stays as
+you set it, so with it off the sections play through in order.
 
 ### Loop lane and practice sections
 

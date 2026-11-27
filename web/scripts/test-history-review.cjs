@@ -44,3 +44,24 @@ assert.deepEqual(passes(score,{...session,judgements:session.judgements.slice().
 assert.deepEqual(passes(score,{...session,judgements:[]}),[]);
 assert.equal(passes(score,{...session,judgements:[judgement(1,20,true),judgement(1,25,false)]})[1].cycle,25,'Raw transport pass IDs are preserved');
 console.log('Passed history map: pickups, variable meter, chronology, corrections, pass counts, partial coverage, free-time gaps, transposition and stale score exclusion.');
+
+// Rows other than bars: saved sections (which may overlap) and single notes.
+{
+  const sections=[{start:-1,end:3,label:'Opening'},{start:0,end:10,label:'From bar 1'},{start:8,end:10,label:'Ending'}];
+  const bySection=review(score,session,sections);
+  assert.deepEqual(bySection.bars.map(row=>[row.label,row.attempts,row.pitch,row.observed,row.notes]),
+    [['Opening',2,1,2,2],['From bar 1',3,2,2,3],['Ending',0,0,0,1]],'A note counts in every section it starts in');
+  assert.deepEqual(bySection.total,result.total,'Totals count each judgement once, however many rows it falls in');
+  const notes=score.melody.map(note=>({start:note.start,end:note.start+note.duration,label:`Note ${note.note}`}));
+  const byNote=review(score,session,notes);
+  assert.deepEqual(byNote.bars.map(row=>[row.attempts,row.pitch,row.onTime]),[[1,1,1],[1,0,0],[2,2,1],[0,0,0]]);
+  assert.deepEqual(byNote.bars.map(row=>row.errorSum),[0,200,200,0],'Signed timing error is summed per row');
+  assert.equal(mod.exports.historyMeanError(byNote.bars[2]),100,'Two timed first judgements, 200 ms and 0 ms');
+  assert.equal(mod.exports.historyMeanError(byNote.bars[3]),null,'Nothing timed, no mean');
+  assert.equal(mod.exports.historyMeanError(review(score,{...session,judgements:[judgement(1,1,true,-80)]},notes).bars[1]),-80,'Early is negative');
+  const free=review(score,{...session,settings:{...settings,freeTime:true}},notes);
+  assert.equal(mod.exports.historyMeanError(free.bars[1]),null,'Free time has no timing');
+  assert.deepEqual(passes(score,session,notes).map(pass=>pass.review.bars.map(row=>row.attempts)),[[1,1,1,0],[0,0,1,0]],'Passes use the same rows');
+  assert.equal(review(score,session).bars.length,4,'Bars remain the default rows');
+  console.log('Passed history rows: overlapping sections, single notes, mean timing and per-pass rows.');
+}

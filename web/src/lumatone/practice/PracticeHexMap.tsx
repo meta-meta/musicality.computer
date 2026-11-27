@@ -19,6 +19,7 @@ import type {PolyphonicTuning} from './polyphonicTuning.ts';
 import {detectedChordCells, detectedPitchCell} from './detectedPitchCell.ts';
 import {transposePosition} from './transposition.ts';
 import {spreadOverlappingMoves} from './arrowLanes.ts';
+import {fitBoardView} from './boardView.ts';
 
 const RADIUS = 27;
 const referenceCells = Array.from({length: 10}, (_, row) => Array.from({length: 11}, (_, col) => {
@@ -185,7 +186,10 @@ function WindIndicator({source, breath: fixedBreath, bend: fixedBend, x, y, colo
   </g>;
 }
 
-export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, fill = false, cueBeat = 0, cueClock, targetSpan, heard: heardNote, heardCents = null, wind, windOffset = 0, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+export function PracticeHexMap({target, targetHit = false, futureAttacks, progress, fill = false, fitNotes, cueBeat = 0, cueClock, targetSpan, heard: heardNote, heardCents = null, wind, windOffset = 0, transpose, mode, harmony, previewNote, practicing, onPlayNote, showGuideTones = false, midiNotes = [], detectedNotes = [], detectedTunings = [], noteTrail = defaultNoteTrail, extendedLowRange = false, group, dimOutsideGroup = false, heardBreath = null, heardBend = null}: {
+  // The notes the view must contain: the selected section, or the whole melody.
+  // Positions are as in the score; `transpose` is applied here. Omit for the fixed view.
+  fitNotes?: MelodyAttack[];
   // Fill the parent's height instead of the page layout's clamped height.
   fill?: boolean;
   // Timed playback: the beat `futureAttacks` was computed for, and a way to
@@ -199,7 +203,8 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   // `windOffset` semitones to written pitch), breath and bend, replacing
   // `heard`, `heardBreath` and `heardBend`.
   wind?: WindSource; windOffset?: number;
-  // Free play on a saved section: every cell outside the group is dimmed.
+  // Every cell outside the group is dimmed (a saved section, or the current note
+  // group), and the group's cells are then drawn without their inset outline.
   dimOutsideGroup?: boolean;
   // Wind-controller input: breath 0–1 sizes a marker on the fingered note's cell,
   // and bend (semitones) slides it along the whole-tone axis of the layout.
@@ -247,14 +252,21 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const viewWidth = height * aspect;
-  const viewLeft = left + width / 2 - viewWidth / 2;
+  // The usual view, moved or zoomed out only as far as needed to contain the
+  // music being practised (see fitBoardView).
+  const fitOffset = transposePosition({q: 0, r: 0}, transpose);
+  const fitBox = fitNotes?.length ? fitNotes.reduce((box, note) => {
+    const {x, y} = pointyHexAxialToPixel({q: note.at.q + fitOffset.q, r: note.at.r + fitOffset.r});
+    return {x0: Math.min(box.x0, x * RADIUS), x1: Math.max(box.x1, x * RADIUS), y0: Math.min(box.y0, y * RADIUS), y1: Math.max(box.y1, y * RADIUS)};
+  }, {x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity}) : null;
+  const view = fitBoardView({left: left + width / 2 - height * aspect / 2, top, width: height * aspect, height}, fitBox, RADIUS + 12, 1.7);
+  const viewWidth = view.width, viewLeft = view.left, viewTop = view.top, viewHeight = view.height;
   const cells = useMemo(() => {
     const result = [];
     // Cover the viewport with staggered rows, including partial edge cells.
     // Axial coordinates stay unchanged, so resize never changes their pitches.
-    const minR = Math.floor(-(top + height + RADIUS) / (1.5 * RADIUS));
-    const maxR = Math.ceil((-top + RADIUS) / (1.5 * RADIUS));
+    const minR = Math.floor(-(viewTop + viewHeight + RADIUS) / (1.5 * RADIUS));
+    const maxR = Math.ceil((-viewTop + RADIUS) / (1.5 * RADIUS));
     for (let r = minR; r <= maxR; r++) {
       const minQ = Math.floor((viewLeft - RADIUS) / (Math.sqrt(3) * RADIUS) - r / 2);
       const maxQ = Math.ceil((viewLeft + viewWidth + RADIUS) / (Math.sqrt(3) * RADIUS) - r / 2);
@@ -264,7 +276,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
       }
     }
     return result;
-  }, [viewLeft, viewWidth, height]);
+  }, [viewLeft, viewTop, viewWidth, viewHeight]);
   const colors = useMemo(() => cells.map(cell => {
     const color = getNoteColorHsl(cell.note);
     const base = isLight ? color.range('white')(0.3) : color;
@@ -315,7 +327,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   }));
   const previousDetectedChord = useRef<typeof cells>([]);
   const detectedCells = detectedChordCells(cells, detectedNotes, previousDetectedChord.current,
-    {left: viewLeft, top, width: viewWidth, height}, RADIUS, targetCell ?? null);
+    {left: viewLeft, top: viewTop, width: viewWidth, height: viewHeight}, RADIUS, targetCell ?? null);
   useEffect(() => {
     if (detectedCells.length) previousDetectedChord.current = detectedCells;
   }, [detectedCells]);
@@ -326,7 +338,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const cueNow = clockNow && Math.abs(clockNow.beat - cueBeat) < 1 ? {...clockNow, at: performance.now()} : null;
   const previousHeardCell = useRef<{x: number; y: number} | null>(null);
   const heardCell = detectedPitchCell(cells, heard, previousHeardCell.current,
-    {left: viewLeft, top, width: viewWidth, height}, RADIUS, promptCell);
+    {left: viewLeft, top: viewTop, width: viewWidth, height: viewHeight}, RADIUS, promptCell);
   useEffect(() => {
     // Keep the anchor through silence between articulations; update only after
     // a committed render, without adding state updates to the audio frame loop.
@@ -336,7 +348,7 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
   const previewCell = previewCells.find(cell => atTarget(cell, target))
     ?? previewCells.sort((a, b) => Math.abs(a.q + 2) - Math.abs(b.q + 2))[0];
   return (
-    <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected instrument note; dot above center means sharp, below means flat." viewBox={`${viewLeft} ${top} ${viewWidth} ${height}`} style={{width: '100%', height: fill ? '100%' : 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
+    <svg ref={svg} role="group" aria-label="Fixed isomorphic practice layout. Click a note to hear it. Contrasting outline: target. Dashed hexagon: upcoming. Small top indicator: detected instrument note; dot above center means sharp, below means flat." data-board-zoom={view.zoom} viewBox={`${viewLeft} ${viewTop} ${viewWidth} ${viewHeight}`} style={{width: '100%', height: fill ? '100%' : 'clamp(280px, 58vh, 640px)', overflow: 'hidden', background: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', borderRadius: 12, fontFamily: 'JetBrains Mono, monospace'}}>
       <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke={targetColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></marker></defs>
       <style>{`
         .practice-hex:focus { outline: none; }
@@ -392,9 +404,9 @@ export function PracticeHexMap({target, targetHit = false, futureAttacks, progre
             arriveAt={practicing && cueNow ? cueNow.at + (cueBeat + approaching.beatsAway - cueNow.beat) * cueNow.msPerBeat : null} msPerBeat={cueNow?.msPerBeat ?? 0}/>
         </g>;
       })}
-      {group && <g data-note-group="true" data-group-size={group.notes.length} role="img" pointerEvents="none"
+      {group && group.notes.length > 0 && <g data-note-group="true" data-group-size={group.notes.length} role="img" pointerEvents="none"
         aria-label={`Note group: ${group.notes.map(note => pitchLabel(note.note + transpose, mode)).join(', ')}`}>
-        {/* A section's cells already stand out against the dimmed board, so they need no outline. */}
+        {/* Cells that stand out against a dimmed board need no outline. */}
         {!dimOutsideGroup && [...new Set(groupCells)].map(cell => cell && <polygon key={`${cell.q},${cell.r}`} data-group-cell={cell.note} points={points}
           transform={`translate(${cell.x},${cell.y}) scale(0.93)`} fill="none" stroke={targetColor} strokeWidth={1}
           opacity={groupCells.lastIndexOf(cell) < group.current ? 0.2 : 0.55} vectorEffect="non-scaling-stroke"/>)}

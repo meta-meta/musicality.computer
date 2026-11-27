@@ -2,6 +2,23 @@ import {usePracticeScore} from './PracticeScoreContext.tsx';
 import {useEffect, useRef} from 'react';
 import {adjacentBar, adjacentGroup, adjacentLoopPoint, adjacentNote} from './navigation.ts';
 
+// Every key the practice page assigns, in the order shown by the ? panel.
+export const PRACTICE_SHORTCUTS: [keys: string, action: string][] = [
+  ['Space', 'Play / pause'],
+  ['[  ]', 'Previous / next note'],
+  [',  .', 'Previous / next note group (when Note groups is on)'],
+  ['Shift+[  Shift+]', 'Previous / next loop point or end of the tune'],
+  ['←  →', 'Previous / next bar; with a section selected, previous / next section'],
+  ['↑  ↓', 'Tempo up / down 1 BPM (Shift: 10)'],
+  ['R', 'Loop on / off'],
+  ['M', 'Metronome on / off'],
+  ['C', 'Play the current chord'],
+  ['F', 'Focus mode on / off: the board fills the window'],
+  ['Esc', 'Close this panel, then leave focus mode, then leave the section'],
+  ['?', 'Show / hide this panel'],
+  ['Enter', 'Activate the focused button or note hex'],
+];
+
 // Space types a space only where text is being entered; everywhere else on the
 // practice page it is play/pause, whatever has focus.
 const textInputTypes = ['text', 'search', 'email', 'url', 'tel', 'password'];
@@ -12,7 +29,7 @@ export function spaceTypesText(element: {tagName: string; isContentEditable?: bo
   return tag === 'input' && textInputTypes.includes((element.getAttribute('type') ?? 'text').toLowerCase());
 }
 
-export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void; onToggleMetronome?: () => void; onToggleLoop?: () => void;
+export function usePracticeShortcuts(actions: {beat: number; loopStart: number | null; loopEnd: number | null; noteGroups: {start: number}[]; onToggle: () => void; onSeek: (beat: number) => void; onPlayChord: () => void; onToggleMetronome?: () => void; onToggleLoop?: () => void; onToggleHelp?: () => void; onToggleFocus?: () => void;
   // Up/down: tempo steps in BPM (positive is faster).
   onTempoStep?: (bpm: number) => void;
   // Left/right first offer the step here; returning true means it was used (moving between saved sections).
@@ -38,11 +55,16 @@ export function usePracticeShortcuts(actions: {beat: number; loopStart: number |
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
       const element = event.target instanceof Element ? event.target : null;
-      // M and R work from any focus except where a letter would be typed.
-      const letter = event.key.toLowerCase();
-      if ((letter === 'm' || letter === 'r') && !spaceTypesText(event.target instanceof HTMLElement ? event.target : null)) {
+      // ?, M and R work from any focus except where a character would be typed.
+      if (event.key === '?' && !spaceTypesText(event.target instanceof HTMLElement ? event.target : null)) {
         event.preventDefault();
-        if (!event.repeat) (letter === 'm' ? latest.current.onToggleMetronome : latest.current.onToggleLoop)?.();
+        if (!event.repeat) latest.current.onToggleHelp?.();
+        return;
+      }
+      const letter = event.key.toLowerCase();
+      if ((letter === 'm' || letter === 'r' || letter === 'f') && !spaceTypesText(event.target instanceof HTMLElement ? event.target : null)) {
+        event.preventDefault();
+        if (!event.repeat) (letter === 'm' ? latest.current.onToggleMetronome : letter === 'r' ? latest.current.onToggleLoop : latest.current.onToggleFocus)?.();
         return;
       }
       if (element?.closest('input, textarea, select, [contenteditable="true"], [role="slider"], [role="textbox"]')) return;

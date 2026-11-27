@@ -7,6 +7,8 @@ import {isPracticeHit, TIMING_TOLERANCE} from './exercise.ts';
 import {MAX_IMPORT_BYTES, summarisePracticeSession} from './practiceHistory.ts';
 import type {PracticeHistoryData, PracticeSession} from './practiceHistory.ts';
 import {PracticeHistoryGraph} from './PracticeHistoryGraph.tsx';
+import type {PracticeSection} from './practiceSections.ts';
+const noSections: PracticeSection[] = [];
 import {InstrumentIcon} from './InstrumentIcon.tsx';
 import {historySessionContext} from './historyContext.ts';
 import {historyBarRanges} from './historyReview.ts';
@@ -30,7 +32,8 @@ function download(raw: string, prefix: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, error, recovery, activeId, running, mode, onExport, onImport}: {
+export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, error, recovery, activeId, running, mode, onExport, onImport, sections = noSections, selectedSection = null}: {
+  sections?: PracticeSection[]; selectedSection?: string | null;
   data: PracticeHistoryData; error: string; recovery: string; activeId: string | null; running: boolean; mode: LabelMode;
   onExport: () => string; onImport: (raw: string) => {sessions: number; total: number};
 }) {
@@ -81,7 +84,7 @@ export const PracticeHistoryPanel = memo(function PracticeHistoryPanel({data, er
       {notice && <Text role="status" fontSize="sm">{notice}</Text>}
       <label><input type="checkbox" checked={allTunes} onChange={event => {setAllTunes(event.target.checked); setSelected(null); setSelectedBar(null); setSelectedPass(null);}}/> Show history for all tunes</label>
       {!rows.length ? <Text fontSize="sm" color="fg.muted">No saved judgements yet. Listen to your instrument during practice to start a history.</Text> : <>
-        {expanded && <PracticeHistoryGraph sessions={data.sessions} selected={selected} selectedPass={selectedPass} mode={mode} onReview={reviewSession}/>}
+        {expanded && <PracticeHistoryGraph sessions={data.sessions} selected={selected} selectedPass={selectedPass} mode={mode} onReview={reviewSession} sections={sections} selectedSection={selectedSection}/>}
         {allTunes && <Text fontSize="xs" color="fg.muted">The graph stays on the selected tune; the table below includes all tunes.</Text>}
       {session && <Stack gap={2} borderTopWidth="1px" pt={3}>
         <Heading size="sm">Session · {dateLabel(session.startedAt)}{selectedPass!==null ? ` · Pass ${selectedPass}` : ''}{selectedBar!==null ? ` · ${barRanges[selectedBar].label}` : ''}</Heading>
